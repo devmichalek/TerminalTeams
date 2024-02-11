@@ -1,0 +1,11 @@
+// Helpers
+#define QU(x) #x
+#define QUH(x) QU(x)
+
+// Options configured from CMake
+#define PROJECT_NAME @CMAKE_PROJECT_NAME@
+#define VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define VERSION_MINOR @PROJECT_VERSION_MINOR@
+
+// Options
+#define VERSION_STRING QUH(PROJECT_NAME) " " QUH(VERSION_MAJOR) "." QUH(VERSION_MINOR)
