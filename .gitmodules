@@ -1,4 +1,0 @@
-[submodule "lib/grpc"]
-	path = lib/grpc
-	url = git@github.com:grpc/grpc.git
-    branch = v1.61.x

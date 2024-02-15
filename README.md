@@ -1,5 +1,5 @@
 ### Usage
-Application can be used in Linux Terminal Emulator to:
+Application runs in Linux Terminal Emulator to:
 - find users on LAN,
 - communicate with other people on LAN
 
@@ -10,10 +10,10 @@ Application can be used in Linux Terminal Emulator to:
 - Google Protocol Buffers
 - Google gRPC
 - GoogleTest
+- Bash
 
 ### Installation
 ```
-git submodule update --init --recursive
 cmake -B build
 make all -j 4 -C build
 ```
