@@ -6,18 +6,16 @@ package tt;
 service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
-
-  rpc SayHelloStreamReply (HelloRequest) returns (stream HelloReply) {}
-
-  rpc SayHelloBidiStream (stream HelloRequest) returns (stream HelloReply) {}
 }
 
 // The request message containing the user's name.
 message HelloRequest {
   string name = 1;
+  string identity = 2;
 }
 
-// The response message containing the greetings
+// The response message containing the user's name.
 message HelloReply {
-  string message = 1;
+  string name = 1;
+  string identity = 2;
 }
