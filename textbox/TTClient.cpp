@@ -43,7 +43,7 @@ class GreeterClient {
 
     // Act upon its status.
     if (status.ok()) {
-      return reply.message();
+      return reply.name();
     } else {
       std::cout << status.error_code() << ": " << status.error_message()
                 << std::endl;

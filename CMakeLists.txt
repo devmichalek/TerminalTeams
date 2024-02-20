@@ -13,43 +13,54 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(grpc)
 
 # Set generated sources paths and add command
-get_filename_component(tt_proto "interface/TerminalTeams.proto" ABSOLUTE)
-get_filename_component(tt_proto_path "${tt_proto}" PATH)
-set(tt_proto_srcs "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.pb.cc")
-set(tt_proto_hdrs "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.pb.h")
-set(tt_grpc_srcs "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.grpc.pb.cc")
-set(tt_grpc_hdrs "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.grpc.pb.h")
+get_filename_component(TT_PROTO_FULLPATH "interface/TerminalTeams.proto" ABSOLUTE)
+get_filename_component(TT_PROTO_DIRECTORY "${TT_PROTO_FULLPATH}" DIRECTORY)
+set(TT_PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.pb.cc")
+set(TT_PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.pb.h")
+set(TT_GRPC_SRCS "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.grpc.pb.cc")
+set(TT_GRPC_HDRS "${CMAKE_CURRENT_BINARY_DIR}/TerminalTeams.grpc.pb.h")
 
 # Add command to generate sources
 add_custom_command(
-      OUTPUT "${tt_proto_srcs}" "${tt_proto_hdrs}" "${tt_grpc_srcs}" "${tt_grpc_hdrs}"
+      OUTPUT "${TT_PROTO_SRCS}" "${TT_PROTO_HDRS}" "${TT_GRPC_SRCS}" "${TT_GRPC_HDRS}"
       COMMAND $<TARGET_FILE:protoc>
       ARGS --grpc_out "${CMAKE_CURRENT_BINARY_DIR}"
         --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-        -I "${tt_proto_path}"
+        -I "${TT_PROTO_DIRECTORY}"
         --plugin=protoc-gen-grpc="$<TARGET_FILE:grpc_cpp_plugin>"
-        "${tt_proto}"
-      DEPENDS "${tt_proto}")
+        "${TT_PROTO_FULLPATH}"
+      DEPENDS "${TT_PROTO_FULLPATH}")
 
 # Create grpc & proto library
 include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 add_library(tt_grpc_proto
-  ${tt_grpc_srcs}
-  ${tt_grpc_hdrs}
-  ${tt_proto_srcs}
-  ${tt_proto_hdrs})
+  ${TT_GRPC_SRCS}
+  ${TT_GRPC_HDRS}
+  ${TT_PROTO_SRCS}
+  ${TT_PROTO_HDRS})
 target_link_libraries(tt_grpc_proto
   grpc++_reflection
   grpc++
   libprotobuf)
 
-# Config file
+# Copy config file and scripts
 configure_file(interface/Config.hpp.in Config.hpp)
+get_filename_component(TT_SCRIPTS_DIRECTORY "scripts" ABSOLUTE)
+set(TT_SCRIPTS
+  tteams.sh
+  tteams-main.sh
+  tteams-chat.sh
+  tteams-contacts.sh
+  tteams-textbox.sh)
+foreach(TT_SCRIPT ${TT_SCRIPTS})
+  configure_file("${TT_SCRIPTS_DIRECTORY}/${TT_SCRIPT}" "${PROJECT_BINARY_DIR}" COPYONLY)
+endforeach()
 
-# Client
-add_executable(ttclient client/TTClient.cpp)
-target_include_directories(ttclient PUBLIC "${PROJECT_BINARY_DIR}")
-target_link_libraries(ttclient
+# Terminal Teams Textbox + Client
+set(TT_TEXTBOX tteams-textbox)
+add_executable(${TT_TEXTBOX} textbox/TTClient.cpp)
+target_include_directories(${TT_TEXTBOX} PUBLIC "${PROJECT_BINARY_DIR}")
+target_link_libraries(${TT_TEXTBOX}
   tt_grpc_proto
   absl::flags
   absl::flags_parse
@@ -57,13 +68,28 @@ target_link_libraries(ttclient
   grpc++
   libprotobuf)
 
-# Server
-add_executable(ttserver server/TTServer.cpp)
-target_include_directories(ttserver PUBLIC "${PROJECT_BINARY_DIR}")
-target_link_libraries(ttserver
+# Terminal Teams Chat + Server
+set(TT_CHAT tteams-chat)
+add_executable(${TT_CHAT} chat/TTChat.cpp)
+target_include_directories(${TT_CHAT} PUBLIC "${PROJECT_BINARY_DIR}")
+target_link_libraries(${TT_CHAT}
   tt_grpc_proto
   absl::flags
   absl::flags_parse
   grpc++_reflection
   grpc++
   libprotobuf)
+
+# Terminal Teams Contacts
+set(TT_CONTACTS tteams-contacts)
+add_executable(${TT_CONTACTS} contacts/TTContacts.cpp)
+target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
+
+# Set install targets
+set(TT_INSTALL_TARGETS "${TT_TEXTBOX}")
+list(APPEND TT_INSTALL_TARGETS "${TT_CHAT}")
+list(APPEND TT_INSTALL_TARGETS "${TT_CONTACTS}")
+#foreach(TT_SCRIPT ${TT_SCRIPTS})
+#  list(APPEND TT_INSTALL_TARGETS "${PROJECT_BINARY_DIR}/${TT_SCRIPT}")
+#endforeach()
+install(TARGETS ${TT_INSTALL_TARGETS})

@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-echo "Hello from chat!"
-sleep 1000
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+${SCRIPTPATH}/tteams-chat $(tput cols) $(tput lines)
