@@ -23,5 +23,5 @@ Application was written with the following assumptions:
 ```
 cmake -B build
 make all -j 4 -C build
-cmake --install build --prefix ./install
+cmake --install build --prefix install
 ```

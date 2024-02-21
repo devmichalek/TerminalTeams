@@ -10,7 +10,13 @@ FetchContent_Declare(
   grpc
   GIT_REPOSITORY https://github.com/grpc/grpc.git
   GIT_TAG        v1.61.0)
-FetchContent_MakeAvailable(grpc)
+#FetchContent_MakeAvailable(grpc)
+# Hack to make sure fetched content install targets are excluded
+FetchContent_GetProperties(grpc)
+if(NOT grpc_POPULATED)
+  FetchContent_Populate(grpc)
+  add_subdirectory(${grpc_SOURCE_DIR} ${grpc_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 # Set generated sources paths and add command
 get_filename_component(TT_PROTO_FULLPATH "interface/TerminalTeams.proto" ABSOLUTE)
@@ -86,10 +92,9 @@ add_executable(${TT_CONTACTS} contacts/TTContacts.cpp)
 target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
 
 # Set install targets
-set(TT_INSTALL_TARGETS "${TT_TEXTBOX}")
-list(APPEND TT_INSTALL_TARGETS "${TT_CHAT}")
-list(APPEND TT_INSTALL_TARGETS "${TT_CONTACTS}")
 #foreach(TT_SCRIPT ${TT_SCRIPTS})
 #  list(APPEND TT_INSTALL_TARGETS "${PROJECT_BINARY_DIR}/${TT_SCRIPT}")
 #endforeach()
-install(TARGETS ${TT_INSTALL_TARGETS})
+install(TARGETS "${TT_TEXTBOX}" DESTINATION .)
+install(TARGETS "${TT_CHAT}" DESTINATION .)
+install(TARGETS "${TT_CONTACTS}" DESTINATION .)
