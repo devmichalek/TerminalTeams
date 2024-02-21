@@ -53,13 +53,13 @@ target_link_libraries(tt_grpc_proto
 configure_file(interface/Config.hpp.in Config.hpp)
 get_filename_component(TT_SCRIPTS_DIRECTORY "scripts" ABSOLUTE)
 set(TT_SCRIPTS
-  tteams.sh
-  tteams-main.sh
-  tteams-chat.sh
-  tteams-contacts.sh
-  tteams-textbox.sh)
+  "${TT_SCRIPTS_DIRECTORY}/tteams.sh"
+  "${TT_SCRIPTS_DIRECTORY}/tteams-main.sh"
+  "${TT_SCRIPTS_DIRECTORY}/tteams-chat.sh"
+  "${TT_SCRIPTS_DIRECTORY}/tteams-contacts.sh"
+  "${TT_SCRIPTS_DIRECTORY}/tteams-textbox.sh")
 foreach(TT_SCRIPT ${TT_SCRIPTS})
-  configure_file("${TT_SCRIPTS_DIRECTORY}/${TT_SCRIPT}" "${PROJECT_BINARY_DIR}" COPYONLY)
+  configure_file("${TT_SCRIPT}" "${PROJECT_BINARY_DIR}" COPYONLY)
 endforeach()
 
 # Terminal Teams Textbox + Client
@@ -76,7 +76,12 @@ target_link_libraries(${TT_TEXTBOX}
 
 # Terminal Teams Chat + Server
 set(TT_CHAT tteams-chat)
-add_executable(${TT_CHAT} chat/TTChat.cpp)
+get_filename_component(TT_CHAT_DIRECTORY "chat" ABSOLUTE)
+set(TT_CHAT_FILES
+  "${TT_CHAT_DIRECTORY}/Main.cpp"
+  "${TT_CHAT_DIRECTORY}/TTChat.cpp"
+  "${TT_CHAT_DIRECTORY}/TTChatBuilder.cpp")
+add_executable(${TT_CHAT} ${TT_CHAT_FILES})
 target_include_directories(${TT_CHAT} PUBLIC "${PROJECT_BINARY_DIR}")
 target_link_libraries(${TT_CHAT}
   tt_grpc_proto
@@ -91,10 +96,11 @@ set(TT_CONTACTS tteams-contacts)
 add_executable(${TT_CONTACTS} contacts/TTContacts.cpp)
 target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
 
-# Set install targets
-#foreach(TT_SCRIPT ${TT_SCRIPTS})
-#  list(APPEND TT_INSTALL_TARGETS "${PROJECT_BINARY_DIR}/${TT_SCRIPT}")
-#endforeach()
-install(TARGETS "${TT_TEXTBOX}" DESTINATION .)
-install(TARGETS "${TT_CHAT}" DESTINATION .)
-install(TARGETS "${TT_CONTACTS}" DESTINATION .)
+install(TARGETS ${TT_TEXTBOX} DESTINATION .)
+install(TARGETS ${TT_CHAT} DESTINATION .)
+install(TARGETS ${TT_CONTACTS} DESTINATION .)
+install(FILES ${TT_SCRIPTS} DESTINATION .
+  PERMISSIONS
+    OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    GROUP_EXECUTE GROUP_READ
+    WORLD_EXECUTE WORLD_READ)

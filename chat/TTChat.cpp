@@ -1,12 +1,21 @@
-#include <iostream>
+#include "TTChat.hpp"
 #include <chrono>
 #include <thread>
 
-int main(int argc, char** argv) {
-  std::cout << argc << std::endl;
-  std::cout << argv[0] << std::endl;
-  std::cout << argv[1] << std::endl;
-  std::cout << argv[2] << std::endl;
-  std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-  return 0;
+TTChat::TTChat(size_t width, size_t height) {
+	// ...
+}
+
+void TTChat::run() {
+	// ...
+	std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+}
+
+void TTChat::clear() {
+	// ...
+	clearWindow();
+}
+
+void TTChat::clearWindow() const {
+	system("clear");
 }

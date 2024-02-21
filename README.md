@@ -10,6 +10,13 @@ Application was written with the following assumptions:
 - each username is unique within it's interface IP address
 - 
 
+### Installation
+```
+cmake -B build
+make all -j 4 -C build
+cmake --install build --prefix install
+```
+
 ### Technology stack
 - C++
 - CMake
@@ -18,10 +25,3 @@ Application was written with the following assumptions:
 - GoogleTest
 - Bash
 - IPC
-
-### Installation
-```
-cmake -B build
-make all -j 4 -C build
-cmake --install build --prefix install
-```
