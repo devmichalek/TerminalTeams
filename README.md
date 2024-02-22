@@ -8,6 +8,7 @@ The tmux terminal multiplexer is used to create program interface.
 ### Assumptions
 Application was written with the following assumptions:
 - each username is unique within it's interface IP address
+- each user has the same local time on the system
 - 
 
 ### Installation
