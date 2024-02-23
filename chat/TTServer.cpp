@@ -11,7 +11,7 @@
 #include <grpcpp/health_check_service_interface.h>
 
 #include "TerminalTeams.grpc.pb.h"
-#include "Config.hpp"
+#include "TTConfig.hpp"
 
 using grpc::Server;
 using grpc::ServerBuilder;

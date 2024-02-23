@@ -8,7 +8,7 @@
 #include <grpcpp/grpcpp.h>
 
 #include "TerminalTeams.grpc.pb.h"
-#include "Config.hpp"
+#include "TTConfig.hpp"
 
 ABSL_FLAG(std::string, target, "localhost:50051", "Server address");
 

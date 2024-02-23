@@ -1,8 +1,14 @@
 #include "TTChat.hpp"
-#include <iostream>
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#include <iostream>
+
+TTChat::TTChat(const TTEmulator& emulator, double ratio) :
+	mEmulator(emulator),
+	mSideWidth(emulator.getWidth() * ratio),
+	mBlankLine(emulator.getWidth(), ' ') {
+}
 
 void TTChat::print(const TTChatMessage& message) {
 	// Extract string message
@@ -85,19 +91,20 @@ void TTChat::print(const TTChatMessage& message) {
 
 	// Print message based on side
 	if (message.side == TTChatSide::LEFT) {
-		std::cout << timestamp << std::endl;
+		mEmulator.println(timestamp);
 		for (auto &line : lines) {
-			std::cout << line << std::endl;
+			mEmulator.println(line);
 		}
 	} else if (message.side == TTChatSide::RIGHT) {
-		std::cout << mBlankLine.c_str() + (mBlankLine.size() - (mWidth - timestamp.size()));
-		std::cout << timestamp << std::endl;
+		mEmulator.print(mBlankLine.substr(0, mBlankLine.size() - timestamp.size()));
+		mEmulator.println(timestamp);
 		for (auto &line : lines) {
-			std::cout << mBlankLine.c_str() + (mBlankLine.size() - (mWidth - line.size()));
-			std::cout << line << std::endl;
+			mEmulator.print(mBlankLine.substr(0, mBlankLine.size() - line.size()));
+			mEmulator.println(line);
 		}
 	}
-	std::cout << std::endl;
+	mEmulator.println({});
+	mEmulator.flush();
 }
 
 void TTChat::print(const TTChatMessages& messages) {
@@ -107,5 +114,5 @@ void TTChat::print(const TTChatMessages& messages) {
 }
 
 void TTChat::clear() {
-	system("clear");
+	mEmulator.clear();
 }

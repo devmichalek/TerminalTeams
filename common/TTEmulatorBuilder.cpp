@@ -1,10 +1,10 @@
-#include "TTChatBuilder.hpp"
+#include "TTEmulatorBuilder.hpp"
 #include <string>
 #include <sstream>
 #include <iostream>
 
-TTChatBuilder::TTChatBuilder(int argc, char** argv) {
-    const std::string classNamePrefix = "TTChatBuilder: ";
+TTEmulatorBuilder::TTEmulatorBuilder(int argc, char** argv) {
+    const std::string classNamePrefix = "TTEmulatorBuilder: ";
     if (argc != MAX_ARGC) {
         throw std::runtime_error(classNamePrefix + "invalid number of arguments");
     }
@@ -25,8 +25,6 @@ TTChatBuilder::TTChatBuilder(int argc, char** argv) {
     }
 }
 
-std::unique_ptr<TTChat> TTChatBuilder::create() const {
-    std::cout << mWidth << std::endl;
-    std::cout << mHeight << std::endl;
-    return std::make_unique<TTChat>(mWidth, mHeight);
+TTEmulator TTEmulatorBuilder::create() const {
+    return TTEmulator(mWidth, mHeight);
 }

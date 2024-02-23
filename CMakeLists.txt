@@ -49,9 +49,13 @@ target_link_libraries(tt_grpc_proto
   grpc++
   libprotobuf)
 
-# Copy config file and scripts
-configure_file(interface/Config.hpp.in Config.hpp)
+# Directories
 get_filename_component(TT_SCRIPTS_DIRECTORY "scripts" ABSOLUTE)
+get_filename_component(TT_COMMON_DIRECTORY "common" ABSOLUTE)
+get_filename_component(TT_CHAT_DIRECTORY "chat" ABSOLUTE)
+
+# Copy config file and scripts
+configure_file(interface/TTConfig.hpp.in TTConfig.hpp)
 set(TT_SCRIPTS
   "${TT_SCRIPTS_DIRECTORY}/tteams.sh"
   "${TT_SCRIPTS_DIRECTORY}/tteams-main.sh"
@@ -76,13 +80,14 @@ target_link_libraries(${TT_TEXTBOX}
 
 # Terminal Teams Chat + Server
 set(TT_CHAT tteams-chat)
-get_filename_component(TT_CHAT_DIRECTORY "chat" ABSOLUTE)
 set(TT_CHAT_FILES
+  "${TT_COMMON_DIRECTORY}/TTEmulator.cpp"
+  "${TT_COMMON_DIRECTORY}/TTEmulatorBuilder.cpp"
   "${TT_CHAT_DIRECTORY}/Main.cpp"
-  "${TT_CHAT_DIRECTORY}/TTChat.cpp"
-  "${TT_CHAT_DIRECTORY}/TTChatBuilder.cpp")
+  "${TT_CHAT_DIRECTORY}/TTChat.cpp")
 add_executable(${TT_CHAT} ${TT_CHAT_FILES})
 target_include_directories(${TT_CHAT} PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(${TT_CHAT} PUBLIC "${TT_COMMON_DIRECTORY}")
 target_link_libraries(${TT_CHAT}
   tt_grpc_proto
   absl::flags
