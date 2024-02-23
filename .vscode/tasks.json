@@ -1,0 +1,23 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "shell",
+			"label": "CMake Build",
+			"command": "cmake -B build",
+			"group": "build"
+		},
+		{
+			"type": "shell",
+			"label": "Make Build",
+			"command": "make all -j 4 -C build",
+			"group": "build"
+		},
+		{
+			"type": "shell",
+			"label": "CMake Install",
+			"command": "cmake --install build --prefix install",
+			"group": "build"
+		},
+	]
+}
