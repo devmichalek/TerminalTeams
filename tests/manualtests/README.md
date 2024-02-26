@@ -74,12 +74,14 @@ Restart the VM. In VirtualBox Manager click on VM's "Settings"->"General"->"Adva
 ## VM's Shared Folder Setup
 On the host type:
 ```
-VBoxManage sharedfolder add "VM name" --name "sharename" --hostpath "/home/$USER/VM/shared"
+VBoxManage sharedfolder add "VM name" --name "sharename" --hostpath "/home/$USER/VM/shared" --automount
 ```
 Start VM and then on the guest type:
 ```
-mkdir /home/$USER/vboxshare
-sudo mount -t vboxsf -o uid=1000,gid=1000 sharename /home/$USER/vboxshare  
+sudo usermod -aG vboxsf $USER
+reboot
+cd /media
+ls -la
 ```
 
 ## VM's Private Network Setup

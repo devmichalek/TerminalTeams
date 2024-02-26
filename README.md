@@ -11,6 +11,7 @@ Application was written with the following assumptions:
 - each user has the same local time on the system
 - only one user runs application per interface IP address
 - no centralized server
+- no support for IPv6
 
 ### Installation
 ```
