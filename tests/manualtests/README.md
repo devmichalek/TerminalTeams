@@ -1,12 +1,11 @@
 
-# VirtualBox
+# VirtualBox Setup
 By using VirtualBox, you can connect ISO files in at least two ways through the VirtualBox Manager or from the virtual machine interface when the guest operating system is running. Install VirtualBox:
 ```
 sudo apt-get install virtualbox
 ```
 
-## VM Setup
-
+## VM Basic Setup
 1. Download Ubuntu 22.04 LTS Desktop from this [site](https://ubuntu.com/download/desktop). Always use original ISO file, like from the original Red Hat [site](https://developers.redhat.com/products/rhel/download).
 2. Open VirtualBox Manager
    ```
@@ -22,7 +21,11 @@ sudo apt-get install virtualbox
    From this point forward ISO is now mounted.
 9. Start newly created VM and complete all the steps during system installation (it differs among systems). Once you've completed all the steps, the installer will prompt you to reboot the machine. Decline and stop the VM by yourself. Now go to the "Storage" -> "Storage Devices" and remove previously added ISO file. Save the settings and enjoy the installed system. ISO file is needed only at the beginning and that`s the reason why we should remove it after system installation.
 
+## VM's Network Setup
+In VirtualBox Manager go to VM's "Settings"->"Network"->"Adapter 1" tab. Click on "Enable Network Adapter", change "Attached to" to "Bridged Adapter" and choose NIC with access to the Internet.
+
 ## VM's OS Setup
+In VirtualBox Manager:
 1. Start Virtual Machine (optionally clone it before start).
 2. Set the password for root user.
     ```
@@ -49,8 +52,37 @@ sudo apt-get install virtualbox
     sudo usermod -d /home/newHomeDir -m newUsername
     ```
     To change hostname go to "Settings"->"About".
+9. Setup tmux on the guest.
+    ```
+    sudo apt update
+    sudo apt install -y build-essential linux-headers-$(uname -r)
+    sudo apt install tmux
+    ```
 
-## VM's Virtual Network
+## VM's Clipboard Setup
+On the host type:
+```
+sudo apt-get install virtualbox-guest-additions-iso
+```
+Under guest (VM) "Settings"->"Storage"->"Controller: IDE" insert installed CD image then run the VM.
+Go the directory with mounted image and type:
+```
+./autorun.sh
+```
+Restart the VM. In VirtualBox Manager click on VM's "Settings"->"General"->"Advanced" then set "Shared Clipboard" to "Host to Guest", same for "Drag'n'Drop". Lastly under guest (VM) "Settings"->"Storage"->"Controller: IDE" remove previously attached image.
+
+## VM's Shared Folder Setup
+On the host type:
+```
+VBoxManage sharedfolder add "VM name" --name "sharename" --hostpath "/home/$USER/VM/shared"
+```
+Start VM and then on the guest type:
+```
+mkdir /home/$USER/vboxshare
+sudo mount -t vboxsf -o uid=1000,gid=1000 sharename /home/$USER/vboxshare  
+```
+
+## VM's Private Network Setup
 You can now create a virtual network in VirtualBox between two virtual machines.
 
 1. In VirtualBox Manager go to "File"->"Host Network Manager" and click on "Create".
@@ -68,7 +100,9 @@ You can now create a virtual network in VirtualBox between two virtual machines.
     IPv4 Network Mask: 255.255.255.0
     ```
     Click on "Apply".
-5. Go to "Settings" of VM. Then on "Network" tab disable all adapters except "Adapter 2". Open this "Adapter 2" tab and click on "Enable Network Adapter".
-6. Change "Attached to" to "Host-only Adapter" and choose previously created adapter.
-7. Do the same for other virtual machines - set "Adapter 2".
-8. Check VM IP addresses using `ip addr show` then check if VMs see each other on the network using `ping` command.
+5. Go to "Settings" of VM. Then on "Network" open "Adapter 2" tab and click on "Enable Network Adapter". Change "Attached to" to "Host-only Adapter" and choose previously created adapter.
+6. Do the same for other virtual machines - set "Adapter 2".
+7. Check VM IP addresses using `ip addr show` then check if VMs see each other on the network using `ping` command.
+
+# Running Tests
+ToDo
