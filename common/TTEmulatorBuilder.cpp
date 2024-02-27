@@ -5,10 +5,6 @@
 
 TTEmulatorBuilder::TTEmulatorBuilder(int argc, char** argv) {
     const std::string classNamePrefix = "TTEmulatorBuilder: ";
-    if (argc != MAX_ARGC) {
-        throw std::runtime_error(classNamePrefix + "invalid number of arguments");
-    }
-
     const auto widthStr = std::string(argv[1]);
     std::stringstream ss(widthStr);
     ss >> mWidth;

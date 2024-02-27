@@ -45,7 +45,6 @@ usage()
     echo "If no options are used script automatically detects neighbors on LAN using available interface." >&2
 	exit 0
 }
-[ $# -eq 0 ] && usage
 
 while getopts hi:a: OPTION
 do
@@ -57,10 +56,52 @@ do
 	esac
 done
 
-echo ${INTERFACE}
-echo ${IP_ADDRESS}
-exit 0
+if ! [ -z "${IP_ADDRESS}" ]; then
+    if [ -z "${INTERFACE}" ]; then
+        echo "Error: Interface is not specified but IP address was provided!"
+        echo "Info: Please specify interface you want to use using -i option"
+        exit 1
+    else
+        IP_ADDRESSES=$(ip -f inet addr show ${INTERFACE} | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+        if [[ ! " ${IP_ADDRESSES[*]} " =~ [[:space:]]${IP_ADDRESS}[[:space:]] ]]; then
+            echo "Error: Interface ${INTERFACE} doesn't have specified ${IP_ADDRESS} IP address"
+            echo "Info: Please specify valid interface (-i option) and valid IP address (-a option)"
+            exit 1
+        fi
+    fi
+fi
+
+if [ -z "${INTERFACE}" ]; then
+    NEIGHBORS=$(ip neigh)
+    if [ ${#NEIGHBORS[@]} -lt 1 ]; then
+        echo "Error: No neighbors have been found!"
+        echo "Info: Please specify interface you want to use using -i option"
+        exit 1
+    fi
+
+    INTERFACES=$(awk -F ' ' '{print $3}' <<< "$NEIGHBORS")
+    UNIQUE_INTERFACES=$(printf "$INTERFACES" | sort | uniq)
+    if [ ${#UNIQUE_INTERFACES[@]} -gt 1 ]; then
+        echo "Error: Multiple available interfaces found over multiple neighbors!"
+        echo "Info: Please specify interface you want to use using -i option"
+        exit 1
+    fi
+    INTERFACE=${UNIQUE_INTERFACES[0]}
+fi
+
+if [ -z "${IP_ADDRESS}" ]; then
+    IP_ADDRESSES=$(ip -f inet addr show ${INTERFACE} | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+    if [ ${#IP_ADDRESSES[@]} -gt 1 ]; then
+        echo "Error: Multiple available IP address found over $INTERFACE interface!"
+        echo "Info: Please specify IP addrss you want to use using -a option"
+        exit 1
+    fi
+    IP_ADDRESS=${IP_ADDRESSES[0]}
+fi
+
+echo "Using ${INTERFACE} interface and ${IP_ADDRESS} IP address..."
+sleep 3
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-main.sh"
+${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-main.sh" "${INTERFACE}" "${IP_ADDRESS}"
 exit 0

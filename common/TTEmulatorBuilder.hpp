@@ -7,7 +7,6 @@ public:
     TTEmulator create() const;
 
 private:
-    static inline constexpr size_t MAX_ARGC = 3;
     size_t mWidth;
     size_t mHeight;
 };
