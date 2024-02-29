@@ -82,7 +82,7 @@ target_link_libraries(${TT_TEXTBOX}
 set(TT_CHAT tteams-chat)
 set(TT_CHAT_FILES
   "${TT_COMMON_DIRECTORY}/TTEmulator.cpp"
-  "${TT_COMMON_DIRECTORY}/TTEmulatorBuilder.cpp"
+  "${TT_CHAT_DIRECTORY}/TTChatSettings.cpp"
   "${TT_CHAT_DIRECTORY}/Main.cpp"
   "${TT_CHAT_DIRECTORY}/TTChat.cpp")
 add_executable(${TT_CHAT} ${TT_CHAT_FILES})

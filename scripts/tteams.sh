@@ -41,6 +41,7 @@ usage()
 	echo "Usage ${0} [-i INTERFACE] [-a IP_ADDRESS]" >&2
 	echo '-i  Interface that should be used for communication' >&2
 	echo '-a  IP address that should be used within provided interface' >&2
+	echo '-p  port that should be used to run server' >&2
 	echo '-h  Displays this help' >&2
     echo "If no options are used script automatically detects neighbors on LAN using available interface." >&2
 	exit 0
@@ -51,6 +52,7 @@ do
 	case "${OPTION}" in
 		i) INTERFACE=${OPTARG} ;;
 		a) IP_ADDRESS=${OPTARG} ;;
+		p) PORT=${OPTARG} ;;
         h) usage ;;
 		?) echo 'Invalid option!' >&2; usage ;;
 	esac
@@ -99,9 +101,11 @@ if [ -z "${IP_ADDRESS}" ]; then
     IP_ADDRESS=${IP_ADDRESSES[0]}
 fi
 
-echo "Using ${INTERFACE} interface and ${IP_ADDRESS} IP address..."
+PORT="${PORT:-17888}"
+
+echo "Using ${IP_ADDRESS}:${PORT} over ${INTERFACE}..."
 sleep 3
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-main.sh" "${INTERFACE}" "${IP_ADDRESS}"
+${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-main.sh" "${INTERFACE}" "${IP_ADDRESS}" "${PORT}"
 exit 0
