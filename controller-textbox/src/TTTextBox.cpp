@@ -1,9 +1,14 @@
-#include "TTChatSettings.hpp"
-#include "TTEmulator.hpp"
-#include "TTChat.hpp"
+#include "TTTextBox.hpp"
+#include <iostream>
 
-#include <chrono>
-#include <thread>
+TTTextBox::TTTextBox(const TTEmulator& emulator) :
+    mEmulator(emulator) {
+}
+
+void TTTextBox::run() {
+    // Print headline
+
+}
 
 int main(int argc, char** argv) {
     TTChatSettings settings(argc, argv);

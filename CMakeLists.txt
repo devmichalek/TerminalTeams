@@ -58,7 +58,7 @@ get_filename_component(TT_CHAT_DIRECTORY "chat" ABSOLUTE)
 configure_file(interface/TTConfig.hpp.in TTConfig.hpp)
 set(TT_SCRIPTS
   "${TT_SCRIPTS_DIRECTORY}/tteams.sh"
-  "${TT_SCRIPTS_DIRECTORY}/tteams-main.sh"
+  "${TT_SCRIPTS_DIRECTORY}/tteams-engine.sh"
   "${TT_SCRIPTS_DIRECTORY}/tteams-chat.sh"
   "${TT_SCRIPTS_DIRECTORY}/tteams-contacts.sh"
   "${TT_SCRIPTS_DIRECTORY}/tteams-textbox.sh")

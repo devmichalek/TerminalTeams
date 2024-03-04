@@ -1,8 +1,11 @@
 #include "TTChat.hpp"
+#include "TTChatSettings.hpp"
 #include <sstream>
 #include <iomanip>
 #include <ctime>
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 TTChat::TTChat(const TTEmulator& emulator, double ratio) :
 	mEmulator(emulator),
@@ -115,4 +118,14 @@ void TTChat::print(const TTChatMessages& messages) {
 
 void TTChat::clear() {
 	mEmulator.clear();
+}
+
+
+int main(int argc, char** argv) {
+    TTChatSettings settings(argc, argv);
+    auto emulator = TTEmulator(settings.getTerminalWidth(), settings.getTerminalHeight());
+    auto chat = TTChat(emulator);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    return 0;
 }

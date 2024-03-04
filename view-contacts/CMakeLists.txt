@@ -1,0 +1,35 @@
+cmake_minimum_required(VERSION 3.22)
+project(TerminalTeamsContacts VERSION 1.0)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+get_filename_component(TT_CONTACTS_INCLUDE_DIRECTORY "include" ABSOLUTE)
+get_filename_component(TT_CONTACTS_SCRIPTS_DIRECTORY "scripts" ABSOLUTE)
+get_filename_component(TT_CONTACTS_SRC_DIRECTORY "src" ABSOLUTE)
+
+set(TT_CONTACTS_SCRIPTS
+  "${TT_CONTACTS_SCRIPTS}/tteams-contacts.sh")
+foreach(TT_CONTACTS_SCRIPT ${TT_CONTACTS_SCRIPTS})
+  configure_file("${TT_CONTACTS_SCRIPT}" "${PROJECT_BINARY_DIR}" COPYONLY)
+endforeach()
+
+set(TT_CONTACTS tteams-contacts)
+set(TT_CONTACTS_FILES
+  "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsSettings.cpp"
+  "${TT_CONTACTS_SRC_DIRECTORY}/TTContacts.cpp")
+
+add_executable(${TT_CONTACTS} ${TT_CONTACTS})
+
+target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(${TT_CONTACTS} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")
+target_include_directories(${TT_CONTACTS} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
+
+target_link_libraries(${TT_CONTACTS})
+
+install(TARGETS ${TT_CONTACTS} DESTINATION .)
+install(FILES ${TT_CONTACTS_SCRIPTS} DESTINATION .
+  PERMISSIONS
+    OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    GROUP_EXECUTE GROUP_READ
+    WORLD_EXECUTE WORLD_READ)
