@@ -9,7 +9,7 @@ get_filename_component(TT_CONTACTS_SCRIPTS_DIRECTORY "scripts" ABSOLUTE)
 get_filename_component(TT_CONTACTS_SRC_DIRECTORY "src" ABSOLUTE)
 
 set(TT_CONTACTS_SCRIPTS
-  "${TT_CONTACTS_SCRIPTS}/tteams-contacts.sh")
+  "${TT_CONTACTS_SCRIPTS_DIRECTORY}/tteams-contacts.sh")
 foreach(TT_CONTACTS_SCRIPT ${TT_CONTACTS_SCRIPTS})
   configure_file("${TT_CONTACTS_SCRIPT}" "${PROJECT_BINARY_DIR}" COPYONLY)
 endforeach()
@@ -19,7 +19,7 @@ set(TT_CONTACTS_FILES
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsSettings.cpp"
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContacts.cpp")
 
-add_executable(${TT_CONTACTS} ${TT_CONTACTS})
+add_executable(${TT_CONTACTS} ${TT_CONTACTS_FILES})
 
 target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")

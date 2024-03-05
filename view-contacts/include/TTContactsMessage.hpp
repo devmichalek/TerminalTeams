@@ -1,5 +1,4 @@
 #pragma once
-#include <semaphore.h>
 
 enum TTContactsCommand : unsigned int {
     ACTIVE_CONTACT = 0,
@@ -8,11 +7,8 @@ enum TTContactsCommand : unsigned int {
     NEW_MESSAGE
 };
 
-enum TTContactsSignal : int {
-    SET,
-    UNSET
-};
-
+const char* const TTCONTACTS_DATA_PRODUCED_POSTFIX = "-data-produced";
+const char* const TTCONTACTS_DATA_CONSUMED_POSTFIX = "-data-consumed";
 const inline unsigned int TTCONTACTS_MAX_DATA_LENGTH = 0xFF;
 
 // Directional message
@@ -20,9 +16,5 @@ struct TTContactsMessage {
     TTContactsCommand command;
     unsigned int dataLength;
     char data[TTCONTACTS_MAX_DATA_LENGTH];
-};
-
-struct TTContactsSharedMessage {
-    sem_t semaphore;
-    TTContactsMessage message;
+    TTContactsMessage() = default;
 };

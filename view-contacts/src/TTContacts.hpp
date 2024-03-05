@@ -1,10 +1,15 @@
 #pragma once
 #include "TTContactsSettings.hpp"
+#include "TTContactsMessage.hpp"
+#include <semaphore.h>
 
 class TTContacts {
 public:
     TTContacts(TTContactsSettings settings);
+    ~TTContacts();
     void run();
 private:
-    void* mSharedMessage;
+    TTContactsMessage* mSharedMessage;
+    sem_t* mDataProducedSemaphore;
+    sem_t* mDataConsumedSemaphore;
 };
