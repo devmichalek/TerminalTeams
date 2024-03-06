@@ -1,14 +1,16 @@
 #include "TTContactsHandler.hpp"
 #include <iostream>
 #include <chrono>
-#include <vector>
+#include <list>
+#include <cstring>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 TTContactsHandler::TTContactsHandler(std::string sharedName) :
-        mSharedName(sharedName)
-	mSharedMessage(nullptr), mDataProducedSemaphore(nullptr), mDataConsumedSemaphore(nullptr) {
+        mSharedName(sharedName), mSharedMessage(nullptr), mDataProducedSemaphore(nullptr), mDataConsumedSemaphore(nullptr) {
+    clean();
+    
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
 	int fd = shm_open(mSharedName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -17,7 +19,7 @@ TTContactsHandler::TTContactsHandler(std::string sharedName) :
 	}
 
 	errno = 0;
-	if (ftruncate(fd, sizeof(TTContactsMessage) < 0)) {
+	if (ftruncate(fd, sizeof(TTContactsMessage)) == -1) {
 		throw std::runtime_error(classNamePrefix + "Failed to truncate shared object, errno=" + std::to_string(errno));
 	}
 
@@ -41,11 +43,7 @@ TTContactsHandler::TTContactsHandler(std::string sharedName) :
 }
 
 TTContactsHandler::~TTContactsHandler() {
-    shm_unlink(mSharedName.c_str());
-    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    sem_unlink(dataConsumedSemName.c_str());
+    clean();
 }
 
 void TTContactsHandler::send(const TTContactsMessage& message) {
@@ -56,20 +54,31 @@ void TTContactsHandler::send(const TTContactsMessage& message) {
 	mQueueCondition.notify_one();
 }
 
+void TTContactsHandler::clean() {
+    shm_unlink(mSharedName.c_str());
+    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+    sem_unlink(dataProducedSemName.c_str());
+    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    sem_unlink(dataConsumedSemName.c_str());
+}
+
 void TTContactsHandler::run() {
     std::list<std::unique_ptr<TTContactsMessage>> messages;
     while (true) {
         {
             std::unique_lock<std::mutex> lock(mQueueMutex);
-            m_cond.wait(lock, [this]() { return !mQueuedMessages.empty(); }); 
+            mQueueCondition.wait(lock, [this]() { return !mQueuedMessages.empty(); }); 
             while (!mQueuedMessages.empty()) {
                 messages.push_back(std::move(mQueuedMessages.front()));
                 mQueuedMessages.pop();
             }
+            std::cout << mQueuedMessages.size() << "\n";
+            std::cout << messages.size() << "\n";
         }
 
         for (auto &message : messages) {
-            std::memcpy(mSharedMessage, )
+            TTContactsMessage tmpMessage;
+            memcpy(mSharedMessage, &tmpMessage, sizeof(TTContactsMessage));
 
             if (sem_post(mDataProducedSemaphore) == -1) {
                 break;
@@ -86,3 +95,18 @@ void TTContactsHandler::run() {
         messages.clear();
 	}
 }
+
+
+// int main(int argc, char** argv) {
+//     std::string dummyString;
+//     TTContactsMessage dummyMessage;
+// 	TTContactsHandler handler("contacts");
+//     while (true) {
+//         std::getline(std::cin, dummyString);
+//         if (dummyString.length() != 0) {
+//             break;
+//         }
+//         handler.send(dummyMessage);
+//     }
+// 	return 0;
+// }

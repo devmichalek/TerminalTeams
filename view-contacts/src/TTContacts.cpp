@@ -6,10 +6,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-TTContacts::TTContacts(TTContactsSettings settings) : mSharedMessage(nullptr) {
+TTContacts::TTContacts(TTContactsSettings settings) :
+		mSharedName(settings.getSharedName()), mSharedMessage(nullptr) {
 	const std::string classNamePrefix = "TTContacts: ";
-	std::string dataProducedSemName = settings.getSharedName() + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-	std::string dataConsumedSemName = settings.getSharedName() + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+	std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+	std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
 
 	const int tryCount = 5;
 	const int tryIntervalMs = 2000;
@@ -30,7 +31,7 @@ TTContacts::TTContacts(TTContactsSettings settings) : mSharedMessage(nullptr) {
 		throw std::runtime_error(classNamePrefix + "Failed to open data consumed semaphore, errno=" + std::to_string(errno));
 	}
 
-	int fd = shm_open(settings.getSharedName().c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+	int fd = shm_open(mSharedName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		throw std::runtime_error(classNamePrefix + "Failed to open shared object, errno=" + std::to_string(errno));
 	}
@@ -40,10 +41,10 @@ TTContacts::TTContacts(TTContactsSettings settings) : mSharedMessage(nullptr) {
 }
 
 TTContacts::~TTContacts() {
-	shm_unlink(settings.getSharedName().c_str());
-    std::string dataProducedSemName = settings.getSharedName() + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+	shm_unlink(mSharedName.c_str());
+    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
     sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = settings.getSharedName() + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
     sem_unlink(dataConsumedSemName.c_str());
 }
 

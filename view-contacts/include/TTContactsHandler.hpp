@@ -1,5 +1,4 @@
 #pragma once
-#include "TTContactsSettings.hpp"
 #include "TTContactsMessage.hpp"
 #include <semaphore.h>
 #include <queue>
@@ -14,6 +13,7 @@ public:
     ~TTContactsHandler();
     void send(const TTContactsMessage& message);
 private:
+    void clean();
     void run();
     std::string mSharedName;
     std::queue<std::unique_ptr<TTContactsMessage>> mQueuedMessages;

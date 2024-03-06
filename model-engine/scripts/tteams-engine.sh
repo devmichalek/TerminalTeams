@@ -7,9 +7,9 @@ INTERFACE="${1:-eno1}" # todo: remove default value
 IP_ADDRESS="${2:-192.168.0.119}" # todo: remove default value
 PORT="${3:-17888}" # todo: remove default value
 TMUX_SESSION_NAME="terminal-teams-session"
-CONTACTS_SHARED_NAME="contacts" # todo add mechanism for generating random shared name
-CHAT_QUEUE_NAME="chat" # todo add mechanism for generating random queue name
-TEXTBOX_PIPE_NAME="textbox" # todo add mechanism for generating random pipe name
+CONTACTS_SHARED_NAME="$(hostname)-contacts" # todo add mechanism for generating random shared name
+CHAT_QUEUE_NAME="$(hostname)-chat" # todo add mechanism for generating random queue name
+TEXTBOX_PIPE_NAME="$(hostname)-textbox" # todo add mechanism for generating random pipe name
 NEIGHBORS_RAW=$(ip neigh | grep ${INTERFACE})
 NEIGHBORS=$(awk -F ' ' '{print $1}' <<< "$NEIGHBORS_RAW")
 

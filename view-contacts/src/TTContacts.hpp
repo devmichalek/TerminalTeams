@@ -9,6 +9,7 @@ public:
     ~TTContacts();
     void run();
 private:
+    std::string mSharedName;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;
