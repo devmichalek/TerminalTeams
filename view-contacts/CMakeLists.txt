@@ -40,11 +40,11 @@ install(FILES ${TT_CONTACTS_SCRIPTS} DESTINATION .
 
 
 # Contacts Handler Test
-# set(TT_CONTACTS_HANDLER tteams-contacts-handler)
-# set(TT_CONTACTS_HANDLER_FILES
-#   "${TT_CONTACTS_INCLUDE_DIRECTORY}/TTContactsHandler.cpp")
-# add_executable(${TT_CONTACTS_HANDLER} ${TT_CONTACTS_HANDLER_FILES})
-# target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${PROJECT_BINARY_DIR}")
-# target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")
-# target_link_libraries(${TT_CONTACTS_HANDLER} Threads::Threads)
-# install(TARGETS ${TT_CONTACTS_HANDLER} DESTINATION .)
+set(TT_CONTACTS_HANDLER tteams-contacts-handler)
+set(TT_CONTACTS_HANDLER_FILES
+  "${TT_CONTACTS_INCLUDE_DIRECTORY}/TTContactsHandler.cpp")
+add_executable(${TT_CONTACTS_HANDLER} ${TT_CONTACTS_HANDLER_FILES})
+target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")
+target_link_libraries(${TT_CONTACTS_HANDLER} Threads::Threads)
+install(TARGETS ${TT_CONTACTS_HANDLER} DESTINATION .)

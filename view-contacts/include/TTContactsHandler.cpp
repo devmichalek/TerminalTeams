@@ -46,6 +46,148 @@ TTContactsHandler::~TTContactsHandler() {
     clean();
 }
 
+void TTContactsHandler::create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort) {
+    TTContactsMessage message;
+    message.status = TTContactsStatus::ACTIVE;
+    message.id = mContacts.size();
+    message.dataLength = nickname.size();
+    memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
+    memcpy(&message.data[0], nickname.c_str(), message.dataLength);
+    send(message);
+    mContacts.emplace_back(nickname, fullname, decription, ipAddressAndPort);
+}
+
+bool TTContactsHandler::send(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        case TTContactsStatus::ACTIVE:
+        case TTContactsStatus::INACTIVE:
+        case TTContactsStatus::UNREAD_MSG_ACTIVE:
+        case TTContactsStatus::UNREAD_MSG_INACTIVE:
+        case TTContactsStatus::PENDING_MSG_INACTIVE:
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    mContacts[id].sentMessages++;
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return true;
+}
+
+bool TTContactsHandler::receive(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
+        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE:
+        case TTContactsStatus::PENDING_MSG_INACTIVE:
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
+        case TTContactsStatus::SELECTED_INACTIVE:
+        case TTContactsStatus::INACTIVE:
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    mContacts[id].receivedMessages++;
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return false;
+}
+
+bool TTContactsHandler::activate(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::ACTIVE: break;
+        case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
+        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return true;
+}
+
+bool TTContactsHandler::deactivate(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
+        case TTContactsStatus::INACTIVE: break;
+        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
+        case TTContactsStatus::SELECTED_INACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_INACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: break;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return true;
+}
+
+bool TTContactsHandler::select(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
+        case TTContactsStatus::INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
+        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::SELECTED_INACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = SELECTED_PENDING_MSG_INACTIVE; break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return true;
+}
+
+const TTContactsEntry& TTContactsHandler::get(size_t id) {
+    return mContacts[id];
+}
+
 void TTContactsHandler::send(const TTContactsMessage& message) {
     {
         std::scoped_lock<std::mutex> lock(mQueueMutex);
@@ -72,8 +214,6 @@ void TTContactsHandler::run() {
                 messages.push_back(std::move(mQueuedMessages.front()));
                 mQueuedMessages.pop();
             }
-            std::cout << mQueuedMessages.size() << "\n";
-            std::cout << messages.size() << "\n";
         }
 
         for (auto &message : messages) {
@@ -97,16 +237,16 @@ void TTContactsHandler::run() {
 }
 
 
-// int main(int argc, char** argv) {
-//     std::string dummyString;
-//     TTContactsMessage dummyMessage;
-// 	TTContactsHandler handler("contacts");
-//     while (true) {
-//         std::getline(std::cin, dummyString);
-//         if (dummyString.length() != 0) {
-//             break;
-//         }
-//         handler.send(dummyMessage);
-//     }
-// 	return 0;
-// }
+int main(int argc, char** argv) {
+    std::string dummyString;
+    TTContactsMessage dummyMessage;
+	TTContactsHandler handler("contacts");
+    while (true) {
+        std::getline(std::cin, dummyString);
+        if (dummyString.length() != 0) {
+            break;
+        }
+        //handler.send(dummyMessage);
+    }
+	return 0;
+}
