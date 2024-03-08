@@ -43,21 +43,16 @@ TTContacts::TTContacts(TTContactsSettings settings) :
 }
 
 TTContacts::~TTContacts() {
-	shm_unlink(mSharedName.c_str());
-    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    sem_unlink(dataConsumedSemName.c_str());
 }
 
 void TTContacts::run() {
 	std::vector<std::string> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
 	while (true) {
-		TTContactsMessage newMessage;
 		if (sem_wait(mDataProducedSemaphore) == -1) {
 			break;
 		}
 
+		TTContactsMessage newMessage;
 		memcpy(&newMessage, mSharedMessage, sizeof(newMessage));
 
 		if (sem_post(mDataConsumedSemaphore) == -1) {

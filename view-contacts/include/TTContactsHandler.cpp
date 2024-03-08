@@ -8,9 +8,9 @@
 #include <fcntl.h>
 
 TTContactsHandler::TTContactsHandler(std::string sharedName) :
-        mSharedName(sharedName), mSharedMessage(nullptr), mDataProducedSemaphore(nullptr), mDataConsumedSemaphore(nullptr) {
+        mSharedName(sharedName), mSharedMessage(nullptr),
+        mDataProducedSemaphore(nullptr), mDataConsumedSemaphore(nullptr), mHandlerThread{} {
     clean();
-    
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
 	int fd = shm_open(mSharedName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -38,11 +38,21 @@ TTContactsHandler::TTContactsHandler(std::string sharedName) :
 		throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
 	}
 
-    std::thread handlerThread(&TTContactsHandler::run, this);
-    handlerThread.detach();
+    mThreadForceExit.store(false);
+    mHandlerThread = std::thread(&TTContactsHandler::main, this);
+    mHandlerThread.detach();
 }
 
 TTContactsHandler::~TTContactsHandler() {
+    {   // Shutdown thread
+        mThreadForceExit.store(true);
+        mQueueCondition.notify_one();
+        // Wait until thread is closed
+        std::unique_lock<std::mutex> lock(mQueueMutex);
+        mQueueCondition.wait(lock, [this]() {
+            return !mThreadForceExit.load();
+        });
+    }
     clean();
 }
 
@@ -204,38 +214,81 @@ void TTContactsHandler::clean() {
     sem_unlink(dataConsumedSemName.c_str());
 }
 
-void TTContactsHandler::run() {
-    std::list<std::unique_ptr<TTContactsMessage>> messages;
-    while (true) {
-        {
-            std::unique_lock<std::mutex> lock(mQueueMutex);
-            mQueueCondition.wait(lock, [this]() { return !mQueuedMessages.empty(); }); 
-            while (!mQueuedMessages.empty()) {
-                messages.push_back(std::move(mQueuedMessages.front()));
-                mQueuedMessages.pop();
-            }
-        }
+void TTContactsHandler::main() {
+    try {
+        bool exit = false;
+        do {
+            // Fill the list of messages
+            std::list<std::unique_ptr<TTContactsMessage>> messages;
+            {
+                std::unique_lock<std::mutex> lock(mQueueMutex);
+                mQueueCondition.wait(lock, [this]() {
+                    return !mQueuedMessages.empty() || mThreadForceExit.load();
+                });
 
-        for (auto &message : messages) {
-            TTContactsMessage tmpMessage;
-            memcpy(mSharedMessage, &tmpMessage, sizeof(TTContactsMessage));
+                if (mThreadForceExit.load()) {
+                    exit = true;
+                    break; // Soft failure, forced exit
+                }
 
-            if (sem_post(mDataProducedSemaphore) == -1) {
-                break;
-            }
-
-            std::cout << "Data produced!\n";
-            
-            if (sem_wait(mDataConsumedSemaphore) == -1) {
-                break;
+                while (!mQueuedMessages.empty()) {
+                    messages.push_back(std::move(mQueuedMessages.front()));
+                    mQueuedMessages.pop();
+                }
             }
 
-            std::cout << "Data consumed!\n";
-        }
-        messages.clear();
-	}
+            for (auto &message : messages) {
+                if (mThreadForceExit.load()) {
+                    exit = true;
+                    break; // Soft failure, forced exit
+                }
+                // Set shared message
+                memcpy(mSharedMessage, message.get(), sizeof(TTContactsMessage));
+                // Inform other process about produced data
+                if (sem_post(mDataProducedSemaphore) == -1) {
+                    exit = true;
+                    break; // Hard failure
+                }
+                // Wait for the other process to consume the data
+                {
+                    timespec ts;
+                    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                        exit = true;
+                        break; // Hard failure
+                    }
+                    ts.tv_nsec = DATA_CONSUME_TIMEOUT_NS;
+                    auto tryCount = DATA_CONSUME_TRY_COUNT;
+                    int result = 0;
+                    for (auto attempt = DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
+                        result = sem_timedwait(mDataConsumedSemaphore, &ts);
+                        if (result != -1) {
+                            break; // Success
+                        } else if (errno == EINTR) {
+                            continue; // Soft failure
+                        }
+                    }
+                    if (result == -1) {
+                        exit = true;
+                        break; // Hard failure
+                    }
+                }
+            }
+        } while (!exit);
+    } catch (...) {
+        // ...
+    }
+
+    // Wait for the main thread to call destructor
+    {
+        std::unique_lock<std::mutex> lock(mQueueMutex);
+        mQueueCondition.wait(lock, [this]() {
+            return mThreadForceExit.load();
+        });
+    }
+
+    mThreadForceExit.store(false);
+    mQueueCondition.notify_one();
 }
-
 
 int main(int argc, char** argv) {
     std::string dummyString;
@@ -243,10 +296,16 @@ int main(int argc, char** argv) {
 	TTContactsHandler handler("contacts");
     while (true) {
         std::getline(std::cin, dummyString);
-        if (dummyString.length() != 0) {
-            break;
+        switch (dummyString[0]) {
+            case 'c': handler.create(dummyString.substr(2), "", "", ""); break;
+            case 's': handler.send(std::stoi(dummyString.substr(2))); break;
+            case 'r': handler.receive(std::stoi(dummyString.substr(2))); break;
+            case 'a': handler.activate(std::stoi(dummyString.substr(2))); break;
+            case 'd': handler.deactivate(std::stoi(dummyString.substr(2))); break;
+            case 'z': handler.select(std::stoi(dummyString.substr(2))); break;
+            case 'e': return 0;
+
         }
-        //handler.send(dummyMessage);
     }
 	return 0;
 }

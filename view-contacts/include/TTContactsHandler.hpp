@@ -9,6 +9,8 @@
 #include <condition_variable>
 #include <memory>
 
+// Class ment to be embedded into other higher abstract class.
+// Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
     TTContactsHandler(std::string sharedName);
@@ -23,16 +25,20 @@ public:
 private:
     void send(const TTContactsMessage& message);
     void clean();
-    void run();
+    void main();
     // IPC shared memory communication
     std::string mSharedName;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;
+    static inline const long DATA_CONSUME_TRY_COUNT = 3; // 3 times
+    static inline const long DATA_CONSUME_TIMEOUT_NS = 500000000; // 0.5s
     // Thread concurrent message communication
     std::queue<std::unique_ptr<TTContactsMessage>> mQueuedMessages;
-    mutable std::mutex mQueueMutex;
-    mutable std::condition_variable mQueueCondition;
+    std::mutex mQueueMutex;
+    std::condition_variable mQueueCondition;
+    std::atomic<bool> mThreadForceExit;
+    std::thread mHandlerThread;
     // Contacts storage
     std::vector<TTContactsEntry> mContacts;
 };

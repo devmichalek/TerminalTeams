@@ -12,6 +12,7 @@ Application was written with the following assumptions:
 - only one user runs application per interface IP address
 - no centralized server
 - no support for IPv6
+- terminal emulator window resizing is not supported
 
 ### Installation
 ```
