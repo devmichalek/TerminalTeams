@@ -6,22 +6,29 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 
-TTContacts::TTContacts(TTContactsSettings settings) :
-		mSharedName(settings.getSharedName()), mTerminalWidth(settings.getTerminalWidth()),
-		mTerminalHeight(settings.getTerminalHeight()), mSharedMessage(nullptr) {
+TTContacts::TTContacts(TTContactsSettings settings,
+	TTContactsCallbackQuit callbackQuit,
+	TTContactsCallbackDataProduced callbackDataProduced,
+	TTContactsCallbackDataConsumed callbackDataConsumed) :
+		mCallbackQuit(callbackQuit),
+		mCallbackDataProduced(callbackDataProduced),
+		mCallbackDataConsumed(callbackDataConsumed),
+		mSharedName(settings.getSharedName()),
+		mTerminalWidth(settings.getTerminalWidth()),
+		mTerminalHeight(settings.getTerminalHeight()),
+		mSharedMessage(nullptr) {
 	const std::string classNamePrefix = "TTContacts: ";
 	std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
 	std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
 
-	const int tryCount = 5;
-	const int tryIntervalMs = 2000;
 	errno = 0;
-	for (int i = 0; i < tryCount; --i) {
+	for (auto attempt = TTCONTACTS_SEMAPHORES_READY_TRY_COUNT; attempt > 0; --attempt) {
 		if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), 0)) != SEM_FAILED) {
 			break;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(tryIntervalMs));
+		std::this_thread::sleep_for(std::chrono::milliseconds(TTCONTACTS_SEMAPHORES_READY_TIMEOUT_MS));
 	}
 
 	if (mDataProducedSemaphore == SEM_FAILED) {
@@ -42,14 +49,34 @@ TTContacts::TTContacts(TTContactsSettings settings) :
 	mSharedMessage = new(rawPointer) TTContactsMessage;
 }
 
-TTContacts::~TTContacts() {
-}
-
 void TTContacts::run() {
 	std::vector<std::string> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
 	while (true) {
-		if (sem_wait(mDataProducedSemaphore) == -1) {
-			break;
+		// Wait for the other process to produce the data
+		{
+			timespec ts;
+			if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+				break; // Hard failure
+			}
+			ts.tv_sec = TTCONTACTS_DATA_PRODUCE_TIMEOUT_S;
+			int result = 0;
+			for (auto attempt = TTCONTACTS_DATA_PRODUCE_TRY_COUNT; attempt > 0; --attempt) {
+				if (mCallbackQuit && mCallbackQuit()) {
+					break; // Forced exit
+				}
+				result = sem_timedwait(mDataProducedSemaphore, &ts);
+				if (result != -1) {
+					if (mCallbackDataConsumed) {
+						mCallbackDataConsumed();
+					}
+					break; // Success
+				} else if (errno == EINTR) {
+					continue; // Soft failure
+				}
+			}
+			if (result == -1) {
+				break; // Hard failure
+			}
 		}
 
 		TTContactsMessage newMessage;
@@ -57,6 +84,13 @@ void TTContacts::run() {
 
 		if (sem_post(mDataConsumedSemaphore) == -1) {
 			break;
+		} else if (mCallbackDataProduced) {
+			mCallbackDataProduced();
+		}
+
+		if (newMessage.status == TTContactsStatus::HEARTBEAT) {
+			// Nothing to be done
+			continue;
 		}
 
 		if (newMessage.status == TTContactsStatus::ACTIVE) {
@@ -81,9 +115,36 @@ void TTContacts::run() {
 	}
 }
 
+std::atomic<bool> quitHandle{false};
+bool quit() {
+	return quitHandle.load();
+}
+
+std::atomic<size_t> producedCounter{0};
+void produced() {
+	producedCounter++;
+}
+
+std::atomic<size_t> consumedCounter{0};
+void consumed() {
+	consumedCounter++;
+}
+
+void signalInterruptHandler(int) {
+	quitHandle.store(true);
+}
+
 int main(int argc, char** argv) {
+	// Signal handling
+    struct sigaction signalAction;
+	memset(&signalAction, 0, sizeof(signalAction));
+    signalAction.sa_handler = signalInterruptHandler;
+    sigfillset(&signalAction.sa_mask);
+    sigaction(SIGINT, &signalAction, nullptr);
+
+	// Run main app
 	TTContactsSettings settings(argc, argv);
-	TTContacts contacts(settings);
+	TTContacts contacts(settings, &quit, &produced, &consumed);
 	contacts.run();
 	return 0;
 }

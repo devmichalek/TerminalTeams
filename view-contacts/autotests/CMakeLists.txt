@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.22)
+project(TerminalTeamsHandler VERSION 1.0)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+
+find_package(Threads REQUIRED)
+
+get_filename_component(TT_CONTACTS_HANDLER_DIRECTORY "." ABSOLUTE)
+
+set(TT_CONTACTS_HANDLER tteams-contacts-handler)
+set(TT_CONTACTS_HANDLER_FILES
+  "${TT_CONTACTS_INCLUDE_DIRECTORY}/TTContactsHandler.cpp"
+  "${TT_CONTACTS_HANDLER_DIRECTORY}/TTContactsHandlerTest.cpp")
+
+add_executable(${TT_CONTACTS_HANDLER} ${TT_CONTACTS_HANDLER_FILES})
+
+target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")
+
+target_link_libraries(${TT_CONTACTS_HANDLER} Threads::Threads)
+
+install(TARGETS ${TT_CONTACTS_HANDLER} DESTINATION .)

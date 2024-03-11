@@ -15,7 +15,8 @@ enum TTContactsStatus : size_t {
     //SELECTED_UNREAD_MSG_ACTIVE // Impossible
     //SELECTED_UNREAD_MSG_INACTIVE // Impossible
     //SELECTED_PENDING_MSG_ACTIVE // Impossible
-    SELECTED_PENDING_MSG_INACTIVE // Inactive contact, no unread messages, pending messages, selected
+    SELECTED_PENDING_MSG_INACTIVE, // Inactive contact, no unread messages, pending messages, selected
     //SELECTED_PENDING_MSG_UNREAD_MSG_ACTIVE // Impossible
     //SELECTED_PENDING_MSG_UNREAD_MSG_INACTIVE // Impossible
+    HEARTBEAT
 };

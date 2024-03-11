@@ -7,9 +7,18 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-TTContactsHandler::TTContactsHandler(std::string sharedName) :
-        mSharedName(sharedName), mSharedMessage(nullptr),
-        mDataProducedSemaphore(nullptr), mDataConsumedSemaphore(nullptr), mHandlerThread{} {
+TTContactsHandler::TTContactsHandler(std::string sharedName,
+    TTContactsCallbackQuit callbackQuit,
+    TTContactsCallbackDataProduced callbackDataProduced,
+    TTContactsCallbackDataConsumed callbackDataConsumed) :
+    	mCallbackQuit(callbackQuit),
+		mCallbackDataProduced(callbackDataProduced),
+		mCallbackDataConsumed(callbackDataConsumed),
+        mSharedName(sharedName),
+        mSharedMessage(nullptr),
+        mDataProducedSemaphore(nullptr),
+        mDataConsumedSemaphore(nullptr),
+        mHandlerThread{&TTContactsHandler::main, this} {
     clean();
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
@@ -38,19 +47,21 @@ TTContactsHandler::TTContactsHandler(std::string sharedName) :
 		throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
 	}
 
-    mThreadForceExit.store(false);
-    mHandlerThread = std::thread(&TTContactsHandler::main, this);
+    mThreadForceQuit.store(false);
+    mIsThreadForcedQuit = [this]() {
+        return mThreadForceQuit.load() || (mCallbackQuit && mCallbackQuit());
+    };
     mHandlerThread.detach();
 }
 
 TTContactsHandler::~TTContactsHandler() {
     {   // Shutdown thread
-        mThreadForceExit.store(true);
+        mThreadForceQuit.store(true);
         mQueueCondition.notify_one();
         // Wait until thread is closed
         std::unique_lock<std::mutex> lock(mQueueMutex);
         mQueueCondition.wait(lock, [this]() {
-            return !mThreadForceExit.load();
+            return !mThreadForceQuit.load();
         });
     }
     clean();
@@ -73,9 +84,9 @@ bool TTContactsHandler::send(size_t id) {
     }
 
     switch (mContacts[id].status) {
-        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::SELECTED_ACTIVE: return false;
         case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
         case TTContactsStatus::ACTIVE:
         case TTContactsStatus::INACTIVE:
         case TTContactsStatus::UNREAD_MSG_ACTIVE:
@@ -100,8 +111,8 @@ bool TTContactsHandler::receive(size_t id) {
 
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: break;
+        case TTContactsStatus::SELECTED_ACTIVE: return false;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_INACTIVE:
         case TTContactsStatus::PENDING_MSG_INACTIVE:
         case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
@@ -116,7 +127,7 @@ bool TTContactsHandler::receive(size_t id) {
     message.status = mContacts[id].status;
     message.id = id;
     send(message);
-    return false;
+    return true;
 }
 
 bool TTContactsHandler::activate(size_t id) {
@@ -125,11 +136,11 @@ bool TTContactsHandler::activate(size_t id) {
     }
 
     switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: break;
+        case TTContactsStatus::ACTIVE: return false;
         case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: break;
+        case TTContactsStatus::SELECTED_ACTIVE: return false;
         case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
         case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
         case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
@@ -151,13 +162,13 @@ bool TTContactsHandler::deactivate(size_t id) {
 
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
-        case TTContactsStatus::INACTIVE: break;
+        case TTContactsStatus::INACTIVE: return false;
         case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: break;
+        case TTContactsStatus::SELECTED_INACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: break;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
         default:
             throw std::runtime_error("Failed to change contact status, internal error");
     }
@@ -177,12 +188,37 @@ bool TTContactsHandler::select(size_t id) {
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
         case TTContactsStatus::INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: break;
-        case TTContactsStatus::SELECTED_INACTIVE: break;
+        case TTContactsStatus::SELECTED_ACTIVE: return false;
+        case TTContactsStatus::SELECTED_INACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
         case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
         case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = SELECTED_PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+
+    TTContactsMessage message;
+    message.status = mContacts[id].status;
+    message.id = id;
+    send(message);
+    return true;
+}
+
+bool TTContactsHandler::unselect(size_t id) {
+    if (id >= mContacts.size()) {
+        return false;
+    }
+
+    switch (mContacts[id].status) {
+        case TTContactsStatus::ACTIVE: return false;
+        case TTContactsStatus::INACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = ACTIVE; break;
+        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = INACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = PENDING_MSG_INACTIVE; break;
         default:
             throw std::runtime_error("Failed to change contact status, internal error");
     }
@@ -223,12 +259,12 @@ void TTContactsHandler::main() {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 mQueueCondition.wait(lock, [this]() {
-                    return !mQueuedMessages.empty() || mThreadForceExit.load();
+                    return !mQueuedMessages.empty() || mIsThreadForcedQuit();
                 });
 
-                if (mThreadForceExit.load()) {
+                if (mIsThreadForcedQuit()) {
                     exit = true;
-                    break; // Soft failure, forced exit
+                    break; // Forced exit
                 }
 
                 while (!mQueuedMessages.empty()) {
@@ -238,9 +274,9 @@ void TTContactsHandler::main() {
             }
 
             for (auto &message : messages) {
-                if (mThreadForceExit.load()) {
+                if (mIsThreadForcedQuit()) {
                     exit = true;
-                    break; // Soft failure, forced exit
+                    break; // Forced exit
                 }
                 // Set shared message
                 memcpy(mSharedMessage, message.get(), sizeof(TTContactsMessage));
@@ -248,6 +284,8 @@ void TTContactsHandler::main() {
                 if (sem_post(mDataProducedSemaphore) == -1) {
                     exit = true;
                     break; // Hard failure
+                } else if (mCallbackDataProduced) {
+                    mCallbackDataProduced();
                 }
                 // Wait for the other process to consume the data
                 {
@@ -256,12 +294,14 @@ void TTContactsHandler::main() {
                         exit = true;
                         break; // Hard failure
                     }
-                    ts.tv_nsec = DATA_CONSUME_TIMEOUT_NS;
-                    auto tryCount = DATA_CONSUME_TRY_COUNT;
+                    ts.tv_sec = TTCONTACTS_DATA_CONSUME_TIMEOUT_S;
                     int result = 0;
-                    for (auto attempt = DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
+                    for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
                         result = sem_timedwait(mDataConsumedSemaphore, &ts);
                         if (result != -1) {
+                            if (mCallbackDataConsumed) {
+                                mCallbackDataConsumed();
+                            }
                             break; // Success
                         } else if (errno == EINTR) {
                             continue; // Soft failure
@@ -282,30 +322,10 @@ void TTContactsHandler::main() {
     {
         std::unique_lock<std::mutex> lock(mQueueMutex);
         mQueueCondition.wait(lock, [this]() {
-            return mThreadForceExit.load();
+            return mIsThreadForcedQuit();
         });
     }
 
-    mThreadForceExit.store(false);
+    mThreadForceQuit.store(false);
     mQueueCondition.notify_one();
-}
-
-int main(int argc, char** argv) {
-    std::string dummyString;
-    TTContactsMessage dummyMessage;
-	TTContactsHandler handler("contacts");
-    while (true) {
-        std::getline(std::cin, dummyString);
-        switch (dummyString[0]) {
-            case 'c': handler.create(dummyString.substr(2), "", "", ""); break;
-            case 's': handler.send(std::stoi(dummyString.substr(2))); break;
-            case 'r': handler.receive(std::stoi(dummyString.substr(2))); break;
-            case 'a': handler.activate(std::stoi(dummyString.substr(2))); break;
-            case 'd': handler.deactivate(std::stoi(dummyString.substr(2))); break;
-            case 'z': handler.select(std::stoi(dummyString.substr(2))); break;
-            case 'e': return 0;
-
-        }
-    }
-	return 0;
 }
