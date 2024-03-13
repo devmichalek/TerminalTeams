@@ -8,18 +8,24 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
 find_package(Threads REQUIRED)
 
-get_filename_component(TT_CONTACTS_HANDLER_DIRECTORY "." ABSOLUTE)
-
+set(TT_CONTACTS tteams-contacts)
 set(TT_CONTACTS_HANDLER tteams-contacts-handler)
-set(TT_CONTACTS_HANDLER_FILES
-  "${TT_CONTACTS_INCLUDE_DIRECTORY}/TTContactsHandler.cpp"
-  "${TT_CONTACTS_HANDLER_DIRECTORY}/TTContactsHandlerTest.cpp")
+set(TT_CONTACTS_EXE tteams-contacts-exe)
+set(TT_CONTACTS_HANDLER_TEST tteams-contacts-handler-test)
 
-add_executable(${TT_CONTACTS_HANDLER} ${TT_CONTACTS_HANDLER_FILES})
+get_filename_component(TT_CONTACTS_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
+get_filename_component(TT_CONTACTS_DIRECTORY "../src" ABSOLUTE)
 
-target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${PROJECT_BINARY_DIR}")
-target_include_directories(${TT_CONTACTS_HANDLER} PUBLIC "${TT_CONTACTS_INCLUDE_DIRECTORY}")
+add_subdirectory(${TT_CONTACTS_DIRECTORY} ${TT_CONTACTS} EXCLUDE_FROM_ALL)
 
-target_link_libraries(${TT_CONTACTS_HANDLER} Threads::Threads)
+add_executable(${TT_CONTACTS_HANDLER_TEST}
+  "${TT_CONTACTS_HANDLER_TEST_DIRECTORY}/TTContactsHandlerTest.cpp")
+  set_target_properties(${TT_CONTACTS_HANDLER_TEST} PROPERTIES OUTPUT_NAME ${TT_CONTACTS_HANDLER})
+target_include_directories(${TT_CONTACTS_HANDLER_TEST} PUBLIC "${PROJECT_BINARY_DIR}")
+target_include_directories(${TT_CONTACTS_HANDLER_TEST} PUBLIC "${TT_CONTACTS_DIRECTORY}")
+target_link_libraries(${TT_CONTACTS_HANDLER_TEST}
+  Threads::Threads
+  ${TT_CONTACTS_HANDLER})
+add_dependencies(${TT_CONTACTS_HANDLER_TEST} ${TT_CONTACTS_EXE})
 
-install(TARGETS ${TT_CONTACTS_HANDLER} DESTINATION .)
+install(TARGETS ${TT_CONTACTS_HANDLER_TEST} ${TT_CONTACTS_EXE} DESTINATION .)
