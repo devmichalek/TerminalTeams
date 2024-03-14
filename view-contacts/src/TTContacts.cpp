@@ -62,16 +62,18 @@ void TTContacts::run() {
 	while (true) {
 		// Wait for the other process to produce the data
 		{
-			timespec ts;
-			if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-				break; // Hard failure
-			}
-			ts.tv_sec = TTCONTACTS_DATA_PRODUCE_TIMEOUT_S;
 			int result = 0;
-			for (auto attempt = TTCONTACTS_DATA_PRODUCE_TRY_COUNT; attempt > 0; --attempt) {
+			for (auto attempt = TTCONTACTS_DATA_PRODUCE_TRY_COUNT; attempt >= 0; --attempt) {
 				if (mCallbackQuit && mCallbackQuit()) {
+					result = -1;
 					break; // Forced exit
 				}
+				struct timespec ts;
+				if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+					result = -1;
+					break; // Hard failure
+				}
+				ts.tv_sec += TTCONTACTS_DATA_PRODUCE_TIMEOUT_S;
 				result = sem_timedwait(mDataProducedSemaphore, &ts);
 				if (result != -1) {
 					if (mCallbackDataConsumed) {
@@ -83,7 +85,7 @@ void TTContacts::run() {
 				}
 			}
 			if (result == -1) {
-				break; // Hard failure
+				break;
 			}
 		}
 

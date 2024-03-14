@@ -28,6 +28,7 @@ public:
     const TTContactsEntry& get(size_t id);
 private:
     void send(const TTContactsMessage& message);
+    void heartbeat();
     void main();
     // Callbacks
     TTContactsCallbackDataProduced mCallbackDataProduced;
@@ -44,6 +45,10 @@ private:
     std::atomic<bool> mThreadForceQuit;
     std::function<bool()> mIsThreadForcedQuit;
     std::thread mHandlerThread;
+    std::mutex mHandlerQuitMutex;
+    // Heartbeat
+    std::thread mHeartbeatThread;
+    std::mutex mHeartbeatQuitMutex;
     // Contacts storage
     std::vector<TTContactsEntry> mContacts;
 };

@@ -16,7 +16,8 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
-        mHandlerThread{&TTContactsHandler::main, this} {
+        mHandlerThread{&TTContactsHandler::main, this},
+        mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
 	int fd = shm_open(mSharedName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -46,17 +47,17 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
 
     mThreadForceQuit.store(false);
     mHandlerThread.detach();
+    mHeartbeatThread.detach();
 }
 
 TTContactsHandler::~TTContactsHandler() {
-    {   // Shutdown thread
+    {   // Shutdown threads
         mThreadForceQuit.store(true);
         mQueueCondition.notify_one();
-        // Wait until thread is closed
-        std::unique_lock<std::mutex> lock(mQueueMutex);
-        mQueueCondition.wait(lock, [this]() {
-            return !mThreadForceQuit.load();
-        });
+        // Wait until main thread is destroyed
+        std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
+        // Wait until heartbeat thread is destroyed
+        std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
     }
     shm_unlink(mSharedName.c_str());
     std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
@@ -240,7 +241,22 @@ void TTContactsHandler::send(const TTContactsMessage& message) {
 	mQueueCondition.notify_one();
 }
 
+void TTContactsHandler::heartbeat() {
+    std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
+    try {
+        while (!mThreadForceQuit.load()) {
+            TTContactsMessage message;
+            message.status = TTContactsStatus::HEARTBEAT;
+            send(message);
+            std::this_thread::sleep_for(std::chrono::milliseconds(TTCONTACTS_HEARTBEAT_TIMEOUT_MS));
+        }
+    } catch (...) {
+        // ...
+    }
+}
+
 void TTContactsHandler::main() {
+    std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
     try {
         bool exit = false;
         do {
@@ -278,44 +294,31 @@ void TTContactsHandler::main() {
                     mCallbackDataProduced();
                 }
                 // Wait for the other process to consume the data
-                {
-                    timespec ts;
+                int result = 0;
+                for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
+                    struct timespec ts;
                     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                        exit = true;
+                        result = -1;
                         break; // Hard failure
                     }
-                    ts.tv_sec = TTCONTACTS_DATA_CONSUME_TIMEOUT_S;
-                    int result = 0;
-                    for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
-                        result = sem_timedwait(mDataConsumedSemaphore, &ts);
-                        if (result != -1) {
-                            if (mCallbackDataConsumed) {
-                                mCallbackDataConsumed();
-                            }
-                            break; // Success
-                        } else if (errno == EINTR) {
-                            continue; // Soft failure
+                    ts.tv_sec += TTCONTACTS_DATA_CONSUME_TIMEOUT_S;
+                    result = sem_timedwait(mDataConsumedSemaphore, &ts);
+                    if (result != -1) {
+                        if (mCallbackDataConsumed) {
+                            mCallbackDataConsumed();
                         }
+                        break; // Success
+                    } else if (errno == EINTR) {
+                        continue; // Soft failure
                     }
-                    if (result == -1) {
-                        exit = true;
-                        break; // Hard failure
-                    }
+                }
+                if (result == -1) {
+                    exit = true;
+                    break; // Hard failure
                 }
             }
         } while (!exit);
     } catch (...) {
         // ...
     }
-
-    // Wait for the main thread to call destructor
-    {
-        std::unique_lock<std::mutex> lock(mQueueMutex);
-        mQueueCondition.wait(lock, [this]() {
-            return mThreadForceQuit.load();
-        });
-    }
-
-    mThreadForceQuit.store(false);
-    mQueueCondition.notify_one();
 }
