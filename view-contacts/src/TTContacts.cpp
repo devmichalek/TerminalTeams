@@ -103,15 +103,13 @@ void TTContacts::run() {
 			continue;
 		}
 
-		if (newMessage.status == TTContactsStatus::ACTIVE) {
-			if (newMessage.id >= mContacts.size()) {
-				std::string nickname(newMessage.data, newMessage.data + newMessage.dataLength);
-				auto newContact = std::make_tuple(newMessage.id, nickname, newMessage.status);
-				mContacts.push_back(newContact);
-			}
+		if (newMessage.status == TTContactsStatus::ACTIVE && newMessage.id >= mContacts.size()) {
+			std::string nickname(newMessage.data, newMessage.data + newMessage.dataLength);
+			auto newContact = std::make_tuple(newMessage.id, nickname, newMessage.status);
+			mContacts.push_back(newContact);
 		} else {
 			auto& contact = mContacts[newMessage.id];
-				std::get<2>(contact) = newMessage.status;
+			std::get<2>(contact) = newMessage.status;
 		}
 
 		system("clear");
