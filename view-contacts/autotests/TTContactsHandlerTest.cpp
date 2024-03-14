@@ -3,11 +3,6 @@
 #include <vector>
 #include <signal.h>
 
-std::atomic<bool> quitHandle{false};
-bool quit() {
-	return quitHandle.load();
-}
-
 std::atomic<size_t> producedCounter{0};
 void produced() {
 	producedCounter++;
@@ -18,6 +13,7 @@ void consumed() {
 	consumedCounter++;
 }
 
+std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {
 	quitHandle.store(true);
 }
@@ -36,8 +32,8 @@ int main(int argc, char** argv) {
     sigaction(SIGINT, &signalAction, nullptr);
 
 	// Run main app
-	TTContactsHandler handler(sharedName, &quit, &produced, &consumed);
-    while (true) {
+	TTContactsHandler handler(sharedName, &produced, &consumed);
+    while (!quitHandle.load()) {
         std::vector<std::string> tokens;
         {
             std::string line;

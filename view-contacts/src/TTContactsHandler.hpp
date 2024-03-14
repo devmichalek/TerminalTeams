@@ -15,7 +15,6 @@
 class TTContactsHandler {
 public:
     TTContactsHandler(std::string sharedName,
-        TTContactsCallbackQuit callbackQuit = {},
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
     ~TTContactsHandler();
@@ -29,10 +28,8 @@ public:
     const TTContactsEntry& get(size_t id);
 private:
     void send(const TTContactsMessage& message);
-    void clean();
     void main();
     // Callbacks
-    TTContactsCallbackQuit mCallbackQuit;
     TTContactsCallbackDataProduced mCallbackDataProduced;
     TTContactsCallbackDataConsumed mCallbackDataConsumed;
     // IPC shared memory communication

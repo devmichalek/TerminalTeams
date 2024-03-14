@@ -8,10 +8,8 @@
 #include <fcntl.h>
 
 TTContactsHandler::TTContactsHandler(std::string sharedName,
-    TTContactsCallbackQuit callbackQuit,
     TTContactsCallbackDataProduced callbackDataProduced,
     TTContactsCallbackDataConsumed callbackDataConsumed) :
-    	mCallbackQuit(callbackQuit),
 		mCallbackDataProduced(callbackDataProduced),
 		mCallbackDataConsumed(callbackDataConsumed),
         mSharedName(sharedName),
@@ -19,7 +17,6 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
         mHandlerThread{&TTContactsHandler::main, this} {
-    clean();
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
 	int fd = shm_open(mSharedName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
@@ -48,9 +45,6 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
 	}
 
     mThreadForceQuit.store(false);
-    mIsThreadForcedQuit = [this]() {
-        return mThreadForceQuit.load() || (mCallbackQuit && mCallbackQuit());
-    };
     mHandlerThread.detach();
 }
 
@@ -64,7 +58,11 @@ TTContactsHandler::~TTContactsHandler() {
             return !mThreadForceQuit.load();
         });
     }
-    clean();
+    shm_unlink(mSharedName.c_str());
+    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+    sem_unlink(dataProducedSemName.c_str());
+    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    sem_unlink(dataConsumedSemName.c_str());
 }
 
 void TTContactsHandler::create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort) {
@@ -242,14 +240,6 @@ void TTContactsHandler::send(const TTContactsMessage& message) {
 	mQueueCondition.notify_one();
 }
 
-void TTContactsHandler::clean() {
-    shm_unlink(mSharedName.c_str());
-    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    sem_unlink(dataConsumedSemName.c_str());
-}
-
 void TTContactsHandler::main() {
     try {
         bool exit = false;
@@ -259,10 +249,10 @@ void TTContactsHandler::main() {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 mQueueCondition.wait(lock, [this]() {
-                    return !mQueuedMessages.empty() || mIsThreadForcedQuit();
+                    return !mQueuedMessages.empty() || mThreadForceQuit.load();
                 });
 
-                if (mIsThreadForcedQuit()) {
+                if (mThreadForceQuit.load()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -274,7 +264,7 @@ void TTContactsHandler::main() {
             }
 
             for (auto &message : messages) {
-                if (mIsThreadForcedQuit()) {
+                if (mThreadForceQuit.load()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -322,7 +312,7 @@ void TTContactsHandler::main() {
     {
         std::unique_lock<std::mutex> lock(mQueueMutex);
         mQueueCondition.wait(lock, [this]() {
-            return mIsThreadForcedQuit();
+            return mThreadForceQuit.load();
         });
     }
 
