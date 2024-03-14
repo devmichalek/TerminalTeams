@@ -18,16 +18,16 @@ public:
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
     ~TTContactsHandler();
-    void create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort);
+    bool create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort);
     bool send(size_t id);
     bool receive(size_t id);
     bool activate(size_t id);
     bool deactivate(size_t id);
     bool select(size_t id);
     bool unselect(size_t id);
-    const TTContactsEntry& get(size_t id);
+    const TTContactsEntry& get(size_t id) const;
 private:
-    void send(const TTContactsMessage& message);
+    bool send(const TTContactsMessage& message);
     void heartbeat();
     void main();
     // Callbacks
@@ -38,15 +38,15 @@ private:
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;
+    // Quit flag
+    std::atomic<bool> mForcedQuit;
     // Thread concurrent message communication
     std::queue<std::unique_ptr<TTContactsMessage>> mQueuedMessages;
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;
-    std::atomic<bool> mThreadForceQuit;
-    std::function<bool()> mIsThreadForcedQuit;
     std::thread mHandlerThread;
     std::mutex mHandlerQuitMutex;
-    // Heartbeat
+    // Thread concurrent Heartbeat
     std::thread mHeartbeatThread;
     std::mutex mHeartbeatQuitMutex;
     // Contacts storage

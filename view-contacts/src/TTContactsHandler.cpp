@@ -16,6 +16,7 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
+        mForcedQuit{false},
         mHandlerThread{&TTContactsHandler::main, this},
         mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
 	const std::string classNamePrefix = "TTContactsHandler: ";
@@ -45,36 +46,28 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
 		throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
 	}
 
-    mThreadForceQuit.store(false);
     mHandlerThread.detach();
     mHeartbeatThread.detach();
 }
 
 TTContactsHandler::~TTContactsHandler() {
-    {   // Shutdown threads
-        mThreadForceQuit.store(true);
-        mQueueCondition.notify_one();
-        // Wait until main thread is destroyed
-        std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
-        // Wait until heartbeat thread is destroyed
-        std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
-    }
-    shm_unlink(mSharedName.c_str());
-    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    sem_unlink(dataConsumedSemName.c_str());
+    mForcedQuit.store(true);
+    mQueueCondition.notify_one();
+    // Wait until main thread is destroyed
+    std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
+    // Wait until heartbeat thread is destroyed
+    std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
 }
 
-void TTContactsHandler::create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort) {
+bool TTContactsHandler::create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort) {
     TTContactsMessage message;
     message.status = TTContactsStatus::ACTIVE;
     message.id = mContacts.size();
     message.dataLength = nickname.size();
     memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
     memcpy(&message.data[0], nickname.c_str(), message.dataLength);
-    send(message);
     mContacts.emplace_back(nickname, fullname, decription, ipAddressAndPort);
+    return send(message);
 }
 
 bool TTContactsHandler::send(size_t id) {
@@ -99,8 +92,7 @@ bool TTContactsHandler::send(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
 bool TTContactsHandler::receive(size_t id) {
@@ -125,8 +117,7 @@ bool TTContactsHandler::receive(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
 bool TTContactsHandler::activate(size_t id) {
@@ -150,8 +141,7 @@ bool TTContactsHandler::activate(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
 bool TTContactsHandler::deactivate(size_t id) {
@@ -175,8 +165,7 @@ bool TTContactsHandler::deactivate(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
 bool TTContactsHandler::select(size_t id) {
@@ -200,8 +189,7 @@ bool TTContactsHandler::select(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
 bool TTContactsHandler::unselect(size_t id) {
@@ -225,34 +213,40 @@ bool TTContactsHandler::unselect(size_t id) {
     TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
-    send(message);
-    return true;
+    return send(message);
 }
 
-const TTContactsEntry& TTContactsHandler::get(size_t id) {
+const TTContactsEntry& TTContactsHandler::get(size_t id) const {
     return mContacts[id];
 }
 
-void TTContactsHandler::send(const TTContactsMessage& message) {
+bool TTContactsHandler::send(const TTContactsMessage& message) {
+    if (mForcedQuit.load()) {
+        return false;
+    }
     {
         std::scoped_lock<std::mutex> lock(mQueueMutex);
         mQueuedMessages.push(std::make_unique<TTContactsMessage>(message));
     }
 	mQueueCondition.notify_one();
+    return true;
 }
 
 void TTContactsHandler::heartbeat() {
     std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
     try {
-        while (!mThreadForceQuit.load()) {
+        while (!mForcedQuit.load()) {
             TTContactsMessage message;
             message.status = TTContactsStatus::HEARTBEAT;
-            send(message);
+            if (!send(message)) {
+                break;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(TTCONTACTS_HEARTBEAT_TIMEOUT_MS));
         }
     } catch (...) {
         // ...
     }
+    mForcedQuit.store(true);
 }
 
 void TTContactsHandler::main() {
@@ -265,10 +259,10 @@ void TTContactsHandler::main() {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 mQueueCondition.wait(lock, [this]() {
-                    return !mQueuedMessages.empty() || mThreadForceQuit.load();
+                    return !mQueuedMessages.empty() || mForcedQuit.load();
                 });
 
-                if (mThreadForceQuit.load()) {
+                if (mForcedQuit.load()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -280,7 +274,7 @@ void TTContactsHandler::main() {
             }
 
             for (auto &message : messages) {
-                if (mThreadForceQuit.load()) {
+                if (mForcedQuit.load()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -293,9 +287,10 @@ void TTContactsHandler::main() {
                 } else if (mCallbackDataProduced) {
                     mCallbackDataProduced();
                 }
+
                 // Wait for the other process to consume the data
                 int result = 0;
-                for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt > 0; --attempt) {
+                for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt >= 0; --attempt) {
                     struct timespec ts;
                     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                         result = -1;
@@ -321,4 +316,10 @@ void TTContactsHandler::main() {
     } catch (...) {
         // ...
     }
+    shm_unlink(mSharedName.c_str());
+    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+    sem_unlink(dataProducedSemName.c_str());
+    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    sem_unlink(dataConsumedSemName.c_str());
+    mForcedQuit.store(true);
 }
