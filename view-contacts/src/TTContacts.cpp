@@ -15,15 +15,20 @@ TTContacts::TTContacts(TTContactsSettings settings,
 		mCallbackDataProduced(callbackDataProduced),
 		mCallbackDataConsumed(callbackDataConsumed),
 		mSharedName(settings.getSharedName()),
+		mSharedMessage(nullptr),
+		mDataProducedSemaphore(nullptr),
+		mDataConsumedSemaphore(nullptr),
 		mTerminalWidth(settings.getTerminalWidth()),
-		mTerminalHeight(settings.getTerminalHeight()),
-		mSharedMessage(nullptr) {
+		mTerminalHeight(settings.getTerminalHeight()) {
 	const std::string classNamePrefix = "TTContacts: ";
 	std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
 	std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
 
 	errno = 0;
 	for (auto attempt = TTCONTACTS_SEMAPHORES_READY_TRY_COUNT; attempt > 0; --attempt) {
+		if (mCallbackQuit && mCallbackQuit()) {
+			return; // Forced exit
+		}
 		if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), 0)) != SEM_FAILED) {
 			break;
 		}
@@ -49,6 +54,10 @@ TTContacts::TTContacts(TTContactsSettings settings,
 }
 
 void TTContacts::run() {
+	if (!mSharedMessage) {
+		return;
+	}
+
 	std::vector<std::string> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
 	while (true) {
 		// Wait for the other process to produce the data

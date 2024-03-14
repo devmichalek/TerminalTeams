@@ -32,6 +32,8 @@ int main(int argc, char** argv) {
 	// Run main app
 	TTContactsSettings settings(argc, argv);
 	TTContacts contacts(settings, &quit, &produced, &consumed);
-	contacts.run();
+	if (!quitHandle.load()) {
+		contacts.run();
+	}
 	return 0;
 }
