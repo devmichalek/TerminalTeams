@@ -30,6 +30,8 @@ int main(int argc, char** argv) {
     signalAction.sa_handler = signalInterruptHandler;
     sigfillset(&signalAction.sa_mask);
     sigaction(SIGINT, &signalAction, nullptr);
+    sigaction(SIGTERM, &signalAction, nullptr);
+    sigaction(SIGSTOP, &signalAction, nullptr);
 
 	// Run main app
     try {

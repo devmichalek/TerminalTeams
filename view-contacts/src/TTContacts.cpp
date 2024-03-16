@@ -112,7 +112,8 @@ void TTContacts::run() {
 			std::get<2>(contact) = newMessage.status;
 		}
 
-		system("clear");
+		// Clear
+		std::cout << "\033[2J\033[1;1H";
 
 		for (auto &contact : mContacts) {
 			std::cout << "#" << std::get<0>(contact);
