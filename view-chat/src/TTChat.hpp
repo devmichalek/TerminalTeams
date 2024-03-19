@@ -1,15 +1,15 @@
 #pragma once
-#include "TTEmulator.hpp"
 #include "TTChatMessage.hpp"
 
 class TTChat {
 public:
-    explicit TTChat(const TTEmulator& emulator, double ratio = 0.7);
-    void print(const TTChatMessage& message);
-    void print(const TTChatMessages& messages);
-    void clear();
+    explicit TTChat(size_t width, size_t height, double ratio = 0.7);
+    
 private:
-    const TTEmulator& mEmulator;
+    void print(const TTChatMessage& message);
+    void clear();
+    size_t mWidth;
+    size_t mHeight;
     size_t mSideWidth;
     std::string mBlankLine;
 };

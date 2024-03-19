@@ -1,16 +1,20 @@
 #include "TTChat.hpp"
-#include "TTChatSettings.hpp"
-#include <sstream>
-#include <iomanip>
 #include <ctime>
 #include <iostream>
 #include <chrono>
-#include <thread>
+#include <mqueue.h>
 
-TTChat::TTChat(const TTEmulator& emulator, double ratio) :
-	mEmulator(emulator),
-	mSideWidth(emulator.getWidth() * ratio),
-	mBlankLine(emulator.getWidth(), ' ') {
+TTChat::TTChat(size_t width, size_t height, double ratio) :
+	mWidth(width),
+	mHeight(height),
+	mSideWidth(mWidth * ratio),
+	mBlankLine(mWidth, ' ') {
+	const std::string classNamePrefix = "TTChat: ";
+	
+}
+
+void TTChat::run() {
+
 }
 
 void TTChat::print(const TTChatMessage& message) {
@@ -87,45 +91,30 @@ void TTChat::print(const TTChatMessage& message) {
 	}
 
 	// Create timestamp string
-	auto time = std::chrono::system_clock::to_time_t( message.timestamp);
+	auto time = std::chrono::system_clock::to_time_t(message.timestamp);
 	std::stringstream ss;
     ss << std::put_time(std::localtime(&time), "%Y-%m-%d %X");
 	const auto timestamp = ss.str();
 
 	// Print message based on side
 	if (message.side == TTChatSide::LEFT) {
-		mEmulator.println(timestamp);
+		std::cout << timestamp << "\n";
 		for (auto &line : lines) {
-			mEmulator.println(line);
+			std::cout << line << "\n";
 		}
 	} else if (message.side == TTChatSide::RIGHT) {
-		mEmulator.print(mBlankLine.substr(0, mBlankLine.size() - timestamp.size()));
-		mEmulator.println(timestamp);
+		std::cout << mBlankLine.substr(0, mBlankLine.size() - timestamp.size());
+		std::cout << timestamp << "\n";
 		for (auto &line : lines) {
-			mEmulator.print(mBlankLine.substr(0, mBlankLine.size() - line.size()));
-			mEmulator.println(line);
+			std::cout << mBlankLine.substr(0, mBlankLine.size() - line.size());
+    		std::cout << line << "\n";
 		}
 	}
-	mEmulator.println({});
-	mEmulator.flush();
-}
-
-void TTChat::print(const TTChatMessages& messages) {
-	for (auto &message : messages) {
-		print(message);
-	}
+	std::cout << std::endl;
 }
 
 void TTChat::clear() {
-	mEmulator.clear();
+	std::cout << "\033[2J\033[1;1H";
 }
 
 
-int main(int argc, char** argv) {
-    TTChatSettings settings(argc, argv);
-    auto emulator = TTEmulator(settings.getTerminalWidth(), settings.getTerminalHeight());
-    auto chat = TTChat(emulator);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    return 0;
-}
