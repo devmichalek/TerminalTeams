@@ -14,15 +14,15 @@ TTContacts::TTContacts(TTContactsSettings settings,
 		mCallbackQuit(callbackQuit),
 		mCallbackDataProduced(callbackDataProduced),
 		mCallbackDataConsumed(callbackDataConsumed),
-		mSharedName(settings.getSharedName()),
+		mSharedMemoryName(settings.getSharedMemoryName()),
 		mSharedMessage(nullptr),
 		mDataProducedSemaphore(nullptr),
 		mDataConsumedSemaphore(nullptr),
 		mTerminalWidth(settings.getTerminalWidth()),
 		mTerminalHeight(settings.getTerminalHeight()) {
 	const std::string classNamePrefix = "TTContacts: ";
-	std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-	std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+	std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+	std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
 
 	errno = 0;
 	for (auto attempt = TTCONTACTS_SEMAPHORES_READY_TRY_COUNT; attempt > 0; --attempt) {
@@ -44,7 +44,7 @@ TTContacts::TTContacts(TTContactsSettings settings,
 		throw std::runtime_error(classNamePrefix + "Failed to open data consumed semaphore, errno=" + std::to_string(errno));
 	}
 
-	int fd = shm_open(mSharedName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+	int fd = shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		throw std::runtime_error(classNamePrefix + "Failed to open shared object, errno=" + std::to_string(errno));
 	}

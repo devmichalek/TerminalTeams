@@ -7,12 +7,12 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-TTContactsHandler::TTContactsHandler(std::string sharedName,
+TTContactsHandler::TTContactsHandler(std::string sharedMemoryName,
     TTContactsCallbackDataProduced callbackDataProduced,
     TTContactsCallbackDataConsumed callbackDataConsumed) :
 		mCallbackDataProduced(callbackDataProduced),
 		mCallbackDataConsumed(callbackDataConsumed),
-        mSharedName(sharedName),
+        mSharedMemoryName(sharedMemoryName),
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
@@ -21,7 +21,7 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
         mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
 	const std::string classNamePrefix = "TTContactsHandler: ";
 	errno = 0;
-	int fd = shm_open(mSharedName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+	int fd = shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd < 0) {
 		throw std::runtime_error(classNamePrefix + "Failed to create shared object, errno=" + std::to_string(errno));
 	}
@@ -35,13 +35,13 @@ TTContactsHandler::TTContactsHandler(std::string sharedName,
 	mSharedMessage = new(rawPointer) TTContactsMessage;
 
 	errno = 0;
-	std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+	std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
 	if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
 		throw std::runtime_error(classNamePrefix + "Failed to create data produced semaphore, errno=" + std::to_string(errno));
 	}
 
 	errno = 0;
-	std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+	std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
 	if ((mDataConsumedSemaphore = sem_open(dataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
 		throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
 	}
@@ -316,10 +316,10 @@ void TTContactsHandler::main() {
     } catch (...) {
         // ...
     }
-    shm_unlink(mSharedName.c_str());
-    std::string dataProducedSemName = mSharedName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+    shm_unlink(mSharedMemoryName.c_str());
+    std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
     sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
     sem_unlink(dataConsumedSemName.c_str());
     mForcedQuit.store(true);
 }

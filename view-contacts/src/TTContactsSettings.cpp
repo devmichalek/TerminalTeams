@@ -24,5 +24,5 @@ TTContactsSettings::TTContactsSettings(int argc, char** argv) {
         throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + heightStr);
     }
 
-    mSharedName = argv[3];
+    mSharedMemoryName = argv[3];
 }

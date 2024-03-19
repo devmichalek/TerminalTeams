@@ -8,7 +8,7 @@
 
 class TTContacts {
 public:
-    TTContacts(TTContactsSettings settings,
+    explicit TTContacts(TTContactsSettings settings,
         TTContactsCallbackQuit callbackQuit = {},
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
@@ -19,7 +19,7 @@ private:
     TTContactsCallbackDataProduced mCallbackDataProduced;
     TTContactsCallbackDataConsumed mCallbackDataConsumed;
     // IPC shared memory communication
-    std::string mSharedName;
+    std::string mSharedMemoryName;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;

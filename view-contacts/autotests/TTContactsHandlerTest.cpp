@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
     if (argc != 2) {
         throw std::runtime_error("invalid number of arguments");
     }
-    std::string sharedName = argv[1];
+    std::string sharedMemoryName = argv[1];
 
     // Signal handling
     struct sigaction signalAction;
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 
 	// Run main app
     try {
-        TTContactsHandler handler(sharedName, &produced, &consumed);
+        TTContactsHandler handler(sharedMemoryName, &produced, &consumed);
         while (!quitHandle.load()) {
             std::vector<std::string> tokens;
             {

@@ -14,7 +14,7 @@
 // Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
-    TTContactsHandler(std::string sharedName,
+    explicit TTContactsHandler(std::string sharedMemoryName,
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
     ~TTContactsHandler();
@@ -34,7 +34,7 @@ private:
     TTContactsCallbackDataProduced mCallbackDataProduced;
     TTContactsCallbackDataConsumed mCallbackDataConsumed;
     // IPC shared memory communication
-    std::string mSharedName;
+    std::string mSharedMemoryName;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;

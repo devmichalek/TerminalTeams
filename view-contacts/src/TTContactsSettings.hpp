@@ -6,11 +6,11 @@ public:
     explicit TTContactsSettings(int argc, char** argv);
     size_t getTerminalWidth() const { return mWidth; }
     size_t getTerminalHeight() const { return mHeight; }
-    std::string getSharedName() const { return mSharedName; }
+    std::string getSharedMemoryName() const { return mSharedMemoryName; }
 
 private:
     size_t mWidth;
     size_t mHeight;
-    std::string mSharedName;
+    std::string mSharedMemoryName;
     static inline constexpr int MAX_ARGC = 4;
 };
