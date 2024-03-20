@@ -2,41 +2,47 @@
 #include <functional>
 #include <list>
 
-TTChatHandler::TTChatHandler(std::string messageQueueName) :
-    mMessageQueueName(messageQueueName),
-    mMessageQueueDescriptor(-1),
-    mMessageQueueReversedName(mMessageQueueName + "-reversed"),
-    mMessageQueueReversedDescriptor(-1),
-    mForcedQuit{false},
-    mHeartbeatReceiverResult{},
-    mHeartbeatSenderResult{},
-    mHandlerResult{} {
+TTChatHandler::TTChatHandler(std::string messageQueueName,
+    TTChatCallbackMessageSent callbackMessageSent = {},
+    TTChatCallbackMessageReceived callbackMessageReceived = {}) :
+        mCallbackMessageSent(callbackMessageSent),
+		mCallbackMessageReceived(callbackMessageReceived),
+        mMessageQueueName(messageQueueName),
+        mMessageQueueDescriptor(-1),
+        mMessageQueueReversedName(mMessageQueueName + "-reversed"),
+        mMessageQueueReversedDescriptor(-1),
+        mForcedQuit{false},
+        mHeartbeatReceiverResult{},
+        mHeartbeatSenderResult{},
+        mHandlerResult{} {
     const std::string classNamePrefix = "TTChatHandler: ";
-
+    // Create and open message queue
 	struct mq_attr messageQueueAttributes;
 	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
-	
+    messageQueueAttributes.mq_msgsize = TTCHAT_MESSAGE_MAX_LENGTH;
 	messageQueueAttributes.mq_flags = 0;
 
 	errno = 0;
 	mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
                                       O_CREAT | O_RDWR | O_NONBLOCK,
                                       0644,
-                                      &attributes);
+                                      &messageQueueAttributes);
 	if (mMessageQueueDescriptor == -1) {
-		throw std::runtime_error(classNamePrefix + "Failed to open message queue, errno=" + std::to_string(errno));
+		throw std::runtime_error(classNamePrefix + "Failed to create message queue, errno=" + std::to_string(errno));
 	}
-
+    // Create and open message queue reversed
     errno = 0;
-    messageQueueAttributes.mq_msgsize = 0;
+    struct mq_attr messageQueueReversedAttributes;
+	messageQueueReversedAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
+    messageQueueReversedAttributes.mq_msgsize = 0;
+	messageQueueReversedAttributes.mq_flags = 0;
 	mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
                                               O_CREAT | O_RDWR | O_NONBLOCK,
                                               0644,
-                                              &attributes);
+                                              &messageQueueReversedAttributes);
 	if (mMessageQueueReversedDescriptor == -1) {
-		throw std::runtime_error(classNamePrefix + "Failed to open reversed message queue, errno=" + std::to_string(errno));
+		throw std::runtime_error(classNamePrefix + "Failed to create reversed message queue, errno=" + std::to_string(errno));
 	}
-
     // Set heartbeat receiver thread
     auto pt = std::packaged_task<void()>(std::bind(&TTChatHandler::heartbeat, this));
     mHeartbeatResult = pt.get_future();
@@ -54,16 +60,47 @@ TTChatHandler::~TTChatHandler() {
     mq_unlink(mMessageQueueName.c_str());
 }
 
-bool TTChatHandler::send(std::string message, TTChatTimestamp timestamp) {
+bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timestamp) {
+    if (id >= mMessages.size()) {
+        return false;
+    }
+    auto& storage = mMessages[id];
+    storage.push_back(std::make_tuple(TTChatMessageType::SEND, message, timestamp));
     return send(TTChatMessageType::SEND, message, timestamp);
 }
 
-bool TTChatHandler::receive(std::string message, TTChatTimestamp timestamp) {
+bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp timestamp) {
+    if (id >= mMessages.size()) {
+        return false;
+    }
+    auto& storage = mMessages[id];
+    storage.push_back(std::make_tuple(TTChatMessageType::RECEIVE, message, timestamp));
     return send(TTChatMessageType::RECEIVE, message, timestamp);
 }
 
-bool TTChatHandler::clear() {
-    return send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now());
+bool TTChatHandler::clear(size_t id) {
+    if (id >= mMessages.size()) {
+        mMessages.push_back({}); // New storage
+    }
+    if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {
+        return false;
+    }
+
+    auto& storage = mMessages[id];
+    for (auto &message : storage) {
+        if (!send(std::get<0>(message), std::get<1>(message), std::get<2>(message))) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+const TTChatEntries& get(size_t id) {
+    if (id >= mMessages.size()) {
+        return {};
+    }
+    return mMessages[id];
 }
 
 bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp) {
@@ -104,7 +141,8 @@ void TTChatHandler::hearbeat() {
         for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i >= 0 && !mForcedQuit.load(); --i) {
             struct timespec ts;
             if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                break; // Hard failure
+                // Hard failure
+                throw std::runtime_error({});
             }
             ts.tv_sec += TTCHAT_MESSAGE_RECEIVE_TIMEOUT_S;
             errno = 0;
@@ -121,8 +159,8 @@ void TTChatHandler::hearbeat() {
             if (errno == EAGAIN || errno == ETIMEDOUT) {
                 continue;
             }
-            // All attempts made, hard failure
-            break;
+            // Hard failure
+            throw std::runtime_error({});
         }
     } catch (...) {
         // ...
@@ -134,13 +172,13 @@ void TTChatHandler::main() {
     try {
         while (true) {
             // Fill the list of messages
-            std::list<std::unique_ptr<TTContactsMessage>> messages;
+            std::list<std::unique_ptr<TTChatMessage>> messages;
             auto cvStatus = cv_status::no_timeout;
             while (true)
             {
                 {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
-                    auto waitTimeMs = std::chrono::miliseconds(TTCONTACTS_HEARTBEAT_TIMEOUT_MS);
+                    auto waitTimeMs = std::chrono::miliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS);
                     cvStatus = mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
                         return !mQueuedMessages.empty() || mForcedQuit.load();
                     });
@@ -164,7 +202,7 @@ void TTChatHandler::main() {
 
             for (auto &message : messages) {
                 int result = -1;
-                const char* rawMessage = message.get();
+                auto& refMessage = *message.get();
                 for (auto i = TTCHAT_MESSAGE_SEND_TRY_COUNT; i >= 0; --i) {
                     if (mForcedQuit.load()) {
                         throw std::runtime_error({});
@@ -176,11 +214,20 @@ void TTChatHandler::main() {
                     ts.tv_sec += TTCHAT_MESSAGE_SEND_TIMEOUT_S;
                     errno = 0;
                     result = mq_timedsend(mMessageQueueDescriptor,
-                                          rawMessage,
+                                          &refMessage,
                                           TTCHAT_MESSAGE_MAX_LENGTH,
                                           TTCHAT_MESSAGE_PRIORITY,
                                           &ts);
                     if (result != -1) {
+                        if (refMessage.type == TTChatMessageType::SEND) {
+                            if (mCallbackMessageSent) {
+                                mCallbackMessageSent();
+                            }
+                        } else if (refMessage.type == TTChatMessageType::RECEIVED) {
+                            if (mCallbackMessageReceived) {
+                                mCallbackMessageReceived();
+                            }
+                        }
                         break; // Success
                     }
                     if (errno == EAGAIN) {

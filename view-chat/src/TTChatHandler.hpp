@@ -1,23 +1,29 @@
 #pragma once
-#include "TTChatMessage.hpp"
+#include "TTChatEntry.hpp"
 #include <mqueue.h>
 #include <memory>
 #include <future>
 #include <queue>
+#include <vector>
 
 class TTChatHandler {
 public:
-    explicit TTChatHandler(std::string messageQueueName);
+    explicit TTChatHandler(std::string messageQueueName,
+        TTChatCallbackMessageSent callbackMessageSent = {},
+        TTChatCallbackMessageReceived callbackMessageReceived = {});
     ~TTChatHandler();
-    bool send(std::string message, TTChatTimestamp timestamp);
-    bool receive(std::string message, TTChatTimestamp timestamp);
-    bool clear();
+    bool send(size_t id, std::string message, TTChatTimestamp timestamp);
+    bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
+    bool clear(size_t id);
+    const TTChatEntries& get(size_t id);
 
 private:
-    bool divide(TTChatMessageType type, std::string message, TTChatTimestamp timestamp);
-    bool send(std::unique_ptr<TTChatMessage> message);
+    bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
     void heartbeat();
     void main();
+    // Callbacks
+    TTChatCallbackMessageSent mCallbackMessageSent;
+    TTChatCallbackMessageReceived mCallbackMessageReceived;
     // IPC main message queue communication
     std::string mMessageQueueName;
     mqd_t mMessageQueueDescriptor;
@@ -31,4 +37,6 @@ private:
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;
+    // Messages storage
+    std::vector<TTChatEntries> mMessages;
 };

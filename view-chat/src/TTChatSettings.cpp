@@ -1,7 +1,5 @@
 #include "TTChatSettings.hpp"
-#include <string>
-#include <sstream>
-#include <iostream>
+#include <charconv>
 
 TTChatSettings::TTChatSettings(int argc, char** argv) {
     const std::string classNamePrefix = "TTChatSettings: ";
@@ -9,20 +7,19 @@ TTChatSettings::TTChatSettings(int argc, char** argv) {
         throw std::runtime_error(classNamePrefix + "invalid number of arguments");
     }
 
-    const auto widthStr = std::string(argv[1]);
-    std::stringstream ss(widthStr);
-    ss >> mWidth;
-    if (ss.fail()) {
-        throw std::runtime_error(classNamePrefix + "invalid terminal emulator width=" + widthStr);
+    {
+        auto [ptr, ec] = std::from_chars(argv[1], argv[1] + strlen(argv[1]), mWidth);
+        if (ec != std::errc()) {
+            throw std::runtime_error(classNamePrefix + "invalid terminal emulator width=" + argv[1]);
+        }
     }
 
-    const auto heightStr = std::string(argv[2]);
-    ss.str(heightStr);
-    ss.clear();
-    ss >> mHeight;
-    if (ss.fail()) {
-        throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + heightStr);
+    {
+        auto [ptr, ec] = std::from_chars(argv[2], argv[2] + strlen(argv[2]), mWidth);
+        if (ec != std::errc()) {
+            throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + argv[2]);
+        }
     }
 
-    mQueueName = argv[3];
+    mMessageQueueName = argv[3];
 }

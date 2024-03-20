@@ -1,9 +1,29 @@
 #include "TTChat.hpp"
+#include <signal.h>
+#include <atomic>
+
+std::atomic<bool> quitHandle{false};
+bool quit() {
+	return quitHandle.load();
+}
+
+void signalInterruptHandler(int) {
+	quitHandle.store(true);
+}
 
 int main(int argc, char** argv) {
-    TTChatSettings settings(argc, argv);
-    auto chat = TTChat(settings.getTerminalWidth(), settings.getTerminalHeight());
+	// Signal handling
+    struct sigaction signalAction;
+	memset(&signalAction, 0, sizeof(signalAction));
+    signalAction.sa_handler = signalInterruptHandler;
+    sigfillset(&signalAction.sa_mask);
+    sigaction(SIGINT, &signalAction, nullptr);
+    sigaction(SIGTERM, &signalAction, nullptr);
+    sigaction(SIGSTOP, &signalAction, nullptr);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    return 0;
+	// Run main app
+	TTChatSettings settings(argc, argv);
+	TTChat chat(settings, &quit, &produced, &consumed);
+	chat.run();
+	return 0;
 }
