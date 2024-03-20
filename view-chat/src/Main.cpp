@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
 
 	// Run main app
 	TTChatSettings settings(argc, argv);
-	TTChat chat(settings, &quit, &produced, &consumed);
+	TTChat chat(settings, &quit);
 	chat.run();
 	return 0;
 }

@@ -1,12 +1,16 @@
 #include "TTChat.hpp"
 #include <ctime>
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include <chrono>
-#include <mqueue.h>
 
-TTChat::TTChat(TTChatSettings settings,
-    TTChatCallbackQuit callbackQuit) :
+TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 		mCallbackQuit(callbackQuit),
+		mMessageQueueDescriptor(-1),
+		mMessageQueueReversedDescriptor(-1),
+		mForcedQuit{false},
+		mHeartbeatResult{},
 		mWidth(settings.getTerminalWidth()),
 		mHeight(settings.getTerminalWidth()),
 		mSideWidth(mWidth * settings.getRatio()),
@@ -24,7 +28,7 @@ TTChat::TTChat(TTChatSettings settings,
 		messageQueueReversedAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
 		messageQueueReversedAttributes.mq_msgsize = 0;
 		messageQueueReversedAttributes.mq_flags = 0;
-		mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
+		mMessageQueueReversedDescriptor = mq_open(messageQueueReversedName.c_str(),
 												O_RDWR | O_NONBLOCK,
 												0644,
 												&messageQueueReversedAttributes);
@@ -36,7 +40,6 @@ TTChat::TTChat(TTChatSettings settings,
 	if (mMessageQueueReversedDescriptor == -1) {
 		throw std::runtime_error(classNamePrefix + "Failed to open reversed message queue, errno=" + std::to_string(errno));
 	}
-
 	// Open message queue
 	struct mq_attr messageQueueAttributes;
 	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
@@ -44,13 +47,22 @@ TTChat::TTChat(TTChatSettings settings,
 	messageQueueAttributes.mq_flags = 0;
 
 	errno = 0;
-	mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
+	mMessageQueueDescriptor = mq_open(messageQueueName.c_str(),
                                       O_RDWR | O_NONBLOCK,
                                       0644,
                                       &messageQueueAttributes);
 	if (mMessageQueueDescriptor == -1) {
 		throw std::runtime_error(classNamePrefix + "Failed to open message queue, errno=" + std::to_string(errno));
 	}
+	// Set heartbeat thread
+	std::promise<void> promise;
+	mHeartbeatResult = promise.get_future();
+	std::thread(&TTChat::heartbeat, this, std::move(promise)).detach();
+}
+
+TTChat::~TTChat() {
+	mForcedQuit.store(true);
+    mHeartbeatResult.wait();
 }
 
 void TTChat::run() {
@@ -60,7 +72,11 @@ void TTChat::run() {
 
 	while (true) {
 		char messageBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
-        for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i >= 0 && !mForcedQuit.load(); --i) {
+        for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i >= 0; --i) {
+			if (mForcedQuit.load() || (mCallbackQuit && mCallbackQuit())) {
+				// Forced exit
+				throw std::runtime_error({});
+			}
             struct timespec ts;
             if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                 // Hard failure
@@ -106,11 +122,11 @@ void TTChat::run() {
 	mForcedQuit.store(true);
 }
 
-void TTChat::heartbeat() {
+void TTChat::heartbeat(std::promise<void> promise) {
 	try {
 		char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
 		for (auto i = TTCHAT_MESSAGE_SEND_TRY_COUNT; i >= 0; --i) {
-			if (mForcedQuit.load()) {
+			if (mForcedQuit.load() || (mCallbackQuit && mCallbackQuit())) {
 				throw std::runtime_error({});
 			}
 			struct timespec ts;
@@ -119,7 +135,7 @@ void TTChat::heartbeat() {
 			}
 			ts.tv_sec += TTCHAT_MESSAGE_SEND_TIMEOUT_S;
 			errno = 0;
-			result = mq_timedsend(mMessageQueueReversedDescriptor,
+			auto result = mq_timedsend(mMessageQueueReversedDescriptor,
 									&dummyBuffer[0],
 									0,
 									TTCHAT_MESSAGE_PRIORITY,
@@ -138,6 +154,7 @@ void TTChat::heartbeat() {
         // ...
     }
     mForcedQuit.store(true);
+	promise.set_value();
 }
 
 void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool received) {

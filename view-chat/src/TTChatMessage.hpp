@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <cstring>
 
 enum TTChatMessageType : unsigned int {
     CLEAR = 0,

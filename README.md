@@ -22,7 +22,7 @@ cmake --install build --prefix install
 ```
 
 ### Technology stack
-- C++
+- C++ Multithreading
 - CMake
 - Google Protocol Buffers
 - Google gRPC

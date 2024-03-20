@@ -1,5 +1,7 @@
 #include "TTChatSettings.hpp"
 #include <charconv>
+#include <cstring>
+#include <stdexcept>
 
 TTChatSettings::TTChatSettings(int argc, char** argv) {
     const std::string classNamePrefix = "TTChatSettings: ";

@@ -1,5 +1,6 @@
 #pragma once
 #include "TTChatEntry.hpp"
+#include "TTChatCallback.hpp"
 #include <mqueue.h>
 #include <memory>
 #include <future>
