@@ -19,7 +19,6 @@ private:
     TTContactsCallbackDataProduced mCallbackDataProduced;
     TTContactsCallbackDataConsumed mCallbackDataConsumed;
     // IPC shared memory communication
-    std::string mSharedMemoryName;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;
