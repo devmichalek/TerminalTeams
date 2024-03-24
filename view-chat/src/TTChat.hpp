@@ -23,6 +23,7 @@ private:
     // Thread concurrent message communication
     std::atomic<bool> mForcedQuit;
     std::future<void> mHeartbeatResult;
+    std::thread mHeartbeatThread;
     // Real data
     size_t mWidth;
     size_t mHeight;

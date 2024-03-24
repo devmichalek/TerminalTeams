@@ -35,6 +35,7 @@ private:
     std::atomic<bool> mForcedQuit;
     std::future<void> mHeartbeatResult;
     std::future<void> mHandlerResult;
+    std::thread mHeartbeatThread;
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;

@@ -1,6 +1,6 @@
 #include "TTChatHandler.hpp"
-#include <functional>
 #include <list>
+#include <iostream>
 
 TTChatHandler::TTChatHandler(std::string messageQueueName,
     TTChatCallbackMessageSent callbackMessageSent,
@@ -31,21 +31,18 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
 	}
     // Create and open message queue reversed
     errno = 0;
-    struct mq_attr messageQueueReversedAttributes;
-	messageQueueReversedAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
-    messageQueueReversedAttributes.mq_msgsize = 0;
-	messageQueueReversedAttributes.mq_flags = 0;
 	mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
                                               O_CREAT | O_RDWR | O_NONBLOCK,
                                               0644,
-                                              &messageQueueReversedAttributes);
+                                              &messageQueueAttributes);
 	if (mMessageQueueReversedDescriptor == -1) {
 		throw std::runtime_error(classNamePrefix + "Failed to create reversed message queue, errno=" + std::to_string(errno));
 	}
     // Set heartbeat receiver thread
     auto pt = std::packaged_task<void()>(std::bind(&TTChatHandler::heartbeat, this));
     mHeartbeatResult = pt.get_future();
-    std::thread(std::move(pt)).detach();
+    mHeartbeatThread = std::thread(std::move(pt));
+    mHeartbeatThread.detach();
     // Set handler thread
     mHandlerResult = std::async(std::launch::async, std::bind(&TTChatHandler::main, this));
 }

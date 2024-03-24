@@ -19,19 +19,20 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 	auto messageQueueName = settings.getMessageQueueName();
 	auto messageQueueReversedName = messageQueueName + "-reversed";
 	// Open message queue reversed
+	struct mq_attr messageQueueAttributes;
+	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
+	messageQueueAttributes.mq_msgsize = TTCHAT_MESSAGE_MAX_LENGTH;
+	messageQueueAttributes.mq_flags = 0;
 	errno = 0;
 	for (auto attempt = TTCHAT_MESSAGE_QUEUE_READY_TRY_COUNT; attempt > 0; --attempt) {
 		if (mCallbackQuit && mCallbackQuit()) {
 			return; // Forced exit
 		}
-		struct mq_attr messageQueueReversedAttributes;
-		messageQueueReversedAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
-		messageQueueReversedAttributes.mq_msgsize = 0;
-		messageQueueReversedAttributes.mq_flags = 0;
+		
 		mMessageQueueReversedDescriptor = mq_open(messageQueueReversedName.c_str(),
 												O_RDWR | O_NONBLOCK,
 												0644,
-												&messageQueueReversedAttributes);
+												&messageQueueAttributes);
 		if (mMessageQueueReversedDescriptor != -1) {
 			break; // Success
 		}
@@ -41,11 +42,6 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 		throw std::runtime_error(classNamePrefix + "Failed to open reversed message queue, errno=" + std::to_string(errno));
 	}
 	// Open message queue
-	struct mq_attr messageQueueAttributes;
-	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
-    messageQueueAttributes.mq_msgsize = TTCHAT_MESSAGE_MAX_LENGTH;
-	messageQueueAttributes.mq_flags = 0;
-
 	errno = 0;
 	mMessageQueueDescriptor = mq_open(messageQueueName.c_str(),
                                       O_RDWR | O_NONBLOCK,
@@ -57,7 +53,8 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 	// Set heartbeat thread
 	std::promise<void> promise;
 	mHeartbeatResult = promise.get_future();
-	std::thread(&TTChat::heartbeat, this, std::move(promise)).detach();
+	mHeartbeatThread = std::thread(&TTChat::heartbeat, this, std::move(promise));
+	mHeartbeatThread.detach();
 }
 
 TTChat::~TTChat() {
