@@ -1,5 +1,6 @@
 #include "TTChatHandler.hpp"
 #include <list>
+#include <limits>
 #include <iostream>
 
 TTChatHandler::TTChatHandler(std::string messageQueueName,
@@ -13,7 +14,8 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
         mMessageQueueReversedDescriptor(-1),
         mForcedQuit{false},
         mHeartbeatResult{},
-        mHandlerResult{} {
+        mHandlerResult{},
+        mCurrentId(std::numeric_limits<size_t>::max()) {
     const std::string classNamePrefix = "TTChatHandler: ";
     // Create and open message queue
 	struct mq_attr messageQueueAttributes;
@@ -62,7 +64,13 @@ bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timesta
     }
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::SEND, message, timestamp));
-    return send(TTChatMessageType::SEND, message, timestamp);
+    if (mCurrentId == id) {
+        return send(TTChatMessageType::SEND, message, timestamp);
+    }
+    if (mForcedQuit.load()) {
+        return false;
+    }
+    return true;
 }
 
 bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp timestamp) {
@@ -71,24 +79,41 @@ bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp time
     }
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::RECEIVE, message, timestamp));
-    return send(TTChatMessageType::RECEIVE, message, timestamp);
+    if (mCurrentId == id) {
+        return send(TTChatMessageType::RECEIVE, message, timestamp);
+    }
+    if (mForcedQuit.load()) {
+        return false;
+    }
+    return true;
 }
 
 bool TTChatHandler::clear(size_t id) {
     if (id >= mMessages.size()) {
-        mMessages.push_back({}); // New storage
+        return false;
     }
     if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {
         return false;
     }
-
+    mCurrentId = id;
     auto& storage = mMessages[id];
     for (auto &message : storage) {
         if (!send(std::get<0>(message), std::get<1>(message), std::get<2>(message))) {
             return false;
         }
     }
+    return true;
+}
 
+bool TTChatHandler::create(size_t id) {
+    if (mForcedQuit.load()) {
+        return false;
+    }
+    if (id < mMessages.size()) {
+        return false;
+    }
+    // New storage
+    mMessages.push_back({});
     return true;
 }
 

@@ -16,6 +16,7 @@ public:
     bool send(size_t id, std::string message, TTChatTimestamp timestamp);
     bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
     bool clear(size_t id);
+    bool create(size_t id);
     const TTChatEntries& get(size_t id);
 
 private:
@@ -40,5 +41,6 @@ private:
     std::condition_variable mQueueCondition;
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;
     // Messages storage
+    size_t mCurrentId;
     std::vector<TTChatEntries> mMessages;
 };
