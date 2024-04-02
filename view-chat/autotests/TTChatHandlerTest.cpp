@@ -32,13 +32,10 @@ std::vector<std::string> getTokens(std::string line) {
     line.erase(0, pos + delimiter.length());
     // ID
     pos = line.find(delimiter);
-    if (pos == std::string::npos) {
-        return {};
-    }
     token = line.substr(0, pos);
     tokens.push_back(token);
+    // The rest - message
     line.erase(0, pos + delimiter.length());
-    // The rest
     if (!line.empty()) {
         tokens.push_back(line);
     }

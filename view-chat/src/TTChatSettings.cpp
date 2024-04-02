@@ -17,7 +17,7 @@ TTChatSettings::TTChatSettings(int argc, char** argv) {
     }
 
     {
-        auto [ptr, ec] = std::from_chars(argv[2], argv[2] + strlen(argv[2]), mWidth);
+        auto [ptr, ec] = std::from_chars(argv[2], argv[2] + strlen(argv[2]), mHeight);
         if (ec != std::errc()) {
             throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + argv[2]);
         }

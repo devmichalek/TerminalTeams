@@ -114,7 +114,7 @@ void TTContacts::run() {
 		}
 
 		// Clear
-		std::cout << "\033[2J\033[1;1H";
+		std::cout << "\033[2J\033[1;1H" << std::flush;
 
 		for (auto &contact : mContacts) {
 			std::cout << "#" << std::get<0>(contact);

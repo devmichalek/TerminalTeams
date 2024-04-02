@@ -114,7 +114,7 @@ bool TTChatHandler::create(size_t id) {
     if (mForcedQuit.load()) {
         return false;
     }
-    if (id < mMessages.size()) {
+    if (!mMessages.empty() && id < mMessages.size()) {
         return false;
     }
     // New storage

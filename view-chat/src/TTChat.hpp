@@ -14,7 +14,6 @@ public:
 private:
     void heartbeat(std::promise<void> promise);
     void print(const char* cmessage, TTChatTimestamp timestmap, bool received);
-    void clear();
     // Callbacks
     TTChatCallbackQuit mCallbackQuit;
     // IPC message queue communication

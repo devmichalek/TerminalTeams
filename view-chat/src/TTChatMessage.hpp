@@ -20,11 +20,13 @@ struct TTChatMessage {
         unsigned int dataLength,
         const char* data) :
             type(type),
-            timestamp(timestamp) {
+            timestamp(timestamp),
+            dataLength(dataLength) {
         std::memcpy(this->data, data, dataLength);
     }
     TTChatMessageType type;
     TTChatTimestamp timestamp;
+    unsigned int dataLength;
     char data[TTCHAT_DATA_MAX_LENGTH];
 };
 

@@ -12,7 +12,7 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 		mForcedQuit{false},
 		mHeartbeatResult{},
 		mWidth(settings.getTerminalWidth()),
-		mHeight(settings.getTerminalWidth()),
+		mHeight(settings.getTerminalHeight()),
 		mSideWidth(mWidth * settings.getRatio()),
 		mBlankLine(mWidth, ' ') {
 	const std::string classNamePrefix = "TTChat: ";
@@ -86,9 +86,10 @@ void TTChat::run() {
 				if (result != -1) {
 					TTChatMessage message;
 					std::memcpy(&message, messageBuffer, TTCHAT_MESSAGE_MAX_LENGTH);
+					message.data[message.dataLength] = '\0';
 					switch (message.type) {
 						case TTChatMessageType::CLEAR:
-							clear();
+							std::cout << "\033[2J\033[1;1H" << std::flush;
 							break;
 						case TTChatMessageType::SEND:
 							print(message.data, message.timestamp, false);
@@ -247,9 +248,3 @@ void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool receive
 	}
 	std::cout << std::endl;
 }
-
-void TTChat::clear() {
-	std::cout << "\033[2J\033[1;1H";
-}
-
-
