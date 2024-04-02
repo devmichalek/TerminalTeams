@@ -19,12 +19,13 @@ void signalInterruptHandler(int) {
 	quitHandle.store(true);
 }
 
-std::vector<std::string> getTokens(std::string line, const std::string delimiter) {
+std::vector<std::string> getTokens(std::string line) {
     std::vector<std::string> tokens;
+    const std::string delimiter = " ";
     // Command
     size_t pos = line.find(delimiter);
     if (pos == std::string::npos) {
-        throw std::runtime_error("TTChatHandlerTest: Failed to read command");
+        return {};
     }
     std::string token = line.substr(0, pos);
     tokens.push_back(token);
@@ -32,7 +33,7 @@ std::vector<std::string> getTokens(std::string line, const std::string delimiter
     // ID
     pos = line.find(delimiter);
     if (pos == std::string::npos) {
-        throw std::runtime_error("TTChatHandlerTest: Failed to read ID");
+        return {};
     }
     token = line.substr(0, pos);
     tokens.push_back(token);
@@ -59,18 +60,16 @@ int main(int argc, char** argv) {
     sigaction(SIGTERM, &signalAction, nullptr);
     sigaction(SIGSTOP, &signalAction, nullptr);
 
-    std::cout << "1.\n";
-
 	// Run main app
     TTChatHandler handler(queueMessageName, &sent, &received);
-    std::cout << "2.\n";
     while (!quitHandle.load()) {
-        std::cout << "3.\n";
         // Get tokens
         std::string line;
         std::getline(std::cin, line);
-        const std::string delimiter = " ";
-        auto tokens = getTokens(line, delimiter);
+        auto tokens = getTokens(line);
+        if (tokens.empty()) {
+            continue;
+        }
         const std::string& command = tokens[0];
         const auto id = std::stoi(tokens[1]);
         // Send command
@@ -81,6 +80,8 @@ int main(int argc, char** argv) {
             status = handler.receive(id, tokens[2], std::chrono::system_clock::now());
         } else if (command == "clear") {
             status = handler.clear(id);
+        } else if (command == "create") {
+            status = handler.create(id);
         }
         if (!status) {
             break;

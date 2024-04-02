@@ -23,5 +23,9 @@ TTChatSettings::TTChatSettings(int argc, char** argv) {
         }
     }
 
+    // Set queue name
     mMessageQueueName = argv[3];
+    if (mMessageQueueName.front() != '/') {
+        mMessageQueueName.insert(0, "/");
+    }
 }

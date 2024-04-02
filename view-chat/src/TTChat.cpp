@@ -28,11 +28,10 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 		if (mCallbackQuit && mCallbackQuit()) {
 			return; // Forced exit
 		}
-		
 		mMessageQueueReversedDescriptor = mq_open(messageQueueReversedName.c_str(),
-												O_RDWR | O_NONBLOCK,
-												0644,
-												&messageQueueAttributes);
+												  O_RDWR,
+												  0644,
+												  &messageQueueAttributes);
 		if (mMessageQueueReversedDescriptor != -1) {
 			break; // Success
 		}
@@ -44,7 +43,7 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 	// Open message queue
 	errno = 0;
 	mMessageQueueDescriptor = mq_open(messageQueueName.c_str(),
-                                      O_RDWR | O_NONBLOCK,
+                                      O_RDWR,
                                       0644,
                                       &messageQueueAttributes);
 	if (mMessageQueueDescriptor == -1) {
@@ -63,58 +62,58 @@ TTChat::~TTChat() {
 }
 
 void TTChat::run() {
-	if (mMessageQueueDescriptor == -1 || mMessageQueueReversedDescriptor == -1) {
-		return;
-	}
+	if (mMessageQueueDescriptor != -1 && mMessageQueueReversedDescriptor != -1) {
+		try {
+			char messageBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
+			for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i > 0; --i) {
+				if (mForcedQuit.load() || (mCallbackQuit && mCallbackQuit())) {
+					// Forced exit
+					throw std::runtime_error({});
+				}
+				struct timespec ts;
+				if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+					// Hard failure
+					throw std::runtime_error({});
+				}
+				ts.tv_sec += TTCHAT_MESSAGE_RECEIVE_TIMEOUT_S;
+				errno = 0;
+				unsigned int priority = 0;
+				auto result = mq_timedreceive(mMessageQueueDescriptor,
+											  messageBuffer,
+											  TTCHAT_MESSAGE_MAX_LENGTH,
+											  &priority,
+											  &ts);
+				if (result != -1) {
+					TTChatMessage message;
+					std::memcpy(&message, messageBuffer, TTCHAT_MESSAGE_MAX_LENGTH);
+					switch (message.type) {
+						case TTChatMessageType::CLEAR:
+							clear();
+							break;
+						case TTChatMessageType::SEND:
+							print(message.data, message.timestamp, false);
+							break;
+						case TTChatMessageType::RECEIVE:
+							print(message.data, message.timestamp, true);
+							break;
+						case TTChatMessageType::HEARTBEAT:
+							[[fallthrough]]
+						default:
+							break;
+					}
 
-	while (true) {
-		char messageBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
-        for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i >= 0; --i) {
-			if (mForcedQuit.load() || (mCallbackQuit && mCallbackQuit())) {
-				// Forced exit
+					i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT + 1;
+					continue;
+				}
+				if (errno == EAGAIN || errno == ETIMEDOUT) {
+					continue;
+				}
+				// Hard failure
 				throw std::runtime_error({});
 			}
-            struct timespec ts;
-            if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                // Hard failure
-				throw std::runtime_error({});
-            }
-            ts.tv_sec += TTCHAT_MESSAGE_RECEIVE_TIMEOUT_S;
-            errno = 0;
-            unsigned int priority = 0;
-            auto result = mq_timedreceive(mMessageQueueDescriptor,
-                                          messageBuffer,
-                                          TTCHAT_MESSAGE_MAX_LENGTH,
-                                          &priority,
-                                          &ts);
-            if (result == 0) {
-				TTChatMessage message;
-				std::memcpy(&message, messageBuffer, TTCHAT_MESSAGE_MAX_LENGTH);
-				switch (message.type) {
-					case TTChatMessageType::CLEAR:
-						clear();
-						break;
-					case TTChatMessageType::SEND:
-						print(message.data, message.timestamp, false);
-						break;
-					case TTChatMessageType::RECEIVE:
-						print(message.data, message.timestamp, true);
-						break;
-					case TTChatMessageType::HEARTBEAT:
-						[[fallthrough]]
-					default:
-						break;
-				}
-
-                i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT + 1;
-                continue;
-            }
-            if (errno == EAGAIN || errno == ETIMEDOUT) {
-                continue;
-            }
-            // Hard failure
-            throw std::runtime_error({});
-        }
+		} catch (...) {
+			// ...
+		}
 	}
 	mForcedQuit.store(true);
 }
@@ -139,6 +138,7 @@ void TTChat::heartbeat(std::promise<void> promise) {
 									&ts);
 			if (result == 0) {
 				i = TTCHAT_MESSAGE_SEND_TRY_COUNT + 1;
+				std::this_thread::sleep_for(std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS));
 				continue;
 			}
 			if (errno == EAGAIN || errno == ETIMEDOUT) {

@@ -17,6 +17,11 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
         mHandlerResult{},
         mCurrentId(std::numeric_limits<size_t>::max()) {
     const std::string classNamePrefix = "TTChatHandler: ";
+    // Correct queue name
+    if (mMessageQueueName.front() != '/') {
+        mMessageQueueName.insert(0, "/");
+        mMessageQueueReversedName.insert(0, "/");
+    }
     // Create and open message queue
 	struct mq_attr messageQueueAttributes;
 	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
@@ -25,7 +30,7 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
 
 	errno = 0;
 	mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
-                                      O_CREAT | O_RDWR | O_NONBLOCK,
+                                      O_CREAT | O_RDWR,
                                       0644,
                                       &messageQueueAttributes);
 	if (mMessageQueueDescriptor == -1) {
@@ -34,7 +39,7 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
     // Create and open message queue reversed
     errno = 0;
 	mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
-                                              O_CREAT | O_RDWR | O_NONBLOCK,
+                                              O_CREAT | O_RDWR,
                                               0644,
                                               &messageQueueAttributes);
 	if (mMessageQueueReversedDescriptor == -1) {
@@ -139,7 +144,7 @@ bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimesta
 
     const size_t totalFullMessagesDataLength = numberOfFullMessages * TTCHAT_DATA_MAX_LENGTH;
     const size_t lastMessageDataLength = data.size() - totalFullMessagesDataLength;
-    if (lastMessageDataLength > 0) {
+    if (lastMessageDataLength > 0 || data.empty()) {
         const char* cdata = data.c_str() + totalFullMessagesDataLength;
         auto message = std::make_unique<TTChatMessage>(type, timestamp, lastMessageDataLength, cdata);
         messages.push_back(std::move(message));
@@ -177,7 +182,7 @@ void TTChatHandler::heartbeat() {
                                           TTCHAT_MESSAGE_MAX_LENGTH,
                                           &priority,
                                           &ts);
-            if (result == 0) {
+            if (result != -1) {
                 i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT + 1;
                 continue;
             }
@@ -211,7 +216,6 @@ void TTChatHandler::main() {
                     if (mForcedQuit.load()) {
                         throw std::runtime_error({});
                     }
-
                     while (!mQueuedMessages.empty()) {
                         messages.push_back(std::move(mQueuedMessages.front()));
                         mQueuedMessages.pop();
@@ -221,7 +225,9 @@ void TTChatHandler::main() {
 
                 if (!predicate) {
                     // There wasn't a new message in a queue
-                    send(TTChatMessageType::HEARTBEAT, {}, std::chrono::system_clock::now());
+                    if (!send(TTChatMessageType::HEARTBEAT, {}, std::chrono::system_clock::now())) {
+                        break; // Fail
+                    }
                     continue;
                 }
 

@@ -53,6 +53,7 @@ TTContacts::TTContacts(TTContactsSettings settings,
 	mSharedMessage = new(rawPointer) TTContactsMessage;
 }
 
+// todo: add try & catch below?
 void TTContacts::run() {
 	if (!mSharedMessage) {
 		return;
