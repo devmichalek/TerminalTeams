@@ -64,21 +64,21 @@ int main(int argc, char** argv) {
         std::string line;
         std::getline(std::cin, line);
         auto tokens = getTokens(line);
-        if (tokens.empty()) {
-            continue;
-        }
-        const std::string& command = tokens[0];
-        const auto id = std::stoi(tokens[1]);
-        // Send command
         bool status = false;
-        if (command == "send") {
-            status = handler.send(id, tokens[2], std::chrono::system_clock::now());
-        } else if (command == "receive") {
-            status = handler.receive(id, tokens[2], std::chrono::system_clock::now());
-        } else if (command == "clear") {
-            status = handler.clear(id);
-        } else if (command == "create") {
-            status = handler.create(id);
+        if (!tokens.empty()) {
+            const std::string& command = tokens[0];
+            const auto id = std::stoi(tokens[1]);
+            // Send command
+            const std::chrono::time_point<std::chrono::system_clock> dt(std::chrono::milliseconds(0));
+            if (command == "send") {
+                status = handler.send(id, tokens[2], dt);
+            } else if (command == "receive") {
+                status = handler.receive(id, tokens[2], dt);
+            } else if (command == "clear") {
+                status = handler.clear(id);
+            } else if (command == "create") {
+                status = handler.create(id);
+            }
         }
         if (!status) {
             break;
