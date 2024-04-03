@@ -17,7 +17,7 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
 		mBlankLine(mWidth, ' ') {
 	const std::string classNamePrefix = "TTChat: ";
 	auto messageQueueName = settings.getMessageQueueName();
-	auto messageQueueReversedName = messageQueueName + "-reversed";
+	auto messageQueueReversedName = TTChatSettings::getReversedMessageQueueName(messageQueueName);
 	// Open message queue reversed
 	struct mq_attr messageQueueAttributes;
 	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;

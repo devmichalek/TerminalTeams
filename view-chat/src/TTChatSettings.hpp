@@ -7,6 +7,9 @@ public:
     size_t getTerminalWidth() const { return mWidth; }
     size_t getTerminalHeight() const { return mHeight; }
     std::string getMessageQueueName() const { return mMessageQueueName; }
+    static std::string getReversedMessageQueueName(std::string messageQueueName) {
+        return messageQueueName + "-reversed";
+    }
     double getRatio() { return 0.7; }
 private:
     size_t mWidth;

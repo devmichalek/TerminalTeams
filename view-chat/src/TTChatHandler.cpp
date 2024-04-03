@@ -1,4 +1,5 @@
 #include "TTChatHandler.hpp"
+#include "TTChatSettings.hpp"
 #include <list>
 #include <limits>
 #include <iostream>
@@ -10,7 +11,7 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
 		mCallbackMessageReceived(callbackMessageReceived),
         mMessageQueueName(messageQueueName),
         mMessageQueueDescriptor(-1),
-        mMessageQueueReversedName(mMessageQueueName + "-reversed"),
+        mMessageQueueReversedName(TTChatSettings::getReversedMessageQueueName(messageQueueName)),
         mMessageQueueReversedDescriptor(-1),
         mForcedQuit{false},
         mHeartbeatResult{},
