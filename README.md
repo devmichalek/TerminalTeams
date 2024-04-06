@@ -1,7 +1,7 @@
 ### Usage
 Application runs in Linux Terminal Emulator to:
 - find users on LAN,
-- communicate with other people on LAN
+- chat with other people on LAN
 
 The tmux terminal multiplexer is used to create program interface.
 
@@ -9,7 +9,7 @@ The tmux terminal multiplexer is used to create program interface.
 Application was written with the following assumptions:
 - each username is unique within it's interface IP address
 - each user has the same local time on the system
-- only one user runs application per interface IP address
+- only one user runs application per IP address interface
 - no centralized server
 - no support for IPv6
 - terminal emulator window resizing is not supported
@@ -25,12 +25,13 @@ cmake --install build --prefix install
 - C++ Multithreading
 - CMake
 - Google Protocol Buffers
-- Google gRPC
-- GoogleTest
+- Google GRPC
+- Google Test
 - Bash
-- Inter-process communication
+- IPC (sockets, named pipe, shared memory, message queue)
 - Virtualization
 - Networking
+- PlantUML
 
 ### Debugging
 Use Visual Studio Code (with C/C++ Extension Pack extension) to debug application.
@@ -38,4 +39,5 @@ Use Visual Studio Code (with C/C++ Extension Pack extension) to debug applicatio
 ### Testing
 Application was tested using:
 - Unit tests,
+- Integration tests,
 - Manual tests - using up to four VMs running together in a virtual network.

@@ -18,10 +18,11 @@ public:
     bool clear(size_t id);
     bool create(size_t id);
     const TTChatEntries& get(size_t id);
-
 private:
     bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
+    // Receives heartbeat
     void heartbeat();
+    // Sends heartbeat periodically or main data if available
     void main();
     // Callbacks
     TTChatCallbackMessageSent mCallbackMessageSent;

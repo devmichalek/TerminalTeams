@@ -10,9 +10,12 @@ class TTChat {
 public:
     explicit TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit = {});
     ~TTChat();
+    // Receives main data
     void run();
 private:
+    // Sends heartbeat periodically
     void heartbeat(std::promise<void> promise);
+    // Prints message in a defined format
     void print(const char* cmessage, TTChatTimestamp timestmap, bool received);
     // Callbacks
     TTChatCallbackQuit mCallbackQuit;

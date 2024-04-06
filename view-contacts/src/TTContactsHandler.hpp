@@ -28,7 +28,9 @@ public:
     const TTContactsEntry& get(size_t id) const;
 private:
     bool send(const TTContactsMessage& message);
+    // Sends heartbeat periodically
     void heartbeat();
+    // Sends main data if available and receives confirmation
     void main();
     // Callbacks
     TTContactsCallbackDataProduced mCallbackDataProduced;

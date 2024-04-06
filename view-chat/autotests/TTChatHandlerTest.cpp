@@ -6,17 +6,17 @@
 
 std::atomic<size_t> sentCounter{0};
 void sent() {
-	sentCounter++;
+    sentCounter++;
 }
 
 std::atomic<size_t> receivedCounter{0};
 void received() {
-	receivedCounter++;
+    receivedCounter++;
 }
 
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {
-	quitHandle.store(true);
+    quitHandle.store(true);
 }
 
 std::vector<std::string> getTokens(std::string line) {
@@ -50,19 +50,22 @@ int main(int argc, char** argv) {
 
     // Signal handling
     struct sigaction signalAction;
-	memset(&signalAction, 0, sizeof(signalAction));
+    memset(&signalAction, 0, sizeof(signalAction));
     signalAction.sa_handler = signalInterruptHandler;
     sigfillset(&signalAction.sa_mask);
     sigaction(SIGINT, &signalAction, nullptr);
     sigaction(SIGTERM, &signalAction, nullptr);
     sigaction(SIGSTOP, &signalAction, nullptr);
 
-	// Run main app
+    // Run main app
     TTChatHandler handler(queueMessageName, &sent, &received);
     while (!quitHandle.load()) {
         // Get tokens
         std::string line;
         std::getline(std::cin, line);
+        if (quitHandle.load()) {
+            break;
+        }
         auto tokens = getTokens(line);
         bool status = false;
         if (!tokens.empty()) {
@@ -85,5 +88,5 @@ int main(int argc, char** argv) {
         }
     }
 
-	return 0;
+    return 0;
 }

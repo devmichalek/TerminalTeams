@@ -12,6 +12,7 @@ public:
         TTContactsCallbackQuit callbackQuit = {},
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
+    // Receives main data and sends confirmation
     void run();
 private:
     // Callbacks

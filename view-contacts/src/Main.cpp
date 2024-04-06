@@ -4,38 +4,38 @@
 
 std::atomic<bool> quitHandle{false};
 bool quit() {
-	return quitHandle.load();
+    return quitHandle.load();
 }
 
 std::atomic<size_t> producedCounter{0};
 void produced() {
-	producedCounter++;
+    producedCounter++;
 }
 
 std::atomic<size_t> consumedCounter{0};
 void consumed() {
-	consumedCounter++;
+    consumedCounter++;
 }
 
 void signalInterruptHandler(int) {
-	quitHandle.store(true);
+    quitHandle.store(true);
 }
 
 int main(int argc, char** argv) {
-	// Signal handling
+    // Signal handling
     struct sigaction signalAction;
-	memset(&signalAction, 0, sizeof(signalAction));
+    memset(&signalAction, 0, sizeof(signalAction));
     signalAction.sa_handler = signalInterruptHandler;
     sigfillset(&signalAction.sa_mask);
     sigaction(SIGINT, &signalAction, nullptr);
     sigaction(SIGTERM, &signalAction, nullptr);
     sigaction(SIGSTOP, &signalAction, nullptr);
 
-	// Run main app
-	TTContactsSettings settings(argc, argv);
-	TTContacts contacts(settings, &quit, &produced, &consumed);
-	if (!quitHandle.load()) {
-		contacts.run();
-	}
-	return 0;
+    // Run main app
+    TTContactsSettings settings(argc, argv);
+    TTContacts contacts(settings, &quit, &produced, &consumed);
+    if (!quitHandle.load()) {
+        contacts.run();
+    }
+    return 0;
 }

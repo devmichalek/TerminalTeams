@@ -8,7 +8,7 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
     TTChatCallbackMessageSent callbackMessageSent,
     TTChatCallbackMessageReceived callbackMessageReceived) :
         mCallbackMessageSent(callbackMessageSent),
-		mCallbackMessageReceived(callbackMessageReceived),
+        mCallbackMessageReceived(callbackMessageReceived),
         mMessageQueueName(messageQueueName),
         mMessageQueueDescriptor(-1),
         mMessageQueueReversedName(TTChatSettings::getReversedMessageQueueName(messageQueueName)),
@@ -24,28 +24,28 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
         mMessageQueueReversedName.insert(0, "/");
     }
     // Create and open message queue
-	struct mq_attr messageQueueAttributes;
-	messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
+    struct mq_attr messageQueueAttributes;
+    messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
     messageQueueAttributes.mq_msgsize = TTCHAT_MESSAGE_MAX_LENGTH;
-	messageQueueAttributes.mq_flags = 0;
+    messageQueueAttributes.mq_flags = 0;
 
-	errno = 0;
-	mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
+    errno = 0;
+    mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
                                       O_CREAT | O_RDWR,
                                       0644,
                                       &messageQueueAttributes);
-	if (mMessageQueueDescriptor == -1) {
-		throw std::runtime_error(classNamePrefix + "Failed to create message queue, errno=" + std::to_string(errno));
-	}
+    if (mMessageQueueDescriptor == -1) {
+        throw std::runtime_error(classNamePrefix + "Failed to create message queue, errno=" + std::to_string(errno));
+    }
     // Create and open message queue reversed
     errno = 0;
-	mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
+    mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
                                               O_CREAT | O_RDWR,
                                               0644,
                                               &messageQueueAttributes);
-	if (mMessageQueueReversedDescriptor == -1) {
-		throw std::runtime_error(classNamePrefix + "Failed to create reversed message queue, errno=" + std::to_string(errno));
-	}
+    if (mMessageQueueReversedDescriptor == -1) {
+        throw std::runtime_error(classNamePrefix + "Failed to create reversed message queue, errno=" + std::to_string(errno));
+    }
     // Set heartbeat receiver thread
     auto pt = std::packaged_task<void()>(std::bind(&TTChatHandler::heartbeat, this));
     mHeartbeatResult = pt.get_future();
@@ -157,7 +157,7 @@ bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimesta
             mQueuedMessages.push(std::move(it));
         }
     }
-	mQueueCondition.notify_one();
+    mQueueCondition.notify_one();
     return true;
     
 }

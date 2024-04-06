@@ -5,17 +5,17 @@
 
 std::atomic<size_t> producedCounter{0};
 void produced() {
-	producedCounter++;
+    producedCounter++;
 }
 
 std::atomic<size_t> consumedCounter{0};
 void consumed() {
-	consumedCounter++;
+    consumedCounter++;
 }
 
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {
-	quitHandle.store(true);
+    quitHandle.store(true);
 }
 
 int main(int argc, char** argv) {
@@ -26,20 +26,23 @@ int main(int argc, char** argv) {
 
     // Signal handling
     struct sigaction signalAction;
-	memset(&signalAction, 0, sizeof(signalAction));
+    memset(&signalAction, 0, sizeof(signalAction));
     signalAction.sa_handler = signalInterruptHandler;
     sigfillset(&signalAction.sa_mask);
     sigaction(SIGINT, &signalAction, nullptr);
     sigaction(SIGTERM, &signalAction, nullptr);
     sigaction(SIGSTOP, &signalAction, nullptr);
 
-	// Run main app
+    // Run main app
     TTContactsHandler handler(sharedMemoryName, &produced, &consumed);
     while (!quitHandle.load()) {
         std::vector<std::string> tokens;
         {
             std::string line;
             std::getline(std::cin, line);
+            if (quitHandle.load()) {
+                break;
+            }
             size_t pos = 0;
             std::string token;
             const std::string delimiter = " ";
@@ -79,5 +82,5 @@ int main(int argc, char** argv) {
         }
     }
 
-	return 0;
+    return 0;
 }

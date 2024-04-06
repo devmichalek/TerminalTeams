@@ -38,24 +38,24 @@ fi
 usage()
 {
     echo "Terminal Teams a chat between users on the LAN within Terminal Emulator." >&2
-	echo "Usage ${0} [-i INTERFACE] [-a IP_ADDRESS]" >&2
-	echo '-i  Interface that should be used for communication' >&2
-	echo '-a  IP address that should be used within provided interface' >&2
-	echo '-p  port that should be used to run server' >&2
-	echo '-h  Displays this help' >&2
+    echo "Usage ${0} [-i INTERFACE] [-a IP_ADDRESS]" >&2
+    echo '-i  Interface that should be used for communication' >&2
+    echo '-a  IP address that should be used within provided interface' >&2
+    echo '-p  port that should be used to run server' >&2
+    echo '-h  Displays this help' >&2
     echo "If no options are used script automatically detects neighbors on LAN using available interface." >&2
-	exit 0
+    exit 0
 }
 
 while getopts hi:a: OPTION
 do
-	case "${OPTION}" in
-		i) INTERFACE=${OPTARG} ;;
-		a) IP_ADDRESS=${OPTARG} ;;
-		p) PORT=${OPTARG} ;;
+    case "${OPTION}" in
+        i) INTERFACE=${OPTARG} ;;
+        a) IP_ADDRESS=${OPTARG} ;;
+        p) PORT=${OPTARG} ;;
         h) usage ;;
-		?) echo 'Invalid option!' >&2; usage ;;
-	esac
+        ?) echo 'Invalid option!' >&2; usage ;;
+    esac
 done
 
 if ! [ -z "${IP_ADDRESS}" ]; then

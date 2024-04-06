@@ -10,8 +10,8 @@
 TTContactsHandler::TTContactsHandler(std::string sharedMemoryName,
     TTContactsCallbackDataProduced callbackDataProduced,
     TTContactsCallbackDataConsumed callbackDataConsumed) :
-		mCallbackDataProduced(callbackDataProduced),
-		mCallbackDataConsumed(callbackDataConsumed),
+        mCallbackDataProduced(callbackDataProduced),
+        mCallbackDataConsumed(callbackDataConsumed),
         mSharedMemoryName(sharedMemoryName),
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
@@ -19,32 +19,32 @@ TTContactsHandler::TTContactsHandler(std::string sharedMemoryName,
         mForcedQuit{false},
         mHandlerThread{&TTContactsHandler::main, this},
         mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
-	const std::string classNamePrefix = "TTContactsHandler: ";
-	errno = 0;
-	int fd = shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
-	if (fd < 0) {
-		throw std::runtime_error(classNamePrefix + "Failed to create shared object, errno=" + std::to_string(errno));
-	}
+    const std::string classNamePrefix = "TTContactsHandler: ";
+    errno = 0;
+    int fd = shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    if (fd < 0) {
+        throw std::runtime_error(classNamePrefix + "Failed to create shared object, errno=" + std::to_string(errno));
+    }
 
-	errno = 0;
-	if (ftruncate(fd, sizeof(TTContactsMessage)) == -1) {
-		throw std::runtime_error(classNamePrefix + "Failed to truncate shared object, errno=" + std::to_string(errno));
-	}
+    errno = 0;
+    if (ftruncate(fd, sizeof(TTContactsMessage)) == -1) {
+        throw std::runtime_error(classNamePrefix + "Failed to truncate shared object, errno=" + std::to_string(errno));
+    }
 
-	void* rawPointer = mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	mSharedMessage = new(rawPointer) TTContactsMessage;
+    void* rawPointer = mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    mSharedMessage = new(rawPointer) TTContactsMessage;
 
-	errno = 0;
-	std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-	if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-		throw std::runtime_error(classNamePrefix + "Failed to create data produced semaphore, errno=" + std::to_string(errno));
-	}
+    errno = 0;
+    std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
+    if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
+        throw std::runtime_error(classNamePrefix + "Failed to create data produced semaphore, errno=" + std::to_string(errno));
+    }
 
-	errno = 0;
-	std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-	if ((mDataConsumedSemaphore = sem_open(dataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-		throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
-	}
+    errno = 0;
+    std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
+    if ((mDataConsumedSemaphore = sem_open(dataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
+        throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
+    }
 
     mHandlerThread.detach();
     mHeartbeatThread.detach();
@@ -228,7 +228,7 @@ bool TTContactsHandler::send(const TTContactsMessage& message) {
         std::scoped_lock<std::mutex> lock(mQueueMutex);
         mQueuedMessages.push(std::make_unique<TTContactsMessage>(message));
     }
-	mQueueCondition.notify_one();
+    mQueueCondition.notify_one();
     return true;
 }
 

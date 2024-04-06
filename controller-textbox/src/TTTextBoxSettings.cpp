@@ -24,5 +24,5 @@ TTTextBoxSettings::TTTextBoxSettings(int argc, char** argv) {
         throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + heightStr);
     }
 
-    mPipeName = argv[3];
+    mUniqueName = argv[3];
 }

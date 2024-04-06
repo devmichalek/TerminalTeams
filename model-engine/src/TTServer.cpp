@@ -32,19 +32,19 @@ class GreeterServiceImpl final : public Greeter::Service {
 };
 
 TTServer::TTServer(uint32_t ipAddress, uint16_t port) {
-	mIpAddressAndPort = absl::StrFormat("0.0.0.0:%d", port);
+    mIpAddressAndPort = absl::StrFormat("0.0.0.0:%d", port);
 }
 
 void TTServer::run() {
-	grpc::EnableDefaultHealthCheckService(true);
-	grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-	ServerBuilder builder;
-	// Listen on the given address without any authentication mechanism.
-	builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
-	// Register synchronous services.
-	GreeterServiceImpl service;
-	builder.RegisterService(&service);
-	// Finally assemble the server and wait for the server to shutdown.
-	std::unique_ptr<Server> server(builder.BuildAndStart());
-	server->Wait();
+    grpc::EnableDefaultHealthCheckService(true);
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    ServerBuilder builder;
+    // Listen on the given address without any authentication mechanism.
+    builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
+    // Register synchronous services.
+    GreeterServiceImpl service;
+    builder.RegisterService(&service);
+    // Finally assemble the server and wait for the server to shutdown.
+    std::unique_ptr<Server> server(builder.BuildAndStart());
+    server->Wait();
 }
