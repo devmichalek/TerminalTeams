@@ -13,22 +13,28 @@ TTTextBoxHandler::TTTextBoxHandler(std::string uniqueName,
         mCallbackMessageSent(callbackMessageSent),
         mCallbackContactsSwitch(callbackContactsSwitch),
         mNamedPipeDescriptor(-1),
-        mSocketDescriptor(-1),
-        mNamedPipePath(TTTextBoxSettings::getPipePath(uniqueName)) {
+        mNamedPipePath(TTTextBoxSettings::getPipePath(uniqueName)),
+        mStopped{false} {
     const std::string classNamePrefix = "TTTextBoxHandler: ";
     errno = 0;
     if (mkfifo(mNamedPipePath.c_str(), 0666) < 0) {
         throw std::runtime_error(classNamePrefix + "Failed to create named pipe, errno=" + std::to_string(errno));
     }
 
-    mNamedPipeDescriptor = open(mNamedPipePath.c_str(), O_WRONLY);
+    mNamedPipeDescriptor = open(mNamedPipePath.c_str(), O_RDONLY);
     if (mNamedPipeDescriptor == -1) {
         throw std::runtime_error(classNamePrefix + "Failed to open named pipe, errno=" + std::to_string(errno));
     }
+
+    // Set main receiver thread
+    std::promise<void> mainPromise;
+    mBlockers.push_back(mainPromise.get_future());
+    mThreads.push_back(std::thread(&TTTextBoxHandler::main, this, std::move(mainPromise)));
+    mThreads.back().detach();
 }
 
 TTTextBoxHandler::~TTTextBoxHandler() {
-    mStopped.store(true);
+    stop();
     for (auto &blocker : mBlockers) {
         blocker.wait();
     }
@@ -36,22 +42,18 @@ TTTextBoxHandler::~TTTextBoxHandler() {
     unlink(mNamedPipePath.c_str());
 }
 
-void TTTextBoxHandler::heartbeat(std::promise<void> promise) {
-    try {
-        while (!mStopped.load()) {
-            // ...
-        }
-    } catch (...) {
-        // ...
-    }
+void TTTextBoxHandler::stop() {
     mStopped.store(true);
-    promise.set_value();
+}
+
+bool TTTextBoxHandler::stopped() const {
+    return mStopped.load();
 }
 
 void TTTextBoxHandler::main(std::promise<void> promise) {
     try {
         for (auto i = TTTEXTBOX_RECEIVE_TRY_COUNT; i >= 0; --i) {
-            if (mStopped.load()) {
+            if (stopped()) {
                 break;
             }
             TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);
@@ -85,6 +87,6 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
     } catch (...) {
         // ...
     }
-    mStopped.store(true);
+    stop();
     promise.set_value();
 }
