@@ -85,7 +85,7 @@ void TTChat::run() {
                                               &ts);
                 if (result != -1) {
                     TTChatMessage message;
-                    std::memcpy(&message, messageBuffer, TTCHAT_MESSAGE_MAX_LENGTH);
+                    memcpy(&message, messageBuffer, TTCHAT_MESSAGE_MAX_LENGTH);
                     message.data[message.dataLength] = '\0';
                     switch (message.type) {
                         case TTChatMessageType::CLEAR:

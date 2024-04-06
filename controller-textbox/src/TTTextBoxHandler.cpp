@@ -1,6 +1,11 @@
 #include "TTTextBoxHandler.hpp"
 #include "TTTextBoxSettings.hpp"
+#include "TTTextBoxMessage.hpp"
 #include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 TTTextBoxHandler::TTTextBoxHandler(std::string uniqueName,
     TTTextBoxCallbackMessageSent callbackMessageSent,
@@ -61,7 +66,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                 case TTTextBoxStatus::CONTACTS_SWITCH:
                 {
                     size_t id = 0;
-                    std::memcpy(&id, message.data, message.dataLength);
+                    memcpy(&id, message.data, message.dataLength);
                     mCallbackContactsSwitch(id);
                     break;
                 }

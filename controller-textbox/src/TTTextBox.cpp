@@ -1,8 +1,9 @@
 #include "TTTextBox.hpp"
 #include <iostream>
+#include <list>
 #include <fcntl.h>
 
-TTTextBox::TTTextBox(const TTTextBoxSettings& settings, TTTextBoxCallbackQuit callbackQuit) :
+TTTextBox::TTTextBox(const TTTextBoxSettings& settings) :
     mNamedPipeDescriptor(-1),
     mSocketDescriptor(-1)
 {
@@ -12,6 +13,7 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings, TTTextBoxCallbackQuit ca
         if (mStopped.load()) {
             return; // Forced exit
         }
+        const auto pipePath = TTTextBoxSettings::getPipePath(settings.getUniqueName());
         if ((mNamedPipeDescriptor = open(pipePath.c_str(), O_RDONLY)) != -1) {
             break;
         }
@@ -48,7 +50,7 @@ void TTTextBox::run() {
             if (mStopped.load()) {
                 break; // Forced exit
             }
-
+            // todo: check for TTTEXTBOX_DATA_MAX_LENGTH
             // Clear the window
             std::cout << "\033[2J\033[1;1H" << std::flush;
         }
@@ -58,7 +60,7 @@ void TTTextBox::run() {
     stop();
 }
 
-void TTTextBox::close() {
+void TTTextBox::stop() {
     mStopped.store(true);
 }
 
@@ -82,7 +84,7 @@ void TTTextBox::main(std::promise<void> promise) {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 auto waitTimeMs = std::chrono::milliseconds(TTTEXTBOX_QUEUED_MSG_TIMEOUT_MS);
-                mQueueCondition.wait(lock, waitTimeMs, [this]() {
+                mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
                     return !mQueuedMessages.empty();
                 });
                 while (!mQueuedMessages.empty()) {

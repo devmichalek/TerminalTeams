@@ -1,5 +1,7 @@
 #pragma once
 #include <queue>
+#include <deque>
+#include <future>
 #include "TTTextBoxSettings.hpp"
 #include "TTTextBoxMessage.hpp"
 
@@ -23,6 +25,6 @@ private:
     std::condition_variable mQueueCondition;
     std::atomic<bool> mStopped;
     std::queue<std::thread> mThreads;
-    std::queue<std::future<void>> mBlockers;
+    std::deque<std::future<void>> mBlockers;
 };
 

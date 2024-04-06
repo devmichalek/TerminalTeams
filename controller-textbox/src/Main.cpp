@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
 
     // Run application
     TTTextBoxSettings settings(argc, argv);
-    application std::make_unique<TTTextBox>(settings);
+    application = std::make_unique<TTTextBox>(settings);
     application->run();
     return 0;
 }

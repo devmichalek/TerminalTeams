@@ -1,4 +1,8 @@
 #pragma once
+#include <string>
+#include <future>
+#include <queue>
+#include <deque>
 #include <functional>
 
 using TTTextBoxCallbackMessageSent = std::function<void(std::string)>;
@@ -23,5 +27,5 @@ private:
     // Thread concurrent message communication
     std::atomic<bool> mStopped;
     std::queue<std::thread> mThreads;
-    std::queue<std::future<void>> mBlockers;
+    std::deque<std::future<void>> mBlockers;
 };

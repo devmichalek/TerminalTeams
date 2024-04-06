@@ -22,7 +22,7 @@ struct TTChatMessage {
             type(type),
             timestamp(timestamp),
             dataLength(dataLength) {
-        std::memcpy(this->data, data, dataLength);
+        memcpy(this->data, data, dataLength);
     }
     TTChatMessageType type;
     TTChatTimestamp timestamp;
