@@ -17,8 +17,7 @@ get_filename_component(TT_CONTACTS_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
 get_filename_component(TT_CONTACTS_DIRECTORY "../src" ABSOLUTE)
 
 set(TT_CONTACTS_HANDLER_TEST_SCRIPTS
-  "autotests-happy-path.sh"
-  "autotests-run.sh")
+  "autotests-happy-path.sh")
 
 add_subdirectory(${TT_CONTACTS_DIRECTORY} ${TT_CONTACTS} EXCLUDE_FROM_ALL)
 

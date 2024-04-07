@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 
 # Test setup
+APP_HANDLER="./tteams-chat-handler"
+APP="./tteams-chat"
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 MSG_QUEUE_NAME=chat
 mkfifo ${HANDLER_STDIN}
 sleep infinity > ${HANDLER_STDIN} &
 HANDLER_STDIN_PID=$!
-./tteams-chat-handler "${MSG_QUEUE_NAME}" < "${HANDLER_STDIN}" &
-./tteams-chat 40 10 "${MSG_QUEUE_NAME}" &> "${HANDLER_STDOUT}" &
+${APP_HANDLER} "${MSG_QUEUE_NAME}" < "${HANDLER_STDIN}" &
+${APP} 40 10 "${MSG_QUEUE_NAME}" &> "${HANDLER_STDOUT}" &
 
 # Test scenario
 sleep 3 # Wait for synchronization
@@ -53,27 +55,39 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-wait $(pidof ./tteams-chat-handler)
-wait $(pidof ./tteams-chat)
-rm -f ${HANDLER_STDIN}
-rm -f ${HANDLER_STDOUT}
+sleep 3 # Wait for stop
 
 # Test verdict
+EXIT_STATUS=0
+APP_PID=$(pgrep -f ${APP} | head -n 1)
+if [[ "${APP_PID}" ]]; then
+    echo "Error: Application is still running! Killing pid=$APP_PID..."
+    kill $APP_PID
+    EXIT_STATUS=1
+fi
+APP_HANDLER_PID=$(pgrep -f ${APP_HANDLER} | head -n 1)
+if [[ "${APP_HANDLER_PID}" ]]; then
+    echo "Error: Application handler is still running! Killing pid=$APP_HANDLER_PID..."
+    kill $APP_HANDLER_PID
+    EXIT_STATUS=1
+fi
 if [ -f "/dev/mqueue/${MSG_QUEUE_NAME}" ]; then
     echo "Error: File /dev/mqueue/${MSG_QUEUE_NAME} exists!"
-    exit 1
+    EXIT_STATUS=1
 fi
 if [ -f "/dev/mqueue/${MSG_QUEUE_NAME}-reversed" ]; then
     echo "Error: File /dev/mqueue/${MSG_QUEUE_NAME}-reversed exists!"
-    exit 1
+    EXIT_STATUS=1
 fi
-if [[ "$ACTUAL_RESULTS" == "$EXPECTED_RESULTS" ]]; then
-    echo "Success: Test passed!"
-    exit 0
-else
+if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
     echo "Error: Test failed!"
     printf "%s" "$ACTUAL_RESULTS" > actual_results.txt
     printf "%s" "$EXPECTED_RESULTS" > expected_results.txt
-    exit 1
+    EXIT_STATUS=1
 fi
-
+if [[ $EXIT_STATUS -eq 0 ]]; then
+    echo "Success: Test passed!"
+    rm -f ${HANDLER_STDIN}
+    rm -f ${HANDLER_STDOUT}
+fi
+exit $EXIT_STATUS
