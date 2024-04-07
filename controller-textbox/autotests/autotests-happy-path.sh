@@ -53,8 +53,10 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-if [ -f "/tmp/${UNIQUE_NAME}" ]; then
-    echo "Error: File /tmp/${UNIQUE_NAME} exists!"
+UNIQUE_PATH="/tmp/${UNIQUE_NAME}"
+if [ -f "${UNIQUE_PATH}" ]; then
+    echo "Error: File ${UNIQUE_PATH} exists! Removing this file..."
+    rm -f "${UNIQUE_PATH}"
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
@@ -65,8 +67,8 @@ if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
 fi
 if [[ $EXIT_STATUS -eq 0 ]]; then
     echo "Success: Test passed!"
-    rm -f ${HANDLER_STDIN}
-    rm -f ${HANDLER_STDOUT}
-    rm -f ${APP_STDOUT}
+    rm -f "${HANDLER_STDIN}"
+    rm -f "${HANDLER_STDOUT}"
+    rm -f "${APP_STDOUT}"
 fi
 exit $EXIT_STATUS

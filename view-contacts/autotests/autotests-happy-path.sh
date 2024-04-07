@@ -43,16 +43,22 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-if [ -f "/dev/shm/${SHARED_NAME}" ]; then
-    echo "Error: File /dev/shm/${SHARED_NAME} exists!"
+SHARED_PATH="/dev/shm/${SHARED_NAME}"
+if [ -f "${SHARED_PATH}" ]; then
+    echo "Error: File ${SHARED_PATH} exists! Removing this file..."
+    rm -f "${SHARED_PATH}"
     EXIT_STATUS=1
 fi
-if [ -f "/dev/shm/sem.${SHARED_NAME}-data-consumed" ]; then
-    echo "Error: File /dev/shm/sem.${SHARED_NAME}-data-consumed exists!"
+SEM_DATA_CONSUMED_PATH="/dev/shm/sem.${SHARED_NAME}-data-consumed"
+if [ -f "${SEM_DATA_CONSUMED_PATH}" ]; then
+    echo "Error: File ${SEM_DATA_CONSUMED_PATH} exists! Removing this file..."
+    rm -f "${SEM_DATA_CONSUMED_PATH}"
     EXIT_STATUS=1
 fi
-if [ -f "/dev/shm/sem.${SHARED_NAME}-data-produced" ]; then
-    echo "Error: File /dev/shm/sem.${SHARED_NAME}-data-produced exists!"
+SEM_DATA_PRODUCED_PATH="/dev/shm/sem.${SHARED_NAME}-data-produced"
+if [ -f "${SEM_DATA_PRODUCED_PATH}" ]; then
+    echo "Error: File ${SEM_DATA_PRODUCED_PATH} exists! Removing this file..."
+    rm -f "${SEM_DATA_PRODUCED_PATH}"
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
@@ -64,7 +70,7 @@ fi
 
 if [[ $EXIT_STATUS -eq 0 ]]; then
     echo "Success: Test passed!"
-    rm -f ${HANDLER_STDIN}
-    rm -f ${HANDLER_STDOUT}
+    rm -f "${HANDLER_STDIN}"
+    rm -f "${HANDLER_STDOUT}"
 fi
 exit $EXIT_STATUS

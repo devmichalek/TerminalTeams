@@ -71,12 +71,16 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-if [ -f "/dev/mqueue/${MSG_QUEUE_NAME}" ]; then
-    echo "Error: File /dev/mqueue/${MSG_QUEUE_NAME} exists!"
+MSG_QUEUE_PATH="/dev/mqueue/${MSG_QUEUE_NAME}"
+if [ -f "${MSG_QUEUE_PATH}" ]; then
+    echo "Error: File ${MSG_QUEUE_PATH} exists! Removing this file..."
+    rm -f "${MSG_QUEUE_PATH}"
     EXIT_STATUS=1
 fi
-if [ -f "/dev/mqueue/${MSG_QUEUE_NAME}-reversed" ]; then
-    echo "Error: File /dev/mqueue/${MSG_QUEUE_NAME}-reversed exists!"
+MSG_QUEUE_REVERSED_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-reversed"
+if [ -f "${MSG_QUEUE_REVERSED_PATH}" ]; then
+    echo "Error: File ${MSG_QUEUE_REVERSED_PATH} exists! Removing this file..."
+    rm -f "${MSG_QUEUE_PATH}"
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
@@ -87,7 +91,7 @@ if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
 fi
 if [[ $EXIT_STATUS -eq 0 ]]; then
     echo "Success: Test passed!"
-    rm -f ${HANDLER_STDIN}
-    rm -f ${HANDLER_STDOUT}
+    rm -f "${HANDLER_STDIN}"
+    rm -f "${HANDLER_STDOUT}"
 fi
 exit $EXIT_STATUS
