@@ -28,7 +28,7 @@ cmake --install build --prefix install
 - Google GRPC
 - Google Test
 - Bash
-- IPC (sockets, named pipe, shared memory, message queue)
+- Inter-Process Communication
 - Virtualization
 - Networking
 - PlantUML

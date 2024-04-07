@@ -49,7 +49,7 @@ TTChat::TTChat(TTChatSettings settings, TTChatCallbackQuit callbackQuit) :
     if (mMessageQueueDescriptor == -1) {
         throw std::runtime_error(classNamePrefix + "Failed to open message queue, errno=" + std::to_string(errno));
     }
-    // Set heartbeat thread
+    // Set heartbeat sender thread
     std::promise<void> promise;
     mHeartbeatResult = promise.get_future();
     mHeartbeatThread = std::thread(&TTChat::heartbeat, this, std::move(promise));

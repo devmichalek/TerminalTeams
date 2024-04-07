@@ -51,7 +51,7 @@ void TTTextBox::run() {
             std::string line;
             std::getline(std::cin, line);
             if (line.empty()) {
-                continue;
+                break;
             }
             send(line.c_str(), line.c_str() + line.size());
         }
