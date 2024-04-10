@@ -59,14 +59,14 @@ TTContactsHandler::~TTContactsHandler() {
     std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
 }
 
-bool TTContactsHandler::create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort) {
+bool TTContactsHandler::create(std::string nickname, std::string fullname, std::string ipAddressAndPort) {
     TTContactsMessage message;
     message.status = TTContactsStatus::ACTIVE;
     message.id = mContacts.size();
     message.dataLength = nickname.size();
     memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
     memcpy(&message.data[0], nickname.c_str(), message.dataLength);
-    mContacts.emplace_back(nickname, fullname, decription, ipAddressAndPort);
+    mContacts.emplace_back(nickname, fullname, ipAddressAndPort);
     return send(message);
 }
 

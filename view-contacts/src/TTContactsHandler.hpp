@@ -18,7 +18,7 @@ public:
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
     ~TTContactsHandler();
-    bool create(std::string nickname, std::string fullname, std::string decription, std::string ipAddressAndPort);
+    bool create(std::string nickname, std::string fullname, std::string ipAddressAndPort);
     bool send(size_t id);
     bool receive(size_t id);
     bool activate(size_t id);

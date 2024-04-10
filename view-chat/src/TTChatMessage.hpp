@@ -11,7 +11,7 @@ enum TTChatMessageType : unsigned int {
 
 using TTChatTimestamp = std::chrono::time_point<std::chrono::system_clock>;
 
-inline const unsigned int TTCHAT_DATA_MAX_LENGTH = 1024;
+inline const unsigned int TTCHAT_DATA_MAX_LENGTH = 2048;
 
 struct TTChatMessage {
     TTChatMessage() = default;

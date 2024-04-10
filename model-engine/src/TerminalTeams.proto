@@ -2,20 +2,67 @@ syntax = "proto3";
 
 package tt;
 
-// The greeting service definition.
-service Greeter {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
+// Neighbors discovery service
+service NeighborsDiscovery {
+  rpc Greet (GreetRequest) returns (GreetReply) {}
+  rpc Heartbeat (HeartbeatRequest) return (HeartbeatReply) {}
 }
 
-// The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
-  string identity = 2;
+// Neighbors chat service
+service NeighborsChat {
+  rpc Tell (TellRequest) returns (TellReply) {}
+  rpc Narrate (stream NarrateRequest) return (NarrateReply) {}
 }
 
-// The response message containing the user's name.
-message HelloReply {
-  string name = 1;
-  string identity = 2;
+message GreetRequest {
+  string nickname = 1;
+  string fullname = 2;
+  string identity = 3;
+  string ipAddressAndPort = 4;
+}
+
+message GreetReply {
+  string nickname = 1;
+  string fullname = 2;
+  string identity = 3;
+  string ipAddressAndPort = 4;
+  int32 sequenceNumber = 5;
+}
+
+message HeartbeatRequest {
+  string identity = 1;
+}
+
+message HeartbeatReply {
+  string identity = 1;
+}
+
+enum Side {
+  UNSPECIFIED = 0
+  SENDER,
+  RECEIVER
+}
+
+message TellRequest {
+  string identity = 1;
+  string message = 2;
+  int32 sequenceNumber = 3;
+  Side side = 4;
+  bytes timestamp = 5;
+}
+
+message TellReply {
+  string identity = 1;
+}
+
+message NarrateRequest {
+  string identity = 1;
+  string message = 2;
+  int32 sequenceNumber = 3;
+  Side side = 4;
+  bytes timestamp = 5;
+}
+
+message NarrateReply {
+  string identity = 1;
 }

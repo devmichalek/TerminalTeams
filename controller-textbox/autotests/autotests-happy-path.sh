@@ -53,7 +53,7 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-UNIQUE_PATH="/tmp/${UNIQUE_NAME}"
+UNIQUE_PATH="/tmp/${UNIQUE_NAME}-pipe"
 if [ -f "${UNIQUE_PATH}" ]; then
     echo "Error: File ${UNIQUE_PATH} exists! Removing this file..."
     rm -f "${UNIQUE_PATH}"
