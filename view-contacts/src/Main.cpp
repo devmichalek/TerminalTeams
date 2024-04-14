@@ -7,16 +7,6 @@ bool quit() {
     return quitHandle.load();
 }
 
-std::atomic<size_t> producedCounter{0};
-void produced() {
-    producedCounter++;
-}
-
-std::atomic<size_t> consumedCounter{0};
-void consumed() {
-    consumedCounter++;
-}
-
 void signalInterruptHandler(int) {
     quitHandle.store(true);
 }
@@ -33,7 +23,7 @@ int main(int argc, char** argv) {
 
     // Run main app
     TTContactsSettings settings(argc, argv);
-    TTContacts contacts(settings, &quit, &produced, &consumed);
+    TTContacts contacts(settings, &quit);
     if (!quitHandle.load()) {
         contacts.run();
     }

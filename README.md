@@ -21,7 +21,7 @@ make all -j 4 -C build
 cmake --install build --prefix install
 ```
 
-### Technology stack
+### Used frameworks, tools and concepts
 - C++ Multithreading
 - CMake
 - Google Protocol Buffers
@@ -32,6 +32,7 @@ cmake --install build --prefix install
 - Virtualization
 - Networking
 - PlantUML
+- Valgrind
 
 ### Debugging
 Use Visual Studio Code (with C/C++ Extension Pack extension) to debug application.
@@ -41,3 +42,14 @@ Application was tested using:
 - Unit tests,
 - Integration tests,
 - Manual tests - using up to four VMs running together in a virtual network.
+
+### Todo
+- use std::shared_mutex
+- user + password
+- [[fallthrough]]
+- [[noreturn]]
+- [[likely]]
+- std::launder
+- std::once_flag
+- safe cleanup
+- use LTTng

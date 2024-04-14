@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
         if (tokens.size() == 2) {
             const std::string& command = tokens[0];
             if (command == "create") {
-                status = handler.create(tokens[1], "", "", "");
+                status = handler.create(tokens[1], "", "");
             } else {
                 auto id = std::stoi(tokens[1]);
                 if (command == "send") {

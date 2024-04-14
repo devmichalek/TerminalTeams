@@ -1,5 +1,4 @@
 #include "TTContacts.hpp"
-#include <iostream>
 #include <chrono>
 #include <thread>
 #include <cstring>
@@ -9,11 +8,9 @@
 
 TTContacts::TTContacts(TTContactsSettings settings,
     TTContactsCallbackQuit callbackQuit,
-    TTContactsCallbackDataProduced callbackDataProduced,
-    TTContactsCallbackDataConsumed callbackDataConsumed) :
+    TTContactsCallbackOutStream& callbackOutStream) :
         mCallbackQuit(callbackQuit),
-        mCallbackDataProduced(callbackDataProduced),
-        mCallbackDataConsumed(callbackDataConsumed),
+        mCallbackOutStream(callbackOutStream),
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
@@ -26,9 +23,7 @@ TTContacts::TTContacts(TTContactsSettings settings,
 
     errno = 0;
     for (auto attempt = TTCONTACTS_SEMAPHORES_READY_TRY_COUNT; attempt > 0; --attempt) {
-        if (mCallbackQuit && mCallbackQuit()) {
-            return; // Forced exit
-        }
+        
         if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), 0)) != SEM_FAILED) {
             break;
         }
@@ -53,74 +48,75 @@ TTContacts::TTContacts(TTContactsSettings settings,
     mSharedMessage = new(rawPointer) TTContactsMessage;
 }
 
-// todo: add try & catch below?
 void TTContacts::run() {
     if (!mSharedMessage) {
         return;
     }
-
-    std::vector<std::string> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
-    while (true) {
-        // Wait for the other process to produce the data
-        {
-            int result = 0;
-            for (auto attempt = TTCONTACTS_DATA_PRODUCE_TRY_COUNT; attempt >= 0; --attempt) {
-                if (mCallbackQuit && mCallbackQuit()) {
-                    result = -1;
-                    break; // Forced exit
-                }
-                struct timespec ts;
-                if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                    result = -1;
-                    break; // Hard failure
-                }
-                ts.tv_sec += TTCONTACTS_DATA_PRODUCE_TIMEOUT_S;
-                result = sem_timedwait(mDataProducedSemaphore, &ts);
-                if (result != -1) {
-                    if (mCallbackDataConsumed) {
-                        mCallbackDataConsumed();
+    
+    try {
+        while (!mCallbackQuit()) {
+            // Wait for the other process to produce the data
+            {
+                int result = 0;
+                for (auto attempt = TTCONTACTS_DATA_PRODUCE_TRY_COUNT; attempt >= 0; --attempt) {
+                    struct timespec ts;
+                    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                        result = -1;
+                        break; // Hard failure
                     }
-                    break; // Success
-                } else if (errno == EINTR) {
-                    continue; // Soft failure
+                    ts.tv_sec += TTCONTACTS_DATA_PRODUCE_TIMEOUT_S;
+                    result = sem_timedwait(mDataProducedSemaphore, &ts);
+                    if (result != -1) {
+                        break; // Success
+                    } else if (errno == EINTR) {
+                        continue; // Soft failure
+                    }
+                }
+                if (result == -1) {
+                    break;
                 }
             }
-            if (result == -1) {
+
+            TTContactsMessage newMessage;
+            memcpy(&newMessage, mSharedMessage, sizeof(newMessage));
+
+            if (sem_post(mDataConsumedSemaphore) == -1) {
                 break;
             }
+            
+            if (handle(newMessage)) {
+                refresh();
+            }
         }
+    } catch (...) {
+        // ...
+    }
+}
 
-        TTContactsMessage newMessage;
-        memcpy(&newMessage, mSharedMessage, sizeof(newMessage));
-
-        if (sem_post(mDataConsumedSemaphore) == -1) {
-            break;
-        } else if (mCallbackDataProduced) {
-            mCallbackDataProduced();
-        }
-
-        if (newMessage.status == TTContactsStatus::HEARTBEAT) {
-            // Nothing to be done
-            continue;
-        }
-
-        if (newMessage.status == TTContactsStatus::ACTIVE && newMessage.id >= mContacts.size()) {
-            std::string nickname(newMessage.data, newMessage.data + newMessage.dataLength);
-            auto newContact = std::make_tuple(newMessage.id, nickname, newMessage.status);
+bool TTContacts::handle(const TTContactsMessage& message) {
+    if (message.status == TTContactsStatus::HEARTBEAT) {
+        // Nothing to be done
+        return false;
+    } else {
+        if (message.status == TTContactsStatus::ACTIVE && message.id >= mContacts.size()) {
+            std::string nickname(message.data, message.data + message.dataLength);
+            auto newContact = std::make_tuple(message.id, nickname, message.status);
             mContacts.push_back(newContact);
         } else {
-            auto& contact = mContacts[newMessage.id];
-            std::get<2>(contact) = newMessage.status;
+            auto& contact = mContacts[message.id];
+            std::get<2>(contact) = message.status;
         }
+    }
+    return true;
+}
 
-        // Clear
-        std::cout << "\033[2J\033[1;1H" << std::flush;
-
-        for (auto &contact : mContacts) {
-            std::cout << "#" << std::get<0>(contact);
-            std::cout << " " << std::get<1>(contact);
-            std::cout << " " << statuses[std::get<2>(contact)];
-            std::cout << std::endl;
-        }
+void TTContacts::refresh() {
+    mCallbackOutStream << "\033[2J\033[1;1H" << std::flush; // Clear window
+    const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
+    for (auto &contact : mContacts) {
+        mCallbackOutStream << "#" << std::get<0>(contact);
+        mCallbackOutStream << " " << std::get<1>(contact);
+        mCallbackOutStream << " " << statuses[std::get<2>(contact)];
+        mCallbackOutStream << std::endl;
     }
 }

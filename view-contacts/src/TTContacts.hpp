@@ -9,16 +9,18 @@
 class TTContacts {
 public:
     explicit TTContacts(TTContactsSettings settings,
-        TTContactsCallbackQuit callbackQuit = {},
-        TTContactsCallbackDataProduced callbackDataProduced = {},
-        TTContactsCallbackDataConsumed callbackDataConsumed = {});
+        TTContactsCallbackQuit callbackQuit,
+        TTContactsCallbackOutStream& callbackOutStream = std::cout);
     // Receives main data and sends confirmation
     void run();
 private:
+    // Handles new message, return true if refresh is needed
+    bool handle(const TTContactsMessage& message);
+    // Refreshes window
+    void refresh();
     // Callbacks
     TTContactsCallbackQuit mCallbackQuit;
-    TTContactsCallbackDataProduced mCallbackDataProduced;
-    TTContactsCallbackDataConsumed mCallbackDataConsumed;
+    TTContactsCallbackOutStream& mCallbackOutStream;
     // IPC shared memory communication
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
