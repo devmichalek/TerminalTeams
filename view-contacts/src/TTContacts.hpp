@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-class TTContacts {
+class TTContacts final {
 public:
     explicit TTContacts(TTContactsSettings settings,
         TTContactsCallbackQuit callbackQuit,

@@ -9,11 +9,11 @@ public:
         const std::string& dataConsumedSemName,
         const std::string& dataProducedSemName);
     // Initialize system objects
-    bool init(long attempts = 5, long timeoutMs = 1000);
+    virtual bool init(long attempts = 5, long timeoutMs = 1000);
     // Get with timeout
-    std::unique_ptr<TTContactsMessage> get(long attempts = 2, long timeoutMs = 2000);
+    virtual std::unique_ptr<TTContactsMessage> get(long attempts = 2, long timeoutMs = 2000);
     // Check if object is functioning properly
-    bool alive() const;
+    virtual bool alive() const;
 private:
     // System objects names
     std::string mSharedMemoryName;

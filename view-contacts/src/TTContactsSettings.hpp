@@ -3,11 +3,10 @@
 
 class TTContactsSettings {
 public:
-    explicit TTContactsSettings(int argc, char** argv);
-    size_t getTerminalWidth() const { return mWidth; }
-    size_t getTerminalHeight() const { return mHeight; }
-    std::unique_ptr<TTContactsConsumer> getConsumer() const;
-
+    explicit TTContactsSettings(int argc, const char* const* argv);
+    virtual size_t getTerminalWidth() const;
+    virtual size_t getTerminalHeight() const;
+    virtual std::unique_ptr<TTContactsConsumer> getConsumer() const;
 private:
     size_t mWidth;
     size_t mHeight;

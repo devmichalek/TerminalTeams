@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 
-TTContactsSettings::TTContactsSettings(int argc, char** argv) {
+TTContactsSettings::TTContactsSettings(int argc, const char* const* argv) {
     const std::string classNamePrefix = "TTContactsSettings: ";
     if (argc != MAX_ARGC) {
         throw std::runtime_error(classNamePrefix + "invalid number of arguments");
@@ -27,6 +27,14 @@ TTContactsSettings::TTContactsSettings(int argc, char** argv) {
 
     mSharedMemoryName = argv[3];
 }
+
+size_t TTContactsSettings::getTerminalWidth() const {
+    return mWidth;
+}
+
+size_t TTContactsSettings::getTerminalHeight() const {
+    return mHeight;
+    }
 
 std::unique_ptr<TTContactsConsumer> TTContactsSettings::getConsumer() const {
     const auto dataConsumedSemName = mSharedMemoryName + TTCONTACTS_DATA_CONSUMED_POSTFIX;
