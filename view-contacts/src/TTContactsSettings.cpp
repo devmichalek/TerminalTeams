@@ -1,4 +1,5 @@
 #include "TTContactsSettings.hpp"
+#include "TTContactsMessage.hpp"
 #include <string>
 #include <sstream>
 #include <iostream>
@@ -25,4 +26,10 @@ TTContactsSettings::TTContactsSettings(int argc, char** argv) {
     }
 
     mSharedMemoryName = argv[3];
+}
+
+std::unique_ptr<TTContactsConsumer> TTContactsSettings::getConsumer() const {
+    const auto dataConsumedSemName = mSharedMemoryName + TTCONTACTS_DATA_CONSUMED_POSTFIX;
+    const auto dataProducedSemName = mSharedMemoryName + TTCONTACTS_DATA_PRODUCED_POSTFIX;
+    return std::make_unique<TTContactsConsumer>(mSharedMemoryName, dataConsumedSemName, dataProducedSemName);
 }

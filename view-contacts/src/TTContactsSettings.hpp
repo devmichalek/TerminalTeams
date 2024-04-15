@@ -1,12 +1,12 @@
 #pragma once
-#include <string>
+#include "TTContactsConsumer.hpp"
 
 class TTContactsSettings {
 public:
     explicit TTContactsSettings(int argc, char** argv);
     size_t getTerminalWidth() const { return mWidth; }
     size_t getTerminalHeight() const { return mHeight; }
-    std::string getSharedMemoryName() const { return mSharedMemoryName; }
+    std::unique_ptr<TTContactsConsumer> getConsumer() const;
 
 private:
     size_t mWidth;

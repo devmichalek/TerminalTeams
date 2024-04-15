@@ -19,6 +19,7 @@ endforeach()
 set(TT_CONTACTS_LIB tteams-contacts)
 add_library(${TT_CONTACTS_LIB}
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsSettings.cpp"
+  "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsConsumer.cpp"
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContacts.cpp")
   set_target_properties(${TT_CONTACTS_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${PROJECT_BINARY_DIR}")

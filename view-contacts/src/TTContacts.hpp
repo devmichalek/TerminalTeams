@@ -1,8 +1,8 @@
 #pragma once
 #include "TTContactsSettings.hpp"
-#include "TTContactsMessage.hpp"
+#include "TTContactsConsumer.hpp"
 #include "TTContactsCallback.hpp"
-#include <semaphore.h>
+#include <memory>
 #include <vector>
 #include <string>
 
@@ -13,6 +13,8 @@ public:
         TTContactsCallbackOutStream& callbackOutStream = std::cout);
     // Receives main data and sends confirmation
     void run();
+    // Returns number of contacts
+    size_t size() const;
 private:
     // Handles new message, return true if refresh is needed
     bool handle(const TTContactsMessage& message);
@@ -22,9 +24,7 @@ private:
     TTContactsCallbackQuit mCallbackQuit;
     TTContactsCallbackOutStream& mCallbackOutStream;
     // IPC shared memory communication
-    TTContactsMessage* mSharedMessage;
-    sem_t* mDataProducedSemaphore;
-    sem_t* mDataConsumedSemaphore;
+    std::unique_ptr<TTContactsConsumer> mConsumer;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;
