@@ -9,7 +9,13 @@ FetchContent_Declare(
   googletest
   URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
 )
-FetchContent_MakeAvailable(googletest)
+#FetchContent_MakeAvailable(googletest)
+# Hack to make sure fetched content install targets are excluded
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
 
 enable_testing()
 
@@ -26,6 +32,10 @@ set(TT_CONTACTS_TESTED_FILES
 
 set(TT_CONTACTS_UNIT_TESTS
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsSettingsTest.cpp"
+)
+
+set(TT_CONTACTS_UNIT_TESTS_SCRIPTS
+  "unittests.sh"
 )
 
 add_executable(
@@ -45,3 +55,10 @@ target_link_libraries(
 
 include(GoogleTest)
 gtest_discover_tests(${TT_CONTACTS_UT})
+
+install(TARGETS ${TT_CONTACTS_UT} DESTINATION .)
+install(FILES ${TT_CONTACTS_UNIT_TESTS_SCRIPTS} DESTINATION .
+  PERMISSIONS
+    OWNER_EXECUTE OWNER_WRITE OWNER_READ
+    GROUP_EXECUTE GROUP_READ
+    WORLD_EXECUTE WORLD_READ)

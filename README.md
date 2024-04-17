@@ -23,16 +23,17 @@ cmake --install build --prefix install
 
 ### Used frameworks, tools and concepts
 - C++ Multithreading
-- CMake
-- Google Protocol Buffers
-- Google GRPC
-- Google Test
+- [CMake](https://cmake.org/)
+- [Google Protocol Buffers](https://protobuf.dev/)
+- [Google GRPC](https://grpc.io/)
+- [Google Test](https://google.github.io/googletest/)
 - Bash
 - Inter-Process Communication
-- Virtualization
+- [VirtualBox](https://www.virtualbox.org/)
 - Networking
-- PlantUML
-- Valgrind
+- [PlantUML](https://valgrind.org/)
+- [Valgrind](https://valgrind.org/)
+- [Linux Trace Toolkit (next generation)](https://lttng.org/)
 
 ### Debugging
 Use Visual Studio Code (with C/C++ Extension Pack extension) to debug application.
