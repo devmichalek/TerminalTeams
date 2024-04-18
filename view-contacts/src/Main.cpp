@@ -1,4 +1,5 @@
 #include "TTContacts.hpp"
+#include "TTContactsOutputStream.hpp"
 #include <signal.h>
 #include <atomic>
 
@@ -22,8 +23,9 @@ int main(int argc, char** argv) {
     sigaction(SIGSTOP, &signalAction, nullptr);
 
     // Run main app
-    TTContactsSettings settings(argc, argv);
-    TTContacts contacts(settings, &quit);
+    const TTContactsSettings settings(argc, argv);
+    const TTContactsOutputStream outputStream;
+    TTContacts contacts(settings, &quit, outputStream);
     if (!quitHandle.load()) {
         contacts.run();
     }

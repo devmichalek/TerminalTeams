@@ -2,16 +2,15 @@
 #include <cstring>
 #include <iostream>
 #include <thread>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 TTContactsConsumer::TTContactsConsumer(const std::string& sharedMemoryName,
     const std::string& dataConsumedSemName,
-    const std::string& dataProducedSemName) : 
+    const std::string& dataProducedSemName,
+    const TTContactsSyscall& syscall) : 
         mSharedMemoryName(sharedMemoryName),
         mDataConsumedSemName(dataConsumedSemName),
         mDataProducedSemName(dataProducedSemName),
+        mSyscall(syscall),
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),

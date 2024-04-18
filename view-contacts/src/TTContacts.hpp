@@ -2,19 +2,25 @@
 #include "TTContactsSettings.hpp"
 #include "TTContactsConsumer.hpp"
 #include "TTContactsCallback.hpp"
+#include "TTContactsOutputStream.hpp"
 #include <memory>
 #include <vector>
 #include <string>
 
-class TTContacts final {
+class TTContacts {
 public:
-    explicit TTContacts(TTContactsSettings settings,
+    explicit TTContacts(const TTContactsSettings& settings,
         TTContactsCallbackQuit callbackQuit,
-        TTContactsCallbackOutStream& callbackOutStream = std::cout);
+        const TTContactsOutputStream& outputStream);
+    virtual ~TTContacts() {}
+    TTContacts(const TTContacts&) = delete;
+    TTContacts(const TTContacts&&) = delete;
+    TTContacts operator=(const TTContacts&) = delete;
+    TTContacts operator=(const TTContacts&&) = delete;
     // Receives main data and sends confirmation
-    void run();
+    virtual void run();
     // Returns number of contacts
-    size_t size() const;
+    virtual size_t size() const;
 private:
     // Handles new message, return true if refresh is needed
     bool handle(const TTContactsMessage& message);
@@ -22,7 +28,8 @@ private:
     void refresh();
     // Callbacks
     TTContactsCallbackQuit mCallbackQuit;
-    TTContactsCallbackOutStream& mCallbackOutStream;
+    // Output stream
+    const TTContactsOutputStream& mOutputStream;
     // IPC shared memory communication
     std::unique_ptr<TTContactsConsumer> mConsumer;
     // Terminal Emulator window properties

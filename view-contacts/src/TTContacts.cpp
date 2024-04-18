@@ -1,11 +1,11 @@
 #include "TTContacts.hpp"
 
-TTContacts::TTContacts(TTContactsSettings settings,
+TTContacts::TTContacts(const TTContactsSettings& settings,
     TTContactsCallbackQuit callbackQuit,
-    TTContactsCallbackOutStream& callbackOutStream) :
+    const TTContactsOutputStream& outputStream) :
         mConsumer(std::move(settings.getConsumer())),
         mCallbackQuit(callbackQuit),
-        mCallbackOutStream(callbackOutStream),
+        mOutputStream(outputStream),
         mTerminalWidth(settings.getTerminalWidth()),
         mTerminalHeight(settings.getTerminalHeight()) {
     const std::string classNamePrefix = "TTContacts: ";
@@ -52,12 +52,12 @@ bool TTContacts::handle(const TTContactsMessage& message) {
 }
 
 void TTContacts::refresh() {
-    mCallbackOutStream << "\033[2J\033[1;1H" << std::flush; // Clear window
+    mOutputStream.print("\033[2J\033[1;1H").flush(); // Clear window
     const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
     for (auto &contact : mContacts) {
-        mCallbackOutStream << "#" << std::get<0>(contact);
-        mCallbackOutStream << " " << std::get<1>(contact);
-        mCallbackOutStream << " " << statuses[std::get<2>(contact)];
-        mCallbackOutStream << std::endl;
+        mOutputStream.print("#").print(std::to_string(std::get<0>(contact)));
+        mOutputStream.print(" ").print(std::get<1>(contact));
+        mOutputStream.print(" ").print(statuses[std::get<2>(contact)]);
+        mOutputStream.endl();
     }
 }

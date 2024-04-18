@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <stdexcept>
+#include <iostream>
 
 using ::testing::Test;
 
@@ -26,10 +27,6 @@ class TTContactsTest : public Test {
 
     void insertMessage();
 }
-
-class TTContactsBuffer {
-
-};
 
 TEST_F(TTContactsTest, HappyPath) {
 

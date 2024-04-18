@@ -17,15 +17,19 @@ public:
     explicit TTContactsHandler(std::string sharedMemoryName,
         TTContactsCallbackDataProduced callbackDataProduced = {},
         TTContactsCallbackDataConsumed callbackDataConsumed = {});
-    ~TTContactsHandler();
-    bool create(std::string nickname, std::string fullname, std::string ipAddressAndPort);
-    bool send(size_t id);
-    bool receive(size_t id);
-    bool activate(size_t id);
-    bool deactivate(size_t id);
-    bool select(size_t id);
-    bool unselect(size_t id);
-    const TTContactsEntry& get(size_t id) const;
+    virtual ~TTContactsHandler();
+    TTContactsHandler(const TTContactsHandler&) = delete;
+    TTContactsHandler(TTContactsHandler&&) = delete;
+    const TTContactsHandler& operator=(const TTContactsHandler&) = delete;
+    const TTContactsHandler& operator=(TTContactsHandler&&) = delete;
+    virtual bool create(std::string nickname, std::string fullname, std::string ipAddressAndPort);
+    virtual bool send(size_t id);
+    virtual bool receive(size_t id);
+    virtual bool activate(size_t id);
+    virtual bool deactivate(size_t id);
+    virtual bool select(size_t id);
+    virtual bool unselect(size_t id);
+    virtual const TTContactsEntry& get(size_t id) const;
 private:
     bool send(const TTContactsMessage& message);
     // Sends heartbeat periodically
