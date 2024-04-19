@@ -8,12 +8,12 @@ public:
     explicit TTContactsConsumer(const std::string& sharedMemoryName,
         const std::string& dataConsumedSemName,
         const std::string& dataProducedSemName,
-        const TTContactsSyscall& syscall);
+        std::shared_ptr<TTContactsSyscall> syscall);
     virtual ~TTContactsConsumer() {}
     TTContactsConsumer(const TTContactsConsumer&) = delete;
     TTContactsConsumer(TTContactsConsumer&&) = delete;
-    constexpr TTContactsConsumer& operator=(const TTContactsConsumer&) = delete;
-    constexpr TTContactsConsumer& operator=(TTContactsConsumer&&) = delete;
+    TTContactsConsumer& operator=(const TTContactsConsumer&) = delete;
+    TTContactsConsumer& operator=(TTContactsConsumer&&) = delete;
     // Initialize system objects
     virtual bool init(long attempts = 5, long timeoutMs = 1000);
     // Get with timeout
@@ -26,7 +26,7 @@ private:
     std::string mDataConsumedSemName;
     std::string mDataProducedSemName;
     // IPC shared memory communication
-    const TTContactsSyscall& mSyscall;
+    std::shared_ptr<TTContactsSyscall> mSyscall;
     TTContactsMessage* mSharedMessage;
     sem_t* mDataProducedSemaphore;
     sem_t* mDataConsumedSemaphore;

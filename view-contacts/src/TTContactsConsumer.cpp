@@ -6,11 +6,11 @@
 TTContactsConsumer::TTContactsConsumer(const std::string& sharedMemoryName,
     const std::string& dataConsumedSemName,
     const std::string& dataProducedSemName,
-    const TTContactsSyscall& syscall) : 
+    std::shared_ptr<TTContactsSyscall> syscall) : 
         mSharedMemoryName(sharedMemoryName),
         mDataConsumedSemName(dataConsumedSemName),
         mDataProducedSemName(dataProducedSemName),
-        mSyscall(syscall),
+        mSyscall(std::move(syscall)),
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
@@ -26,7 +26,7 @@ bool TTContactsConsumer::init(long attempts, long timeoutMs) {
     errno = 0;
     for (auto attempt = attempts; attempt > 0; --attempt) {
         
-        if ((mDataProducedSemaphore = sem_open(mDataProducedSemName.c_str(), 0)) != SEM_FAILED) {
+        if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), 0)) != SEM_FAILED) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
@@ -38,18 +38,18 @@ bool TTContactsConsumer::init(long attempts, long timeoutMs) {
     }
 
     errno = 0;
-    if ((mDataConsumedSemaphore = sem_open(mDataConsumedSemName.c_str(), 0)) == SEM_FAILED) {
+    if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) == SEM_FAILED) {
         std::cerr << classNamePrefix << "Failed to open data consumed semaphore, errno=" << errno << std::endl;
         return false;
     }
 
-    int fd = shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+    int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         std::cerr << classNamePrefix << "Failed to open shared object, errno=" << errno << std::endl;
         return false;
     }
 
-    void* rawPointer = mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void* rawPointer = mSyscall->mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     mSharedMessage = new(rawPointer) TTContactsMessage;
     if (!mSharedMessage) {
         std::cerr << classNamePrefix << "Failed to allocate shared message!" << std::endl;
@@ -70,12 +70,12 @@ std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long t
                 int res = -1;
                 for (auto attempt = attempts; attempt > 0; --attempt) {
                     struct timespec ts;
-                    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                    if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                         res = -1;
                         break; // Hard failure
                     }
                     ts.tv_sec += timeoutSecs;
-                    res = sem_timedwait(mDataProducedSemaphore, &ts);
+                    res = mSyscall->sem_timedwait(mDataProducedSemaphore, &ts);
                     if (res != -1) {
                         break; // Success
                     } else if (errno == EINTR) {
@@ -89,7 +89,7 @@ std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long t
 
             result = std::make_unique<TTContactsMessage>();
             memcpy(result.get(), mSharedMessage, sizeof(TTContactsMessage));
-            if (sem_post(mDataConsumedSemaphore) == -1) {
+            if (mSyscall->sem_post(mDataConsumedSemaphore) == -1) {
                 result = nullptr;
             }
         } while (false);

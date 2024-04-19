@@ -20,8 +20,8 @@ public:
     virtual ~TTContactsHandler();
     TTContactsHandler(const TTContactsHandler&) = delete;
     TTContactsHandler(TTContactsHandler&&) = delete;
-    const TTContactsHandler& operator=(const TTContactsHandler&) = delete;
-    const TTContactsHandler& operator=(TTContactsHandler&&) = delete;
+    TTContactsHandler& operator=(const TTContactsHandler&) = delete;
+    TTContactsHandler& operator=(TTContactsHandler&&) = delete;
     virtual bool create(std::string nickname, std::string fullname, std::string ipAddressAndPort);
     virtual bool send(size_t id);
     virtual bool receive(size_t id);

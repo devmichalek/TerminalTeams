@@ -38,8 +38,10 @@ size_t TTContactsSettings::getTerminalHeight() const {
     }
 
 std::unique_ptr<TTContactsConsumer> TTContactsSettings::getConsumer() const {
-    const TTContactsSyscall syscall;
     const auto dataConsumedSemName = mSharedMemoryName + TTCONTACTS_DATA_CONSUMED_POSTFIX;
     const auto dataProducedSemName = mSharedMemoryName + TTCONTACTS_DATA_PRODUCED_POSTFIX;
-    return std::make_unique<TTContactsConsumer>(mSharedMemoryName, dataConsumedSemName, dataProducedSemName, syscall);
+    return std::make_unique<TTContactsConsumer>(mSharedMemoryName,
+                                                dataConsumedSemName,
+                                                dataProducedSemName,
+                                                std::make_shared<TTContactsSyscall>());
 }

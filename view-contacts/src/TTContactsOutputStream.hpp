@@ -8,8 +8,8 @@ public:
     virtual ~TTContactsOutputStream() {}
     TTContactsOutputStream(const TTContactsOutputStream&) = default;
     TTContactsOutputStream(TTContactsOutputStream&&) = default;
-    constexpr TTContactsOutputStream& operator=(const TTContactsOutputStream&) = default;
-    constexpr TTContactsOutputStream& operator=(TTContactsOutputStream&&) = default;
+    TTContactsOutputStream& operator=(const TTContactsOutputStream&) = default;
+    TTContactsOutputStream& operator=(TTContactsOutputStream&&) = default;
 
     virtual const TTContactsOutputStream& print(const char* cmessage) const {
         std::cout << cmessage;

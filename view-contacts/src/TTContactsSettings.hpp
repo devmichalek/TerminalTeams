@@ -7,8 +7,8 @@ public:
     virtual ~TTContactsSettings() {}
     TTContactsSettings(const TTContactsSettings&) = delete;
     TTContactsSettings(TTContactsSettings&&) = delete;
-    constexpr TTContactsSettings& operator=(const TTContactsSettings&) = delete;
-    constexpr TTContactsSettings& operator=(TTContactsSettings&&) = delete;
+    TTContactsSettings& operator=(const TTContactsSettings&) = delete;
+    TTContactsSettings& operator=(TTContactsSettings&&) = delete;
     virtual size_t getTerminalWidth() const;
     virtual size_t getTerminalHeight() const;
     virtual std::unique_ptr<TTContactsConsumer> getConsumer() const;

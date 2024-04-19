@@ -11,8 +11,8 @@ public:
     virtual ~TTContactsSyscall() {}
     TTContactsSyscall(const TTContactsSyscall&) = delete;
     TTContactsSyscall(TTContactsSyscall&&) = delete;
-    const TTContactsSyscall& operator=(const TTContactsSyscall&) = delete;
-    const TTContactsSyscall& operator=(TTContactsSyscall&&) = delete;
+    TTContactsSyscall& operator=(const TTContactsSyscall&) = delete;
+    TTContactsSyscall& operator=(TTContactsSyscall&&) = delete;
 
     virtual sem_t* sem_open(const char* name, int oflag) const {
         return ::sem_open(name, oflag);

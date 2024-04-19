@@ -18,6 +18,6 @@ struct TTContactsMessage final {
     ~TTContactsMessage() = default;
     TTContactsMessage(const TTContactsMessage&) = default;
     TTContactsMessage(TTContactsMessage&&) = default;
-    constexpr TTContactsMessage& operator=(const TTContactsMessage&) = default;
-    constexpr TTContactsMessage& operator=(TTContactsMessage&&) = default;
+    TTContactsMessage& operator=(const TTContactsMessage&) = default;
+    TTContactsMessage& operator=(TTContactsMessage&&) = default;
 };
