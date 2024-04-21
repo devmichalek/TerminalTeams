@@ -11,7 +11,7 @@ public:
     TTContactsSettings& operator=(TTContactsSettings&&) = delete;
     virtual size_t getTerminalWidth() const;
     virtual size_t getTerminalHeight() const;
-    virtual std::unique_ptr<TTContactsConsumer> getConsumer() const;
+    virtual std::shared_ptr<TTContactsConsumer> getConsumer() const;
 private:
     size_t mWidth;
     size_t mHeight;

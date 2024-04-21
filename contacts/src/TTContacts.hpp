@@ -31,7 +31,7 @@ private:
     // Output stream
     const TTContactsOutputStream& mOutputStream;
     // IPC shared memory communication
-    std::unique_ptr<TTContactsConsumer> mConsumer;
+    std::shared_ptr<TTContactsConsumer> mConsumer;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;

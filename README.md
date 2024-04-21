@@ -33,7 +33,7 @@ cmake --install build --prefix install
 - Networking
 - [PlantUML](https://valgrind.org/)
 - [Valgrind](https://valgrind.org/)
-- [Linux Trace Toolkit (next generation)](https://lttng.org/)
+- [Linux Trace Toolkit (next generation)](https://lttng.org/) and [Babeltrace](https://babeltrace.org/)
 
 ### Debugging
 Use Visual Studio Code (with C/C++ Extension Pack extension) to debug application.

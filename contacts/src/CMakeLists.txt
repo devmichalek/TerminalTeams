@@ -31,7 +31,9 @@ add_executable(${TT_CONTACTS}
 set_target_properties(${TT_CONTACTS} PROPERTIES OUTPUT_NAME ${TT_CONTACTS_LIB})
 target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
-target_link_libraries(${TT_CONTACTS} ${TT_CONTACTS_LIB})
+target_link_libraries(${TT_CONTACTS}
+  ${TT_CONTACTS_LIB}
+)
 
 set(TT_CONTACTS_HANDLER_LIB tteams-contacts-handler)
 add_library(${TT_CONTACTS_HANDLER_LIB}
