@@ -13,7 +13,9 @@ get_filename_component(TT_DIAGNOSTICS_DIRECTORY "${TT_ROOT_DIRECTORY}/diagnostic
 get_filename_component(TT_CONTACTS_SRC_DIRECTORY "." ABSOLUTE)
 set(TT_DIAGNOSTICS_LIB "tteams-diagnostics")
 
-add_subdirectory("${TT_DIAGNOSTICS_DIRECTORY}" "${TT_DIAGNOSTICS_LIB}")
+if (NOT TARGET ${TT_DIAGNOSTICS_LIB})
+  add_subdirectory("${TT_DIAGNOSTICS_DIRECTORY}" "${TT_DIAGNOSTICS_LIB}")
+endif()
 
 set(TT_CONTACTS_SCRIPTS
   "${TT_CONTACTS_SRC_DIRECTORY}/tteams-contacts.sh"
