@@ -62,14 +62,14 @@ if [ -f "${SEM_DATA_PRODUCED_PATH}" ]; then
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
-    echo "Error: Test failed!"
+    echo "Error: Actual results are different than expected!"
     printf "%s" "$ACTUAL_RESULTS" > actual_results.txt
     printf "%s" "$EXPECTED_RESULTS" > expected_results.txt
     EXIT_STATUS=1
 fi
 
 if [[ $EXIT_STATUS -eq 0 ]]; then
-    echo "Success: Test passed!"
+    echo "Success: Autotest \"happy path\" passed!"
     rm -f "${HANDLER_STDIN}"
     rm -f "${HANDLER_STDOUT}"
 fi
