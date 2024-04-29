@@ -2,16 +2,14 @@
 
 #ifdef TT_DIAGNOSTICS_LOGGER_DEBUG
 
-#include <string>
-#include <sstream>
-#include <iomanip>
+#include "TTDiagnosticsHelper.hpp"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 
 class TTDiagnosticsLogger {
  public:
     explicit TTDiagnosticsLogger(std::string name, size_t maxSize = 1048576 * 5) {
-        const auto uniquePath = generateUniquePath(name);
+        const auto uniquePath = TTDiagnosticsHelper::generateUniquePath(name, ".log.txt");
         mLogger = spdlog::rotating_logger_mt(name, uniquePath.c_str(), maxSize, 1);
     }
 
@@ -56,18 +54,6 @@ class TTDiagnosticsLogger {
     TTDiagnosticsLogger operator=(const TTDiagnosticsLogger&) = delete;
     TTDiagnosticsLogger operator=(const TTDiagnosticsLogger&&) = delete;
 
-    std::string generateUniquePath(const std::string& name) {
-        return std::string("/tmp/").append(name).append("-").append(now()).append(".log.txt");
-    }
-
-    std::string now()
-    {
-        auto now = std::chrono::system_clock::now();
-        auto in_time_t = std::chrono::system_clock::to_time_t(now);
-        std::stringstream ss;
-        ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d-%X");
-        return ss.str();
-    }
     std::shared_ptr<spdlog::logger> mLogger;
 };
 
