@@ -27,7 +27,7 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-sleep 5 # Wait for stop
+sleep 6 # Wait for stop
 
 # Test verdict
 EXIT_STATUS=0

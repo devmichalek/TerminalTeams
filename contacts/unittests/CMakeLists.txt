@@ -36,7 +36,7 @@ set(TT_CONTACTS_UNIT_TESTS
 )
 
 set(TT_CONTACTS_UNIT_TESTS_SCRIPTS
-  "unittests.sh"
+  "tteams-contacts-unittests.sh"
 )
 
 add_executable(
@@ -57,8 +57,9 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(${TT_CONTACTS_UT})
 
-install(TARGETS ${TT_CONTACTS_UT} DESTINATION .)
-install(FILES ${TT_CONTACTS_UNIT_TESTS_SCRIPTS} DESTINATION .
+set(TT_CONTACTS_DST "unittests")
+install(TARGETS ${TT_CONTACTS_UT} DESTINATION "${TT_CONTACTS_DST}")
+install(FILES ${TT_CONTACTS_UNIT_TESTS_SCRIPTS} DESTINATION "${TT_CONTACTS_DST}"
   PERMISSIONS
     OWNER_EXECUTE OWNER_WRITE OWNER_READ
     GROUP_EXECUTE GROUP_READ

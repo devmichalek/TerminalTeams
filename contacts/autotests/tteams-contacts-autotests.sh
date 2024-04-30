@@ -5,7 +5,7 @@ function exit-with-error() {
     exit 1
 }
 
-./autotests-happy-path.sh || exit-with-error "\"happy path\""
+./tteams-contacts-autotests-happy-path.sh || exit-with-error "\"happy path\""
 
 echo "Success: All autotests passed!"
 exit 0
