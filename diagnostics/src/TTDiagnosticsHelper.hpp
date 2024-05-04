@@ -5,7 +5,7 @@
 #include <chrono>
 
 namespace TTDiagnosticsHelper {
-    std::string now()
+    inline std::string now()
     {
         auto now = std::chrono::system_clock::now();
         auto in_time_t = std::chrono::system_clock::to_time_t(now);
@@ -14,7 +14,7 @@ namespace TTDiagnosticsHelper {
         return ss.str();
     }
 
-    std::string generateUniquePath(const std::string& filename, const std::string& extension) {
+    inline std::string generateUniquePath(const std::string& filename, const std::string& extension) {
         return std::string("/tmp/").append(filename).append("-").append(now()).append(extension);
     }
 }

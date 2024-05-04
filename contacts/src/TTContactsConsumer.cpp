@@ -14,12 +14,15 @@ TTContactsConsumer::TTContactsConsumer(const std::string& sharedMemoryName,
         mSharedMessage(nullptr),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
-        mAlive(false) {}
+        mAlive(false),
+        mLogger(TTDiagnosticsLogger::getInstance()) {
+    mLogger.info("{} Constructing...", mClassNamePrefix);
+}
 
 bool TTContactsConsumer::init(long attempts, long timeoutMs) {
-    const std::string classNamePrefix = "TTContactsConsumer: ";
+    mLogger.info("{} Initializing...", mClassNamePrefix);
     if (mAlive) {
-        std::cerr << classNamePrefix << "Cannot reinitialize!" << std::endl;
+        mLogger.error("{} Cannot reinitialize!", mClassNamePrefix);
         return false;
     }
 
@@ -33,29 +36,30 @@ bool TTContactsConsumer::init(long attempts, long timeoutMs) {
     }
 
     if (mDataProducedSemaphore == SEM_FAILED) {
-        std::cerr << classNamePrefix << "Failed to open data produced semaphore, errno=" << errno << std::endl;
+        mLogger.error("{} Failed to open data produced semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     errno = 0;
     if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) == SEM_FAILED) {
-        std::cerr << classNamePrefix << "Failed to open data consumed semaphore, errno=" << errno << std::endl;
+        mLogger.error("{} Failed to open data consumed semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
-        std::cerr << classNamePrefix << "Failed to open shared object, errno=" << errno << std::endl;
+        mLogger.error("{} Failed to open shared object, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     void* rawPointer = mSyscall->mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     mSharedMessage = new(rawPointer) TTContactsMessage;
     if (!mSharedMessage) {
-        std::cerr << classNamePrefix << "Failed to allocate shared message!" << std::endl;
+        mLogger.error("{} Failed to allocate shared message!", mClassNamePrefix);
         return false;
     }
 
+    mLogger.info("{} Successfully initialized!", mClassNamePrefix);
     mAlive = true;
     return true;
 }
@@ -65,21 +69,24 @@ std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long t
     std::unique_ptr<TTContactsMessage> result = nullptr;
     if (mAlive) {
         do {
-            // Wait for the other process to produce the data
             {
                 int res = -1;
                 for (auto attempt = attempts; attempt > 0; --attempt) {
+                    mLogger.info("{} Waiting for the other process to produce the data, attempt={}", mClassNamePrefix, (attempts - attempt));
                     struct timespec ts;
                     if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                         res = -1;
-                        break; // Hard failure
+                        mLogger.error("{} Hard failure at fetching clock time!", mClassNamePrefix);
+                        break;
                     }
                     ts.tv_sec += timeoutSecs;
                     res = mSyscall->sem_timedwait(mDataProducedSemaphore, &ts);
                     if (res != -1) {
-                        break; // Success
+                        mLogger.info("{} Fetched other process data", mClassNamePrefix);
+                        break;
                     } else if (errno == EINTR) {
-                        continue; // Soft failure
+                        mLogger.warning("{} Soft failure, interrupted function call!", mClassNamePrefix);
+                        continue;
                     }
                 }
                 if (res == -1) {
@@ -90,11 +97,16 @@ std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long t
             result = std::make_unique<TTContactsMessage>();
             memcpy(result.get(), mSharedMessage, sizeof(TTContactsMessage));
             if (mSyscall->sem_post(mDataConsumedSemaphore) == -1) {
+                mLogger.error("{} Failed to notify other process!", mClassNamePrefix);
                 result = nullptr;
+            } else {
+                mLogger.info("{} Successfully notified other process", mClassNamePrefix);
             }
         } while (false);
     }
+    
     mAlive = (result != nullptr);
+    mLogger.info("{} Summary of the fetched message, alive={}", mClassNamePrefix, mAlive);
     return result;
 }
 

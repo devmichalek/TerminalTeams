@@ -3,6 +3,7 @@
 #include "TTContactsConsumer.hpp"
 #include "TTContactsCallback.hpp"
 #include "TTContactsOutputStream.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <memory>
 #include <vector>
 #include <string>
@@ -30,6 +31,9 @@ private:
     TTContactsCallbackQuit mCallbackQuit;
     // Output stream
     const TTContactsOutputStream& mOutputStream;
+    // Logger
+    inline static const std::string mClassNamePrefix = "TTContacts:";
+    const TTDiagnosticsLogger& mLogger;
     // IPC shared memory communication
     std::shared_ptr<TTContactsConsumer> mConsumer;
     // Terminal Emulator window properties

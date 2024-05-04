@@ -19,18 +19,18 @@ endif()
 
 enable_testing()
 
+set(TT_CONTACTS_LIB tteams-contacts)
+set(TT_CONTACTS_HANDLER_LIB tteams-contacts-handler)
 set(TT_CONTACTS_UT tteams-contacts-ut)
 get_filename_component(TT_CONTACTS_TESTED_DIRECTORY "../src" ABSOLUTE)
 get_filename_component(TT_CONTACTS_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 
-set(TT_CONTACTS_TESTED_FILES
-  "${TT_CONTACTS_TESTED_DIRECTORY}/TTContacts.cpp"
-  "${TT_CONTACTS_TESTED_DIRECTORY}/TTContactsSettings.cpp"
-  "${TT_CONTACTS_TESTED_DIRECTORY}/TTContactsConsumer.cpp"
-  "${TT_CONTACTS_TESTED_DIRECTORY}/TTContactsHandler.cpp"
-)
+if (NOT TARGET ${TT_CONTACTS_LIB})
+  add_subdirectory(${TT_CONTACTS_TESTED_DIRECTORY} ${TT_CONTACTS_LIB} EXCLUDE_FROM_ALL)
+endif()
 
 set(TT_CONTACTS_UNIT_TESTS
+  "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/Main.cpp"
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsSettingsTest.cpp"
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsTest.cpp"
 )
@@ -41,7 +41,6 @@ set(TT_CONTACTS_UNIT_TESTS_SCRIPTS
 
 add_executable(
   ${TT_CONTACTS_UT}
-  "${TT_CONTACTS_TESTED_FILES}"
   "${TT_CONTACTS_UNIT_TESTS}"
 )
 
@@ -50,6 +49,8 @@ target_include_directories(${TT_CONTACTS_UT} PUBLIC "${TT_CONTACTS_UNIT_TESTS_DI
 
 target_link_libraries(
   ${TT_CONTACTS_UT}
+  ${TT_CONTACTS_LIB}
+  ${TT_CONTACTS_HANDLER_LIB}
   GTest::gtest_main
   GTest::gmock_main
 )

@@ -1,7 +1,9 @@
 #pragma once
 #include "TTContactsMessage.hpp"
 #include "TTContactsSyscall.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <memory>
+#include <string>
 
 class TTContactsConsumer {
 public:
@@ -32,4 +34,7 @@ private:
     sem_t* mDataConsumedSemaphore;
     // Flags
     bool mAlive;
+    // Logger
+    inline static const std::string mClassNamePrefix = "TTContactsConsumer:";
+    const TTDiagnosticsLogger& mLogger;
 };

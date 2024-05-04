@@ -13,6 +13,7 @@ public:
     virtual size_t getTerminalHeight() const;
     virtual std::shared_ptr<TTContactsConsumer> getConsumer() const;
 private:
+    inline static const std::string mClassNamePrefix = "TTContactsSettings: ";
     size_t mWidth;
     size_t mHeight;
     std::string mSharedMemoryName;

@@ -5,18 +5,24 @@
 #include <signal.h>
 #include <atomic>
 
+// Logger
+const std::string LOGGER_PREFIX = "Main:";
+TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-contacts");
+
+// Quit handler
 std::atomic<bool> quitHandle{false};
 bool quit() {
     return quitHandle.load();
 }
 
 void signalInterruptHandler(int) {
+    TTDiagnosticsLogger::getInstance().info("{} Received interrupt signal!", LOGGER_PREFIX);
     quitHandle.store(true);
 }
 
 int main(int argc, char** argv) {
     DT_INIT(DT_UNIQUE_PATH("tteams-contacts").c_str());
-    auto logger = TTDiagnosticsLogger("tteams-contacts");
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     DT_META_PROCESS_NAME("tteams-contacts");
     DT_META_THREAD_NAME("main");
     try {
@@ -30,12 +36,12 @@ int main(int argc, char** argv) {
         sigaction(SIGINT, &signalAction, nullptr);
         sigaction(SIGTERM, &signalAction, nullptr);
         sigaction(SIGSTOP, &signalAction, nullptr);
-        logger.info("Signal handling initialized");
+        logger.info("{} Signal handling initialized", LOGGER_PREFIX);
         // Set contacts
         const TTContactsSettings settings(argc, argv);
         const TTContactsOutputStream outputStream;
         TTContacts contacts(settings, &quit, outputStream);
-        logger.info("Contacts initialized");
+        logger.info("{} Contacts initialized", LOGGER_PREFIX);
         DT_END("main", "initialization");
 
         // Run main app
@@ -44,16 +50,17 @@ int main(int argc, char** argv) {
             if (!quitHandle.load()) {
                 contacts.run();
             } else {
-                logger.warning("Application was shut down out of a sudden");
+                logger.warning("{} Application was shut down out of a sudden", LOGGER_PREFIX);
             }
         } catch (const std::exception& exp) {
-            logger.info("Exception captured: {}", exp.what());
+            logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
             throw;
         }
         DT_END("main", "run");
     } catch (const std::exception& exp) {
-        logger.info("Exception captured: {}", exp.what());
+        logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
     }
+    logger.info("{} Successfully flushed all logs", LOGGER_PREFIX);
     DT_FLUSH();
     DT_SHUTDOWN();
     return 0;

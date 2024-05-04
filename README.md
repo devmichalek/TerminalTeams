@@ -37,7 +37,7 @@ cmake --install build --prefix install
 - [spdlog](https://github.com/gabime/spdlog)
 
 ### Debugging
-Use Visual Studio Code (with C/C++ Extension Pack extension) to debug unit tests. Specify `-DCMAKE_BUILD_TYPE=Debug` to generate [trace](chrome://tracing/) and log files in `/tmp` on runtime.
+Use Visual Studio Code (with C/C++ Extension Pack extension) to debug unit tests. Specify `-DCMAKE_BUILD_TYPE=Debug` to generate [trace](chrome://tracing/) and log files in `/tmp` directory on runtime.
 
 ### Testing
 Application was tested using:

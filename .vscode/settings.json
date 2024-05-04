@@ -79,6 +79,7 @@
         "valarray": "cpp",
         "variant": "cpp",
         "queue": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "source_location": "cpp"
     }
 }

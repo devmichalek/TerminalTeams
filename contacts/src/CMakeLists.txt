@@ -28,11 +28,13 @@ set(TT_CONTACTS_LIB tteams-contacts)
 add_library(${TT_CONTACTS_LIB}
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsSettings.cpp"
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsConsumer.cpp"
-  "${TT_CONTACTS_SRC_DIRECTORY}/TTContacts.cpp")
-  set_target_properties(${TT_CONTACTS_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
+  "${TT_CONTACTS_SRC_DIRECTORY}/TTContacts.cpp"
+)
+set_target_properties(${TT_CONTACTS_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
-target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${${TT_DIAGNOSTICS_LIB}_SOURCE_DIR}")
+target_include_directories (${TT_CONTACTS_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(${TT_CONTACTS_LIB} ${TT_DIAGNOSTICS_LIB})
 
 set(TT_CONTACTS tteams-contacts-exe)
 add_executable(${TT_CONTACTS}
@@ -41,11 +43,8 @@ add_executable(${TT_CONTACTS}
 set_target_properties(${TT_CONTACTS} PROPERTIES OUTPUT_NAME ${TT_CONTACTS_LIB})
 target_include_directories(${TT_CONTACTS} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
-target_include_directories(${TT_CONTACTS} PUBLIC "${${TT_DIAGNOSTICS_LIB}_SOURCE_DIR}")
-target_link_libraries(${TT_CONTACTS}
-  ${TT_CONTACTS_LIB}
-  ${TT_DIAGNOSTICS_LIB}
-)
+target_include_directories (${TT_CONTACTS} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(${TT_CONTACTS} ${TT_CONTACTS_LIB})
 
 set(TT_CONTACTS_HANDLER_LIB tteams-contacts-handler)
 add_library(${TT_CONTACTS_HANDLER_LIB}
@@ -53,7 +52,7 @@ add_library(${TT_CONTACTS_HANDLER_LIB}
 )
 target_include_directories(${TT_CONTACTS_HANDLER_LIB} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS_HANDLER_LIB} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
-target_include_directories(${TT_CONTACTS_HANDLER_LIB} PUBLIC "${${TT_DIAGNOSTICS_LIB}_SOURCE_DIR}")
+target_include_directories (${TT_CONTACTS_HANDLER_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
 
 install(TARGETS ${TT_CONTACTS} DESTINATION "bin")
 install(TARGETS ${TT_CONTACTS_LIB} DESTINATION "lib")
