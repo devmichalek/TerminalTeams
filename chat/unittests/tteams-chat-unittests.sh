@@ -10,4 +10,4 @@ valgrind --tool=memcheck \
          --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
-         ./tteams-contacts-ut &> unittests-results.txt
+         ./tteams-chat-ut &> unittests-results.txt

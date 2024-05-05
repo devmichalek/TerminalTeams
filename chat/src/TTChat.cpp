@@ -98,7 +98,6 @@ void TTChat::run() {
                             print(message.data, message.timestamp, true);
                             break;
                         case TTChatMessageType::HEARTBEAT:
-                            [[fallthrough]]
                         default:
                             break;
                     }
