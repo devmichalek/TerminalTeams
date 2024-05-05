@@ -17,7 +17,7 @@ Application was written with the following assumptions:
 ### Installation
 ```
 cmake -B build
-cmake --build build
+cmake --build build --parallel 4
 cmake --install build --prefix install
 ```
 
@@ -54,4 +54,3 @@ Application was tested using:
 - std::launder
 - std::once_flag
 - safe cleanup
-- use LTTng

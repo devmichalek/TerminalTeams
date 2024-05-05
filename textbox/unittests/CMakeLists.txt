@@ -21,7 +21,7 @@ enable_testing()
 
 set(TT_TEXTBOX_LIB tteams-textbox)
 set(TT_TEXTBOX_HANDLER_LIB tteams-textbox-handler)
-set(TT_TEXTBOX_UT tteams-textbox-ut)
+set(TT_TEXTBOX_UT tteams-textbox-unittests)
 get_filename_component(TT_TEXTBOX_TESTED_DIRECTORY "../src" ABSOLUTE)
 get_filename_component(TT_TEXTBOX_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 

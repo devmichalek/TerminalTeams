@@ -11,4 +11,5 @@ valgrind --tool=memcheck \
          --leak-check=full \
          --show-leak-kinds=all \
          --track-origins=yes \
-         ./tteams-textbox-ut &> unittests-results.txt
+         --error-exitcode=1 \
+         ./tteams-textbox-unittests &> tteams-textbox-unittests-results.txt || exit 1

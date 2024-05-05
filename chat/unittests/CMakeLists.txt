@@ -21,7 +21,7 @@ enable_testing()
 
 set(TT_CHAT_LIB tteams-chat)
 set(TT_CHAT_HANDLER_LIB tteams-chat-handler)
-set(TT_CHAT_UT tteams-chat-ut)
+set(TT_CHAT_UT tteams-chat-unittests)
 get_filename_component(TT_CHAT_TESTED_DIRECTORY "../src" ABSOLUTE)
 get_filename_component(TT_CHAT_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 

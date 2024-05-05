@@ -21,7 +21,7 @@ enable_testing()
 
 set(TT_CONTACTS_LIB tteams-contacts)
 set(TT_CONTACTS_HANDLER_LIB tteams-contacts-handler)
-set(TT_CONTACTS_UT tteams-contacts-ut)
+set(TT_CONTACTS_UT tteams-contacts-unittests)
 get_filename_component(TT_CONTACTS_TESTED_DIRECTORY "../src" ABSOLUTE)
 get_filename_component(TT_CONTACTS_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 

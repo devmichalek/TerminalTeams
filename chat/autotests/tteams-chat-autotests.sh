@@ -5,7 +5,12 @@ function exit-with-error() {
     exit 1
 }
 
-./tteams-chat-autotests-happy-path.sh || exit-with-error "\"happy path\""
+function run-and-exit-on-error() {
+    echo "Info: Running $@ ..."
+    $@ || exit-with-error $@
+}
 
-echo "Success: All autotests passed!"
+run-and-exit-on-error ./tteams-chat-autotests-happy-path.sh
+
+echo "Success: Autotests \"chat\" passed!"
 exit 0

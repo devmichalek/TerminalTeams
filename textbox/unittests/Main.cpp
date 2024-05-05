@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "TTDiagnosticsLogger.hpp"
 
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox-ut");
+TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox-unittests");
 
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
