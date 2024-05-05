@@ -17,7 +17,9 @@ get_filename_component(TT_TEXTBOX_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
 get_filename_component(TT_TEXTBOX_DIRECTORY "../src" ABSOLUTE)
 
 set(TT_TEXTBOX_HANDLER_TEST_SCRIPTS
-  "autotests-happy-path.sh")
+  "tteams-textbox-autotests.sh"
+  "tteams-textbox-autotests-happy-path.sh"
+)
 
 add_subdirectory(${TT_TEXTBOX_DIRECTORY} ${TT_TEXTBOX} EXCLUDE_FROM_ALL)
 

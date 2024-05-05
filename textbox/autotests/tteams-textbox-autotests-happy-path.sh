@@ -1,17 +1,21 @@
 #!/usr/bin/env bash
 
 # Test setup
-APP_HANDLER="./tteams-textbox-handler"
-APP="./tteams-textbox"
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 APP_STDOUT=app-stdout
 UNIQUE_NAME=textbox
+APP_HANDLER="./tteams-textbox-handler"
+APP_HANDLER_ARGS=("${UNIQUE_NAME}")
+APP_HANDLER_CMD="${APP_HANDLER} ${APP_HANDLER_ARGS[@]}"
+APP="./tteams-textbox"
+APP_ARGS=(0 0 "${UNIQUE_NAME}")
+APP_CMD="${APP} ${APP_ARGS[@]}"
 mkfifo ${HANDLER_STDIN}
 sleep infinity > ${HANDLER_STDIN} &
 HANDLER_STDIN_PID=$!
-${APP_HANDLER} "${UNIQUE_NAME}" &> "${HANDLER_STDOUT}" &
-${APP} 0 0 "${UNIQUE_NAME}" < "${HANDLER_STDIN}" &> ${APP_STDOUT} &
+${APP_HANDLER_CMD} &> "${HANDLER_STDOUT}" &
+${APP_CMD} < "${HANDLER_STDIN}" &> ${APP_STDOUT} &
 
 # Test scenario
 sleep 3 # Wait for synchronization
@@ -41,13 +45,13 @@ sleep 3 # Wait for stop
 
 # Test verdict
 EXIT_STATUS=0
-APP_PID=$(pgrep -f ${APP} | head -n 1)
+APP_PID=$(pgrep -f "${APP_CMD}" | head -n 1)
 if [[ "${APP_PID}" ]]; then
     echo "Error: Application is still running! Killing pid=$APP_PID..."
     kill $APP_PID
     EXIT_STATUS=1
 fi
-APP_HANDLER_PID=$(pgrep -f ${APP_HANDLER} | head -n 1)
+APP_HANDLER_PID=$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)
 if [[ "${APP_HANDLER_PID}" ]]; then
     echo "Error: Application handler is still running! Killing pid=$APP_HANDLER_PID..."
     kill $APP_HANDLER_PID
