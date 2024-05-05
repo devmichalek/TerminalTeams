@@ -1,16 +1,21 @@
 #!/usr/bin/env bash
 
 # Test setup
-APP_HANDLER="./tteams-chat-handler"
-APP="./tteams-chat"
+
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 MSG_QUEUE_NAME=chat
+APP_HANDLER="./tteams-chat-handler"
+APP_HANDLER_ARGS=("${MSG_QUEUE_NAME}")
+APP_HANDLER_CMD="${APP_HANDLER} ${APP_HANDLER_ARGS[@]}"
+APP="./tteams-chat"
+APP_ARGS=(40 10 "${MSG_QUEUE_NAME}")
+APP_CMD="${APP} ${APP_ARGS[@]}"
 mkfifo ${HANDLER_STDIN}
 sleep infinity > ${HANDLER_STDIN} &
 HANDLER_STDIN_PID=$!
-${APP_HANDLER} "${MSG_QUEUE_NAME}" < "${HANDLER_STDIN}" &
-${APP} 40 10 "${MSG_QUEUE_NAME}" &> "${HANDLER_STDOUT}" &
+${APP_HANDLER_CMD} < "${HANDLER_STDIN}" &
+${APP_CMD} &> "${HANDLER_STDOUT}" &
 
 # Test scenario
 sleep 3 # Wait for synchronization
@@ -55,17 +60,17 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-sleep 3 # Wait for stop
+sleep 6 # Wait for stop
 
 # Test verdict
 EXIT_STATUS=0
-APP_PID=$(pgrep -f ${APP} | head -n 1)
+APP_PID=$(pgrep -f "${APP_CMD}" | head -n 1)
 if [[ "${APP_PID}" ]]; then
     echo "Error: Application is still running! Killing pid=$APP_PID..."
     kill $APP_PID
     EXIT_STATUS=1
 fi
-APP_HANDLER_PID=$(pgrep -f ${APP_HANDLER} | head -n 1)
+APP_HANDLER_PID=$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)
 if [[ "${APP_HANDLER_PID}" ]]; then
     echo "Error: Application handler is still running! Killing pid=$APP_HANDLER_PID..."
     kill $APP_HANDLER_PID

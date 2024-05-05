@@ -17,7 +17,9 @@ get_filename_component(TT_CHAT_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
 get_filename_component(TT_CHAT_DIRECTORY "../src" ABSOLUTE)
 
 set(TT_CHAT_HANDLER_TEST_SCRIPTS
-  "autotests-happy-path.sh")
+  "tteams-chat-autotests.sh"
+  "tteams-chat-autotests-happy-path.sh"
+)
 
 add_subdirectory(${TT_CHAT_DIRECTORY} ${TT_CHAT} EXCLUDE_FROM_ALL)
 
