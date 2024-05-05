@@ -33,7 +33,9 @@ set_target_properties(${TT_CHAT_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_CHAT_LIB} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CHAT_LIB} PUBLIC "${TT_CHAT_SRC_DIRECTORY}")
 target_include_directories (${TT_CHAT_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
-target_link_libraries(${TT_CHAT_LIB} ${TT_DIAGNOSTICS_LIB})
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  target_link_libraries(${TT_CHAT_LIB} ${TT_DIAGNOSTICS_LIB})
+endif()
 
 set(TT_CHAT tteams-chat-exe)
 add_executable(${TT_CHAT}

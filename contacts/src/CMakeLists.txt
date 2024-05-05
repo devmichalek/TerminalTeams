@@ -34,7 +34,9 @@ set_target_properties(${TT_CONTACTS_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${PROJECT_BINARY_DIR}")
 target_include_directories(${TT_CONTACTS_LIB} PUBLIC "${TT_CONTACTS_SRC_DIRECTORY}")
 target_include_directories (${TT_CONTACTS_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
-target_link_libraries(${TT_CONTACTS_LIB} ${TT_DIAGNOSTICS_LIB})
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  target_link_libraries(${TT_CONTACTS_LIB} ${TT_DIAGNOSTICS_LIB})
+endif()
 
 set(TT_CONTACTS tteams-contacts-exe)
 add_executable(${TT_CONTACTS}
