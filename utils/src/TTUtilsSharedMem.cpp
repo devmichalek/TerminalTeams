@@ -1,28 +1,30 @@
-#include "TTContactsConsumer.hpp"
+#include "TTUtilsSharedMem.hpp"
 #include <cstring>
 #include <iostream>
 #include <thread>
 
-TTContactsConsumer::TTContactsConsumer(const std::string& sharedMemoryName,
+TTUtilsSharedMem::TTUtilsSharedMem(const std::string& sharedMemoryName,
     const std::string& dataConsumedSemName,
     const std::string& dataProducedSemName,
-    std::shared_ptr<TTContactsSyscall> syscall) : 
+    size_t sharedMessageSize,
+    std::shared_ptr<TTUtilsSyscall> syscall) : 
         mSharedMemoryName(sharedMemoryName),
         mDataConsumedSemName(dataConsumedSemName),
         mDataProducedSemName(dataProducedSemName),
         mSyscall(std::move(syscall)),
         mSharedMessage(nullptr),
+        mSharedMessageSize(sharedMessageSize),
         mDataProducedSemaphore(nullptr),
         mDataConsumedSemaphore(nullptr),
-        mAlive(false),
-        mLogger(TTDiagnosticsLogger::getInstance()) {
-    mLogger.info("{} Constructing...", mClassNamePrefix);
+        mAlive(false) {
+    TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
 }
 
-bool TTContactsConsumer::init(long attempts, long timeoutMs) {
-    mLogger.info("{} Initializing...", mClassNamePrefix);
+bool TTUtilsSharedMem::init(long attempts, long timeoutMs) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Initializing...", mClassNamePrefix);
     if (mAlive) {
-        mLogger.error("{} Cannot reinitialize!", mClassNamePrefix);
+        logger.error("{} Cannot reinitialize!", mClassNamePrefix);
         return false;
     }
 
@@ -36,56 +38,56 @@ bool TTContactsConsumer::init(long attempts, long timeoutMs) {
     }
 
     if (mDataProducedSemaphore == SEM_FAILED) {
-        mLogger.error("{} Failed to open data produced semaphore, errno={}", mClassNamePrefix, errno);
+        logger.error("{} Failed to open data produced semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     errno = 0;
     if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) == SEM_FAILED) {
-        mLogger.error("{} Failed to open data consumed semaphore, errno={}", mClassNamePrefix, errno);
+        logger.error("{} Failed to open data consumed semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
-        mLogger.error("{} Failed to open shared object, errno={}", mClassNamePrefix, errno);
+        logger.error("{} Failed to open shared object, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
-    void* rawPointer = mSyscall->mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    mSharedMessage = new(rawPointer) TTContactsMessage;
+    mSharedMessage = mSyscall->mmap(nullptr, mSharedMessageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (!mSharedMessage) {
-        mLogger.error("{} Failed to allocate shared message!", mClassNamePrefix);
+        logger.error("{} Failed to allocate shared message!", mClassNamePrefix);
         return false;
     }
 
-    mLogger.info("{} Successfully initialized!", mClassNamePrefix);
+    logger.info("{} Successfully initialized!", mClassNamePrefix);
     mAlive = true;
     return true;
 }
 
-std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long timeoutMs) {
+bool TTUtilsSharedMem::receive(void* message, long attempts, long timeoutMs) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     const auto timeoutSecs = timeoutMs / 1000;
-    std::unique_ptr<TTContactsMessage> result = nullptr;
+    bool result = false;
     if (mAlive) {
         do {
             {
                 int res = -1;
                 for (auto attempt = attempts; attempt > 0; --attempt) {
-                    mLogger.info("{} Waiting for the other process to produce the data, attempt={}", mClassNamePrefix, (attempts - attempt));
+                    logger.info("{} Waiting for the other process to produce the data, attempt={}", mClassNamePrefix, (attempts - attempt));
                     struct timespec ts;
                     if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                         res = -1;
-                        mLogger.error("{} Hard failure at fetching clock time!", mClassNamePrefix);
+                        logger.error("{} Hard failure at fetching clock time!", mClassNamePrefix);
                         break;
                     }
                     ts.tv_sec += timeoutSecs;
                     res = mSyscall->sem_timedwait(mDataProducedSemaphore, &ts);
                     if (res != -1) {
-                        mLogger.info("{} Fetched other process data", mClassNamePrefix);
+                        logger.info("{} Fetched other process data", mClassNamePrefix);
                         break;
                     } else if (errno == EINTR) {
-                        mLogger.warning("{} Soft failure, interrupted function call!", mClassNamePrefix);
+                        logger.warning("{} Soft failure, interrupted function call!", mClassNamePrefix);
                         continue;
                     }
                 }
@@ -94,22 +96,22 @@ std::unique_ptr<TTContactsMessage> TTContactsConsumer::get(long attempts, long t
                 }
             }
 
-            result = std::make_unique<TTContactsMessage>();
-            memcpy(result.get(), mSharedMessage, sizeof(TTContactsMessage));
+            result = true;
+            memcpy(message, mSharedMessage, mSharedMessageSize);
             if (mSyscall->sem_post(mDataConsumedSemaphore) == -1) {
-                mLogger.error("{} Failed to notify other process!", mClassNamePrefix);
-                result = nullptr;
+                logger.error("{} Failed to notify other process!", mClassNamePrefix);
+                result = false;
             } else {
-                mLogger.info("{} Successfully notified other process", mClassNamePrefix);
+                logger.info("{} Successfully notified other process", mClassNamePrefix);
             }
         } while (false);
     }
     
-    mAlive = (result != nullptr);
-    mLogger.info("{} Summary of the fetched message, alive={}", mClassNamePrefix, mAlive);
+    mAlive = result;
+    logger.info("{} Summary of the fetched message, alive={}", mClassNamePrefix, mAlive);
     return result;
 }
 
-bool TTContactsConsumer::alive() const {
+bool TTUtilsSharedMem::alive() const {
     return mAlive;
 }

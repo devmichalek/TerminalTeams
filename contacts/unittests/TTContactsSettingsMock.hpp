@@ -8,5 +8,5 @@ class TTContactsSettingsMock : public TTContactsSettings {
         TTContactsSettings(argc, argv) {}
     MOCK_METHOD(size_t, getTerminalWidth, (), (const, override));
     MOCK_METHOD(size_t, getTerminalHeight, (), (const, override));
-    MOCK_METHOD(std::shared_ptr<TTContactsConsumer>, getConsumer, (), (const, override));
+    MOCK_METHOD(std::shared_ptr<TTUtilsSharedMem>, getSharedMemory, (), (const, override));
 };

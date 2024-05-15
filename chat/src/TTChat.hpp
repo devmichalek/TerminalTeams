@@ -2,8 +2,7 @@
 #include "TTChatSettings.hpp"
 #include "TTChatMessage.hpp"
 #include "TTChatCallback.hpp"
-#include <mqueue.h>
-#include <string>
+#include "TTChatMessageQueue.hpp"
 #include <future>
 
 class TTChat {

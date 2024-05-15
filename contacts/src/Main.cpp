@@ -1,5 +1,5 @@
 #include "TTContacts.hpp"
-#include "TTContactsOutputStream.hpp"
+#include "TTUtilsOutputStream.hpp"
 #include "TTDiagnosticsTracer.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <signal.h>
@@ -39,11 +39,10 @@ int main(int argc, char** argv) {
         logger.info("{} Signal handling initialized", LOGGER_PREFIX);
         // Set contacts
         const TTContactsSettings settings(argc, argv);
-        const TTContactsOutputStream outputStream;
+        const TTUtilsOutputStream outputStream;
         TTContacts contacts(settings, &quit, outputStream);
         logger.info("{} Contacts initialized", LOGGER_PREFIX);
         DT_END("main", "initialization");
-
         // Run main app
         DT_BEGIN("main", "run");
         try {

@@ -2,35 +2,36 @@
 
 TTContacts::TTContacts(const TTContactsSettings& settings,
     TTContactsCallbackQuit callbackQuit,
-    const TTContactsOutputStream& outputStream) :
-        mConsumer(std::move(settings.getConsumer())),
+    const TTUtilsOutputStream& outputStream) :
+        mSharedMem(std::move(settings.getSharedMemory())),
         mCallbackQuit(callbackQuit),
         mOutputStream(outputStream),
-        mLogger(TTDiagnosticsLogger::getInstance()),
         mTerminalWidth(settings.getTerminalWidth()),
         mTerminalHeight(settings.getTerminalHeight()) {
-    mLogger.info("{} Constructing...", mClassNamePrefix);
-    if (!mConsumer->init()) {
-        mLogger.error("{} Failed to initialize consumer!", mClassNamePrefix);
-        throw std::runtime_error(mClassNamePrefix + "Failed to initialize consumer!");
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Constructing...", mClassNamePrefix);
+    if (!mSharedMem->init()) {
+        logger.error("{} Failed to initialize shared memory!", mClassNamePrefix);
+        throw std::runtime_error(mClassNamePrefix + "Failed to initialize shared memory!");
     } else {
-        mLogger.info("{} Successfully initialized consumer!", mClassNamePrefix);
+        logger.info("{} Successfully initialized shared memory!", mClassNamePrefix);
     }
 }
 
 void TTContacts::run() {
-    mLogger.info("{} Started contacts loop", mClassNamePrefix);
-    while (!mCallbackQuit() && mConsumer->alive()) {
-        auto newMessage = mConsumer->get();
-        if (!newMessage) {
-            mLogger.warning("{} Received null message!", mClassNamePrefix);
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started contacts loop", mClassNamePrefix);
+    while (!mCallbackQuit() && mSharedMem->alive()) {
+        TTContactsMessage newMessage;
+        if (!mSharedMem->receive(reinterpret_cast<void*>(&newMessage))) {
+            logger.warning("{} Failed to receive message!", mClassNamePrefix);
             break;
         }
-        if (handle(*(newMessage.get()))) {
+        if (handle(newMessage)) {
             refresh();
         }
     }
-    mLogger.info("{} Completed contacts loop", mClassNamePrefix);
+    logger.info("{} Completed contacts loop", mClassNamePrefix);
 }
 
 size_t TTContacts::size() const {
@@ -38,26 +39,28 @@ size_t TTContacts::size() const {
 }
 
 bool TTContacts::handle(const TTContactsMessage& message) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (message.status == TTContactsStatus::HEARTBEAT) {
-        mLogger.info("{} Received heartbeat message", mClassNamePrefix);
+        logger.info("{} Received heartbeat message", mClassNamePrefix);
         return false;
     } else {
         if (message.status == TTContactsStatus::ACTIVE && message.id >= mContacts.size()) {
             std::string nickname(message.data, message.data + message.dataLength);
             auto newContact = std::make_tuple(message.id, nickname, message.status);
             mContacts.push_back(newContact);
-            mLogger.info("{} Received new contact message id={}, nickname={}, status={}", mClassNamePrefix, message.id, nickname, (size_t)message.status);
+            logger.info("{} Received new contact message id={}, nickname={}, status={}", mClassNamePrefix, message.id, nickname, (size_t)message.status);
         } else {
             auto& contact = mContacts[message.id];
             std::get<2>(contact) = message.status;
-            mLogger.info("{} Received update contact message id={}, status={}", mClassNamePrefix, message.id, (size_t)message.status);
+            logger.info("{} Received update contact message id={}, status={}", mClassNamePrefix, message.id, (size_t)message.status);
         }
     }
     return true;
 }
 
 void TTContacts::refresh() {
-    mLogger.info("{} Started refreshing window, number of contacts={}", mClassNamePrefix, size());
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started refreshing window, number of contacts={}", mClassNamePrefix, size());
     mOutputStream.print("\033[2J\033[1;1H").flush(); // Clear window
     const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
     for (auto &contact : mContacts) {

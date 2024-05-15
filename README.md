@@ -33,8 +33,8 @@ cmake --install build --prefix install
 - Networking
 - [PlantUML](https://valgrind.org/)
 - [Valgrind](https://valgrind.org/)
-- [minitrace](https://github.com/hrydgard/minitrace)
-- [spdlog](https://github.com/gabime/spdlog)
+- [Minitrace](https://github.com/hrydgard/minitrace)
+- [Spdlog](https://github.com/gabime/spdlog)
 
 ### Debugging
 Use Visual Studio Code (with C/C++ Extension Pack extension) to debug unit tests. Specify `-DCMAKE_BUILD_TYPE=Debug` to generate [trace](chrome://tracing/) and log files in `/tmp` directory on runtime.

@@ -1,6 +1,6 @@
 #include "TTContactsSettings.hpp"
 #include "TTContactsMessage.hpp"
-#include "TTContactsSyscall.hpp"
+#include "TTUtilsSyscall.hpp"
 #include <string>
 #include <sstream>
 
@@ -35,11 +35,12 @@ size_t TTContactsSettings::getTerminalHeight() const {
     return mHeight;
 }
 
-std::shared_ptr<TTContactsConsumer> TTContactsSettings::getConsumer() const {
+std::shared_ptr<TTUtilsSharedMem> TTContactsSettings::getSharedMemory() const {
     const auto dataConsumedSemName = mSharedMemoryName + TTCONTACTS_DATA_CONSUMED_POSTFIX;
     const auto dataProducedSemName = mSharedMemoryName + TTCONTACTS_DATA_PRODUCED_POSTFIX;
-    return std::make_shared<TTContactsConsumer>(mSharedMemoryName,
-                                                dataConsumedSemName,
-                                                dataProducedSemName,
-                                                std::make_shared<TTContactsSyscall>());
+    return std::make_shared<TTUtilsSharedMem>(mSharedMemoryName,
+                                              dataConsumedSemName,
+                                              dataProducedSemName,
+                                              sizeof(TTContactsMessage),
+                                              std::make_shared<TTUtilsSyscall>());
 }

@@ -13,7 +13,7 @@ TEST(TTContactsSettingsTest, HappyPath) {
     const TTContactsSettings settings(argc, argv);
     EXPECT_EQ(settings.getTerminalWidth(), 90);
     EXPECT_EQ(settings.getTerminalHeight(), 45);
-    EXPECT_TRUE(settings.getConsumer() != nullptr);
+    EXPECT_TRUE(settings.getSharedMemory() != nullptr);
 }
 
 TEST(TTContactsSettingsTest, NotEnoughArguments) {

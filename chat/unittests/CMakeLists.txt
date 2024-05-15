@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(TerminalTeamsChatsUnitTests VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -42,7 +42,7 @@ add_executable(
   "${TT_CHAT_UNIT_TESTS}"
 )
 
-target_include_directories(${TT_CHAT_UT} PUBLIC "${TT_CHAT_TESTED_DIRECTORY}")
+target_include_directories(${TT_CHAT_UT} PRIVATE "${TT_CHAT_TESTED_DIRECTORY}")
 target_include_directories(${TT_CHAT_UT} PUBLIC "${TT_CHAT_UNIT_TESTS_DIRECTORY}")
 
 target_link_libraries(

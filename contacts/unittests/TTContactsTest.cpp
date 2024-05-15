@@ -1,7 +1,7 @@
 #include "TTContacts.hpp"
 #include "TTContactsSettingsMock.hpp"
-#include "TTContactsConsumerMock.hpp"
-#include "TTContactsOutputStreamMock.hpp"
+#include "TTUtilsSharedMemMock.hpp"
+#include "TTUtilsOutputStreamMock.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 #include <stdexcept>
@@ -16,8 +16,8 @@ class TTContactsTest : public Test {
     TTContactsTest() {
         const char* argv[] = {"", "0", "0", "contacts"};
         mSettingsMock = std::make_shared<TTContactsSettingsMock>(4, argv);
-        mConsumerMock = std::make_shared<TTContactsConsumerMock>("", "", "", nullptr);
-        mOutputStreamMock = std::make_shared<TTContactsOutputStreamMock>();
+        mSharedMemMock = std::make_shared<TTUtilsSharedMemMock>();
+        mOutputStreamMock = std::make_shared<TTUtilsOutputStreamMock>();
     }
     ~TTContactsTest() {
 
@@ -27,9 +27,9 @@ class TTContactsTest : public Test {
         setCallbackQuitFalse();
         EXPECT_CALL(*mSettingsMock, getTerminalWidth).Times(1);
         EXPECT_CALL(*mSettingsMock, getTerminalHeight).Times(1);
-        EXPECT_CALL(*mSettingsMock, getConsumer)
+        EXPECT_CALL(*mSettingsMock, getSharedMemory)
             .Times(1)
-            .WillOnce(Return(mConsumerMock));
+            .WillOnce(Return(mSharedMemMock));
     }
     // Called before destructor, after each test
     virtual void TearDown() override {
@@ -50,13 +50,13 @@ class TTContactsTest : public Test {
 
     TTContactsCallbackQuit mCallbackQuitMock;
     std::shared_ptr<TTContactsSettingsMock> mSettingsMock;
-    std::shared_ptr<TTContactsConsumerMock> mConsumerMock;
-    std::shared_ptr<TTContactsOutputStreamMock> mOutputStreamMock;
+    std::shared_ptr<TTUtilsSharedMemMock> mSharedMemMock;
+    std::shared_ptr<TTUtilsOutputStreamMock> mOutputStreamMock;
     std::unique_ptr<TTContacts> mContacts;
 };
 
-TEST_F(TTContactsTest, ConsumerInitFailed) {
-    EXPECT_CALL(*mConsumerMock, init)
+TEST_F(TTContactsTest, SharedMemoryInitFailed) {
+    EXPECT_CALL(*mSharedMemMock, init)
         .Times(1)
         .WillOnce(Return(false));
     EXPECT_THROW(createContacts(), std::runtime_error);

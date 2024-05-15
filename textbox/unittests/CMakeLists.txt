@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(TerminalTeamsTextboxUnitTests VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -42,7 +42,7 @@ add_executable(
   "${TT_TEXTBOX_UNIT_TESTS}"
 )
 
-target_include_directories(${TT_TEXTBOX_UT} PUBLIC "${TT_TEXTBOX_TESTED_DIRECTORY}")
+target_include_directories(${TT_TEXTBOX_UT} PRIVATE "${TT_TEXTBOX_TESTED_DIRECTORY}")
 target_include_directories(${TT_TEXTBOX_UT} PUBLIC "${TT_TEXTBOX_UNIT_TESTS_DIRECTORY}")
 
 target_link_libraries(

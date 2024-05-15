@@ -5,14 +5,14 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-class TTContactsSyscall {
+class TTUtilsSyscall {
 public:
-    TTContactsSyscall() = default;
-    virtual ~TTContactsSyscall() {}
-    TTContactsSyscall(const TTContactsSyscall&) = delete;
-    TTContactsSyscall(TTContactsSyscall&&) = delete;
-    TTContactsSyscall& operator=(const TTContactsSyscall&) = delete;
-    TTContactsSyscall& operator=(TTContactsSyscall&&) = delete;
+    TTUtilsSyscall() = default;
+    virtual ~TTUtilsSyscall() {}
+    TTUtilsSyscall(const TTUtilsSyscall&) = delete;
+    TTUtilsSyscall(TTUtilsSyscall&&) = delete;
+    TTUtilsSyscall& operator=(const TTUtilsSyscall&) = delete;
+    TTUtilsSyscall& operator=(TTUtilsSyscall&&) = delete;
 
     virtual sem_t* sem_open(const char* name, int oflag) const {
         return ::sem_open(name, oflag);

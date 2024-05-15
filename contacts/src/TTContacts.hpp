@@ -1,8 +1,9 @@
 #pragma once
 #include "TTContactsSettings.hpp"
-#include "TTContactsConsumer.hpp"
+#include "TTUtilsSharedMem.hpp"
+#include "TTContactsMessage.hpp"
 #include "TTContactsCallback.hpp"
-#include "TTContactsOutputStream.hpp"
+#include "TTUtilsOutputStream.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <memory>
 #include <vector>
@@ -12,7 +13,7 @@ class TTContacts {
 public:
     explicit TTContacts(const TTContactsSettings& settings,
         TTContactsCallbackQuit callbackQuit,
-        const TTContactsOutputStream& outputStream);
+        const TTUtilsOutputStream& outputStream);
     virtual ~TTContacts() {}
     TTContacts(const TTContacts&) = delete;
     TTContacts(const TTContacts&&) = delete;
@@ -30,12 +31,11 @@ private:
     // Callbacks
     TTContactsCallbackQuit mCallbackQuit;
     // Output stream
-    const TTContactsOutputStream& mOutputStream;
+    const TTUtilsOutputStream& mOutputStream;
     // Logger
     inline static const std::string mClassNamePrefix = "TTContacts:";
-    const TTDiagnosticsLogger& mLogger;
     // IPC shared memory communication
-    std::shared_ptr<TTContactsConsumer> mConsumer;
+    std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;

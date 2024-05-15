@@ -1,5 +1,5 @@
 #pragma once
-#include "TTContactsConsumer.hpp"
+#include "TTUtilsSharedMem.hpp"
 
 class TTContactsSettings {
 public:
@@ -11,7 +11,7 @@ public:
     TTContactsSettings& operator=(TTContactsSettings&&) = delete;
     virtual size_t getTerminalWidth() const;
     virtual size_t getTerminalHeight() const;
-    virtual std::shared_ptr<TTContactsConsumer> getConsumer() const;
+    virtual std::shared_ptr<TTUtilsSharedMem> getSharedMemory() const;
 private:
     inline static const std::string mClassNamePrefix = "TTContactsSettings: ";
     size_t mWidth;

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(TerminalTeamsChat VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
@@ -28,6 +28,7 @@ set(TT_CHAT_LIB tteams-chat)
 add_library(${TT_CHAT_LIB}
   "${TT_CHAT_SRC_DIRECTORY}/TTChatSettings.cpp"
   "${TT_CHAT_SRC_DIRECTORY}/TTChat.cpp"
+  "${TT_CHAT_SRC_DIRECTORY}/TTChatMessageQueue.cpp"
 )
 set_target_properties(${TT_CHAT_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_CHAT_LIB} PUBLIC "${PROJECT_BINARY_DIR}")
