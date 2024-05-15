@@ -3,54 +3,26 @@
 #include <chrono>
 #include <list>
 #include <cstring>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
-TTContactsHandler::TTContactsHandler(std::string sharedMemoryName,
-    TTContactsCallbackDataProduced callbackDataProduced,
-    TTContactsCallbackDataConsumed callbackDataConsumed) :
-        mCallbackDataProduced(callbackDataProduced),
-        mCallbackDataConsumed(callbackDataConsumed),
-        mSharedMemoryName(sharedMemoryName),
-        mSharedMessage(nullptr),
-        mDataProducedSemaphore(nullptr),
-        mDataConsumedSemaphore(nullptr),
+TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
+        mSharedMem(std::move(settings.getSharedMemory())),
         mForcedQuit{false},
         mHandlerThread{&TTContactsHandler::main, this},
         mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
-    const std::string classNamePrefix = "TTContactsHandler: ";
-    errno = 0;
-    int fd = shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd < 0) {
-        throw std::runtime_error(classNamePrefix + "Failed to create shared object, errno=" + std::to_string(errno));
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Constructing...", mClassNamePrefix);
+    if (!mSharedMem->create()) {
+        throw std::runtime_error(mClassNamePrefix + "Failed to create shared memory!");
+    } else {
+        logger.info("{} Successfully created shared memory!", mClassNamePrefix);
     }
-
-    errno = 0;
-    if (ftruncate(fd, sizeof(TTContactsMessage)) == -1) {
-        throw std::runtime_error(classNamePrefix + "Failed to truncate shared object, errno=" + std::to_string(errno));
-    }
-
-    void* rawPointer = mmap(nullptr, sizeof(TTContactsMessage), PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    mSharedMessage = new(rawPointer) TTContactsMessage;
-
-    errno = 0;
-    std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    if ((mDataProducedSemaphore = sem_open(dataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-        throw std::runtime_error(classNamePrefix + "Failed to create data produced semaphore, errno=" + std::to_string(errno));
-    }
-
-    errno = 0;
-    std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    if ((mDataConsumedSemaphore = sem_open(dataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-        throw std::runtime_error(classNamePrefix + "Failed to create data consumed semaphore, errno=" + std::to_string(errno));
-    }
-
     mHandlerThread.detach();
     mHeartbeatThread.detach();
+    logger.info("{} Successfully detached threads", mClassNamePrefix);
 }
 
 TTContactsHandler::~TTContactsHandler() {
+    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
     mForcedQuit.store(true);
     mQueueCondition.notify_one();
     // Wait until main thread is destroyed
@@ -278,36 +250,7 @@ void TTContactsHandler::main() {
                     exit = true;
                     break; // Forced exit
                 }
-                // Set shared message
-                memcpy(mSharedMessage, message.get(), sizeof(TTContactsMessage));
-                // Inform other process about produced data
-                if (sem_post(mDataProducedSemaphore) == -1) {
-                    exit = true;
-                    break; // Hard failure
-                } else if (mCallbackDataProduced) {
-                    mCallbackDataProduced();
-                }
-
-                // Wait for the other process to consume the data
-                int result = 0;
-                for (auto attempt = TTCONTACTS_DATA_CONSUME_TRY_COUNT; attempt >= 0; --attempt) {
-                    struct timespec ts;
-                    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                        result = -1;
-                        break; // Hard failure
-                    }
-                    ts.tv_sec += TTCONTACTS_DATA_CONSUME_TIMEOUT_S;
-                    result = sem_timedwait(mDataConsumedSemaphore, &ts);
-                    if (result != -1) {
-                        if (mCallbackDataConsumed) {
-                            mCallbackDataConsumed();
-                        }
-                        break; // Success
-                    } else if (errno == EINTR) {
-                        continue; // Soft failure
-                    }
-                }
-                if (result == -1) {
+                if (!mSharedMem->send(reinterpret_cast<void*>(message.get()))) {
                     exit = true;
                     break; // Hard failure
                 }
@@ -316,10 +259,6 @@ void TTContactsHandler::main() {
     } catch (...) {
         // ...
     }
-    shm_unlink(mSharedMemoryName.c_str());
-    std::string dataProducedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_PRODUCED_POSTFIX);
-    sem_unlink(dataProducedSemName.c_str());
-    std::string dataConsumedSemName = mSharedMemoryName + std::string(TTCONTACTS_DATA_CONSUMED_POSTFIX);
-    sem_unlink(dataConsumedSemName.c_str());
+    mSharedMem->destroy();
     mForcedQuit.store(true);
 }

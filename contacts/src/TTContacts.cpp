@@ -10,12 +10,15 @@ TTContacts::TTContacts(const TTContactsSettings& settings,
         mTerminalHeight(settings.getTerminalHeight()) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Constructing...", mClassNamePrefix);
-    if (!mSharedMem->init()) {
-        logger.error("{} Failed to initialize shared memory!", mClassNamePrefix);
-        throw std::runtime_error(mClassNamePrefix + "Failed to initialize shared memory!");
+    if (!mSharedMem->open()) {
+        throw std::runtime_error(mClassNamePrefix + "Failed to open shared memory!");
     } else {
-        logger.info("{} Successfully initialized shared memory!", mClassNamePrefix);
+        logger.info("{} Successfully opened shared memory!", mClassNamePrefix);
     }
+}
+
+TTContacts::~TTContacts() {
+    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
 }
 
 void TTContacts::run() {

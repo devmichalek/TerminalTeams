@@ -1,8 +1,8 @@
 #pragma once
 #include "TTContactsMessage.hpp"
 #include "TTContactsEntry.hpp"
-#include "TTContactsCallback.hpp"
-#include <semaphore.h>
+#include "TTContactsSettings.hpp"
+#include "TTUtilsSharedMem.hpp"
 #include <queue>
 #include <vector>
 #include <mutex>
@@ -14,9 +14,7 @@
 // Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
-    explicit TTContactsHandler(std::string sharedMemoryName,
-        TTContactsCallbackDataProduced callbackDataProduced = {},
-        TTContactsCallbackDataConsumed callbackDataConsumed = {});
+    explicit TTContactsHandler(const TTContactsSettings& settings);
     virtual ~TTContactsHandler();
     TTContactsHandler(const TTContactsHandler&) = delete;
     TTContactsHandler(TTContactsHandler&&) = delete;
@@ -36,14 +34,10 @@ private:
     void heartbeat();
     // Sends main data if available and receives confirmation
     void main();
-    // Callbacks
-    TTContactsCallbackDataProduced mCallbackDataProduced;
-    TTContactsCallbackDataConsumed mCallbackDataConsumed;
+    // Logger
+    inline static const std::string mClassNamePrefix = "TTContactsHandler:";
     // IPC shared memory communication
-    std::string mSharedMemoryName;
-    TTContactsMessage* mSharedMessage;
-    sem_t* mDataProducedSemaphore;
-    sem_t* mDataConsumedSemaphore;
+    std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Quit flag
     std::atomic<bool> mForcedQuit;
     // Thread concurrent message communication

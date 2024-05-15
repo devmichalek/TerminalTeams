@@ -11,17 +11,17 @@ public:
         const std::string& dataProducedSemName,
         size_t sharedMessageSize,
         std::shared_ptr<TTUtilsSyscall> syscall);
-    virtual ~TTUtilsSharedMem() {}
+    virtual ~TTUtilsSharedMem();
     TTUtilsSharedMem(const TTUtilsSharedMem&) = delete;
     TTUtilsSharedMem(TTUtilsSharedMem&&) = delete;
     TTUtilsSharedMem& operator=(const TTUtilsSharedMem&) = delete;
     TTUtilsSharedMem& operator=(TTUtilsSharedMem&&) = delete;
-    // Initialize system objects
-    virtual bool init(long attempts = 5, long timeoutMs = 1000);
-    // Receive with timeout
+    virtual bool create();
+    virtual bool open(long attempts = 5, long timeoutMs = 1000);
     virtual bool receive(void* message, long attempts = 2, long timeoutMs = 2000);
-    // Check if object is functioning properly
+    virtual bool send(const void* message, long attempts = 2, long timeoutMs = 2000);
     virtual bool alive() const;
+    virtual void destroy();
 protected:
     TTUtilsSharedMem() = default;
 private:
@@ -37,6 +37,9 @@ private:
     sem_t* mDataConsumedSemaphore;
     // Flags
     bool mAlive;
+    bool mSharedMemoryCreated;
+    bool mDataConsumedSemCreated;
+    bool mDataProducedSemCreated;
     // Logger
     inline static const std::string mClassNamePrefix = "TTUtilsSharedMem:";
 };

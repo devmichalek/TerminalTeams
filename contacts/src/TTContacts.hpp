@@ -2,19 +2,21 @@
 #include "TTContactsSettings.hpp"
 #include "TTUtilsSharedMem.hpp"
 #include "TTContactsMessage.hpp"
-#include "TTContactsCallback.hpp"
 #include "TTUtilsOutputStream.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <memory>
 #include <vector>
 #include <string>
+#include <functional>
+
+using TTContactsCallbackQuit = std::function<bool()>;
 
 class TTContacts {
 public:
     explicit TTContacts(const TTContactsSettings& settings,
         TTContactsCallbackQuit callbackQuit,
         const TTUtilsOutputStream& outputStream);
-    virtual ~TTContacts() {}
+    virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
     TTContacts(const TTContacts&&) = delete;
     TTContacts operator=(const TTContacts&) = delete;

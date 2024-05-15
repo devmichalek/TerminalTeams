@@ -56,6 +56,7 @@ target_link_libraries(${TT_CONTACTS_EXE} ${TT_CONTACTS_LIB})
 
 # Build library
 add_library(${TT_CONTACTS_HANDLER_LIB}
+  "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsSettings.cpp"
   "${TT_CONTACTS_SRC_DIRECTORY}/TTContactsHandler.cpp"
 )
 target_include_directories(${TT_CONTACTS_HANDLER_LIB} PUBLIC "${PROJECT_BINARY_DIR}")

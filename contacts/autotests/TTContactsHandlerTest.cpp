@@ -3,27 +3,12 @@
 #include <vector>
 #include <signal.h>
 
-std::atomic<size_t> producedCounter{0};
-void produced() {
-    producedCounter++;
-}
-
-std::atomic<size_t> consumedCounter{0};
-void consumed() {
-    consumedCounter++;
-}
-
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {
     quitHandle.store(true);
 }
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        throw std::runtime_error("invalid number of arguments");
-    }
-    std::string sharedMemoryName = argv[1];
-
     // Signal handling
     struct sigaction signalAction;
     memset(&signalAction, 0, sizeof(signalAction));
@@ -34,7 +19,8 @@ int main(int argc, char** argv) {
     sigaction(SIGSTOP, &signalAction, nullptr);
 
     // Run main app
-    TTContactsHandler handler(sharedMemoryName, &produced, &consumed);
+    const TTContactsSettings settings(argc, argv);
+    TTContactsHandler handler(settings);
     while (!quitHandle.load()) {
         std::vector<std::string> tokens;
         {

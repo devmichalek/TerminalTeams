@@ -56,7 +56,7 @@ class TTContactsTest : public Test {
 };
 
 TEST_F(TTContactsTest, SharedMemoryInitFailed) {
-    EXPECT_CALL(*mSharedMemMock, init)
+    EXPECT_CALL(*mSharedMemMock, open)
         .Times(1)
         .WillOnce(Return(false));
     EXPECT_THROW(createContacts(), std::runtime_error);

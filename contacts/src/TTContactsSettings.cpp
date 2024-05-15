@@ -36,8 +36,8 @@ size_t TTContactsSettings::getTerminalHeight() const {
 }
 
 std::shared_ptr<TTUtilsSharedMem> TTContactsSettings::getSharedMemory() const {
-    const auto dataConsumedSemName = mSharedMemoryName + TTCONTACTS_DATA_CONSUMED_POSTFIX;
-    const auto dataProducedSemName = mSharedMemoryName + TTCONTACTS_DATA_PRODUCED_POSTFIX;
+    const auto dataConsumedSemName = mSharedMemoryName + "-data-consumed";
+    const auto dataProducedSemName = mSharedMemoryName + "-data-produced";
     return std::make_shared<TTUtilsSharedMem>(mSharedMemoryName,
                                               dataConsumedSemName,
                                               dataProducedSemName,
