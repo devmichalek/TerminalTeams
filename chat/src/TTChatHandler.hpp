@@ -1,38 +1,36 @@
 #pragma once
 #include "TTChatEntry.hpp"
-#include "TTChatCallback.hpp"
+#include "TTChatSettings.hpp"
 #include <mqueue.h>
 #include <memory>
 #include <future>
 #include <queue>
 #include <vector>
+#include <list>
 
 class TTChatHandler {
 public:
-    explicit TTChatHandler(std::string messageQueueName,
-        TTChatCallbackMessageSent callbackMessageSent = {},
-        TTChatCallbackMessageReceived callbackMessageReceived = {});
-    ~TTChatHandler();
-    bool send(size_t id, std::string message, TTChatTimestamp timestamp);
-    bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
-    bool clear(size_t id);
-    bool create(size_t id);
-    const TTChatEntries& get(size_t id);
+    explicit TTChatHandler(const TTChatSettings& settings);
+    virtual ~TTChatHandler();
+    TTChatHandler(const TTChatHandler&) = delete;
+    TTChatHandler(const TTChatHandler&&) = delete;
+    TTChatHandler operator=(const TTChatHandler&) = delete;
+    TTChatHandler operator=(const TTChatHandler&&) = delete;
+    virtual bool send(size_t id, std::string message, TTChatTimestamp timestamp);
+    virtual bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
+    virtual bool clear(size_t id);
+    virtual bool create(size_t id);
+    virtual const TTChatEntries& get(size_t id);
 private:
     bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
+    std::list<std::unique_ptr<TTChatMessage>> dequeue();
     // Receives heartbeat
     void heartbeat();
     // Sends heartbeat periodically or main data if available
     void main();
-    // Callbacks
-    TTChatCallbackMessageSent mCallbackMessageSent;
-    TTChatCallbackMessageReceived mCallbackMessageReceived;
-    // IPC main message queue communication
-    std::string mMessageQueueName;
-    mqd_t mMessageQueueDescriptor;
-    // IPC reversed message queue communication
-    std::string mMessageQueueReversedName;
-    mqd_t mMessageQueueReversedDescriptor;
+    // IPC message queue communication
+    std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
+    std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
     // Thread concurrent message communication
     std::atomic<bool> mForcedQuit;
     std::future<void> mHeartbeatResult;
@@ -44,4 +42,6 @@ private:
     // Messages storage
     size_t mCurrentId;
     std::vector<TTChatEntries> mMessages;
+    // Logger
+    inline static const std::string mClassNamePrefix = "TTChatHandler:";
 };

@@ -12,8 +12,8 @@ class TTUtilsMessageQueue {
     TTUtilsMessageQueue(TTUtilsMessageQueue&&) = delete;
     TTUtilsMessageQueue& operator=(const TTUtilsMessageQueue&) = delete;
     TTUtilsMessageQueue& operator=(TTUtilsMessageQueue&&) = delete;
-    virtual bool open(long attempts = 5, long timeoutMs = 1000);
     virtual bool create();
+    virtual bool open(long attempts = 5, long timeoutMs = 1000);
     virtual bool alive() const;
     virtual bool receive(char* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool send(const char* message, long attempts = 3, long timeoutMs = 1000);

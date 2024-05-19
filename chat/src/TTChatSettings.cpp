@@ -1,4 +1,5 @@
 #include "TTChatSettings.hpp"
+#include "TTChatMessage.hpp"
 #include <charconv>
 #include <cstring>
 #include <stdexcept>
@@ -28,4 +29,14 @@ TTChatSettings::TTChatSettings(int argc, char** argv) {
     if (mMessageQueueName.front() != '/') {
         mMessageQueueName.insert(0, "/");
     }
+}
+
+std::shared_ptr<TTUtilsMessageQueue> TTChatSettings::getPrimaryMessageQueue() const {
+    const auto queueName = mMessageQueueName + PRIMARY_POSTFIX;
+    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage));
+}
+
+std::shared_ptr<TTUtilsMessageQueue> TTChatSettings::getSecondaryMessageQueue() const {
+    const auto queueName = mMessageQueueName + SECONDARY_POSTFIX;
+    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage));
 }

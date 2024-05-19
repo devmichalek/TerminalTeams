@@ -1,18 +1,12 @@
 #include "TTChatHandler.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <iostream>
 #include <chrono>
 #include <vector>
 #include <signal.h>
 
-std::atomic<size_t> sentCounter{0};
-void sent() {
-    sentCounter++;
-}
-
-std::atomic<size_t> receivedCounter{0};
-void received() {
-    receivedCounter++;
-}
+// Logger
+TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-chat-handler");
 
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {
@@ -43,11 +37,6 @@ std::vector<std::string> getTokens(std::string line) {
 }
 
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        throw std::runtime_error("invalid number of arguments");
-    }
-    std::string queueMessageName = argv[1];
-
     // Signal handling
     struct sigaction signalAction;
     memset(&signalAction, 0, sizeof(signalAction));
@@ -58,7 +47,8 @@ int main(int argc, char** argv) {
     sigaction(SIGSTOP, &signalAction, nullptr);
 
     // Run main app
-    TTChatHandler handler(queueMessageName, &sent, &received);
+    const TTChatSettings settings(argc, argv);
+    TTChatHandler handler(settings);
     while (!quitHandle.load()) {
         // Get tokens
         std::string line;

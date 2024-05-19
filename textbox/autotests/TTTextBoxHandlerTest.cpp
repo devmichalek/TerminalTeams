@@ -1,4 +1,5 @@
 #include "TTTextBoxHandler.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <iostream>
 #include <chrono>
 #include <cstring>

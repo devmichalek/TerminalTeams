@@ -4,10 +4,9 @@ project(TerminalTeamsContactsUnitTests VERSION 1.0)
 # Set literals
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(TT_CONTACTS_LIB tteams-contacts)
-set(TT_CONTACTS_HANDLER_LIB tteams-contacts-handler)
-set(TT_CONTACTS_UT tteams-contacts-unittests)
-get_filename_component(TT_ROOT_DIRECTORY "../../" ABSOLUTE)
+set(TT_CONTACTS_LIB "tteams-contacts")
+set(TT_CONTACTS_HANDLER_LIB "tteams-contacts-handler")
+set(TT_CONTACTS_UT "tteams-contacts-unittests")
 get_filename_component(TT_CONTACTS_TESTED_DIRECTORY "../src" ABSOLUTE)
 get_filename_component(TT_CONTACTS_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 set(TT_CONTACTS_UNIT_TESTS

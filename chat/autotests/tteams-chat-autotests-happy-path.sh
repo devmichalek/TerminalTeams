@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 
 # Test setup
-
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 MSG_QUEUE_NAME=chat
 APP_HANDLER="./tteams-chat-handler"
-APP_HANDLER_ARGS=("${MSG_QUEUE_NAME}")
+APP_HANDLER_ARGS=(40 10 "${MSG_QUEUE_NAME}")
 APP_HANDLER_CMD="${APP_HANDLER} ${APP_HANDLER_ARGS[@]}"
 APP="./tteams-chat"
 APP_ARGS=(40 10 "${MSG_QUEUE_NAME}")

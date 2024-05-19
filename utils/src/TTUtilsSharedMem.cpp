@@ -34,7 +34,7 @@ TTUtilsSharedMem::~TTUtilsSharedMem() {
 bool TTUtilsSharedMem::create() {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Creating...", mClassNamePrefix);
-    if (mAlive) {
+    if (alive()) {
         logger.error("{} Cannot recreate!", mClassNamePrefix);
         return false;
     }
@@ -80,7 +80,7 @@ bool TTUtilsSharedMem::create() {
 bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Initializing...", mClassNamePrefix);
-    if (mAlive) {
+    if (alive()) {
         logger.error("{} Cannot reopen!", mClassNamePrefix);
         return false;
     }
@@ -126,7 +126,7 @@ bool TTUtilsSharedMem::receive(void* message, long attempts, long timeoutMs) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     const auto timeoutSecs = timeoutMs / 1000;
     bool result = false;
-    if (mAlive) {
+    if (alive()) {
         do {
             int code = -1;
             for (auto attempt = attempts; attempt > 0; --attempt) {
@@ -134,7 +134,7 @@ bool TTUtilsSharedMem::receive(void* message, long attempts, long timeoutMs) {
                 struct timespec ts;
                 if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                     code = -1;
-                    logger.error("{} Hard failure at fetching clock time!", mClassNamePrefix);
+                    logger.error("{} Hard failure at fetching clock time before data was received!", mClassNamePrefix);
                     break;
                 }
                 ts.tv_sec += timeoutSecs;
@@ -143,7 +143,7 @@ bool TTUtilsSharedMem::receive(void* message, long attempts, long timeoutMs) {
                     logger.info("{} Received other process data", mClassNamePrefix);
                     break;
                 } else if (errno == EINTR) {
-                    logger.warning("{} Soft failure, interrupted function call!", mClassNamePrefix);
+                    logger.warning("{} Soft failure, interrupted function call before data was received!", mClassNamePrefix);
                     continue;
                 }
             }
@@ -152,16 +152,16 @@ bool TTUtilsSharedMem::receive(void* message, long attempts, long timeoutMs) {
             }
             memcpy(message, mSharedMessage, mSharedMessageSize);
             if (mSyscall->sem_post(mDataConsumedSemaphore) == -1) {
-                logger.error("{} Failed to notify other process!", mClassNamePrefix);
+                logger.error("{} Failed to notify other process about received data!", mClassNamePrefix);
                 break;
             } else {
                 result = true;
-                logger.info("{} Successfully notified other process", mClassNamePrefix);
+                logger.info("{} Successfully notified other process about received data", mClassNamePrefix);
             }
         } while (false);
     }
     mAlive = result;
-    logger.info("{} Finished receiving message, alive={}", mClassNamePrefix, mAlive);
+    logger.info("{} Finished receiving data, alive={}", mClassNamePrefix, mAlive);
     return result;
 }
 
@@ -169,14 +169,14 @@ bool TTUtilsSharedMem::send(const void* message, long attempts, long timeoutMs) 
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     const auto timeoutSecs = timeoutMs / 1000;
     bool result = false;
-    if (mAlive) {
+    if (alive()) {
         do {
             memcpy(mSharedMessage, message, mSharedMessageSize);
             if (sem_post(mDataProducedSemaphore) == -1) {
-                logger.error("{} Failed to notify other process!", mClassNamePrefix);
+                logger.error("{} Failed to notify other process about sent data!", mClassNamePrefix);
                 break;
             } else {
-                logger.info("{} Successfully notified other process", mClassNamePrefix);
+                logger.info("{} Successfully notified other process about sent data", mClassNamePrefix);
             }
 
             int code = 0;
@@ -185,7 +185,7 @@ bool TTUtilsSharedMem::send(const void* message, long attempts, long timeoutMs) 
                 struct timespec ts;
                 if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                     code = -1;
-                    logger.error("{} Hard failure at fetching clock time!", mClassNamePrefix);
+                    logger.error("{} Hard failure at fetching clock time after data was sent!", mClassNamePrefix);
                     break;
                 }
                 ts.tv_sec += timeoutSecs;
@@ -195,14 +195,14 @@ bool TTUtilsSharedMem::send(const void* message, long attempts, long timeoutMs) 
                     result = true;
                     break;
                 } else if (errno == EINTR) {
-                    logger.warning("{} Soft failure, interrupted function call!", mClassNamePrefix);
+                    logger.warning("{} Soft failure, interrupted function call after data was sent!", mClassNamePrefix);
                     continue;
                 }
             }
         } while (false);
     }
     mAlive = result;
-    logger.info("{} Finished sending message, alive={}", mClassNamePrefix, mAlive);
+    logger.info("{} Finished sending data, alive={}", mClassNamePrefix, mAlive);
     return result;
 }
 

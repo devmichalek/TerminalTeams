@@ -1,51 +1,30 @@
 #include "TTChatHandler.hpp"
 #include "TTChatSettings.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <list>
 #include <limits>
 #include <iostream>
 
-TTChatHandler::TTChatHandler(std::string messageQueueName,
-    TTChatCallbackMessageSent callbackMessageSent,
-    TTChatCallbackMessageReceived callbackMessageReceived) :
-        mCallbackMessageSent(callbackMessageSent),
-        mCallbackMessageReceived(callbackMessageReceived),
-        mMessageQueueName(messageQueueName),
-        mMessageQueueDescriptor(-1),
-        mMessageQueueReversedName(TTChatSettings::getReversedMessageQueueName(messageQueueName)),
-        mMessageQueueReversedDescriptor(-1),
+TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
+        mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
+        mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
         mForcedQuit{false},
         mHeartbeatResult{},
         mHandlerResult{},
         mCurrentId(std::numeric_limits<size_t>::max()) {
-    const std::string classNamePrefix = "TTChatHandler: ";
-    // Correct queue name
-    if (mMessageQueueName.front() != '/') {
-        mMessageQueueName.insert(0, "/");
-        mMessageQueueReversedName.insert(0, "/");
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Constructing...", mClassNamePrefix);
+    if (!mPrimaryMessageQueue->create()) {
+        throw std::runtime_error(mClassNamePrefix + "Failed to create primary message queue!");
+    } else {
+        logger.info("{} Successfully created primary message queue!", mClassNamePrefix);
     }
-    // Create and open message queue
-    struct mq_attr messageQueueAttributes;
-    messageQueueAttributes.mq_maxmsg = TTCHAT_MESSAGE_MAX_NUM;
-    messageQueueAttributes.mq_msgsize = TTCHAT_MESSAGE_MAX_LENGTH;
-    messageQueueAttributes.mq_flags = 0;
+    if (!mSecondaryMessageQueue->create()) {
+        throw std::runtime_error(mClassNamePrefix + "Failed to create secondary message queue!");
+    } else {
+        logger.info("{} Successfully created secondary message queue!", mClassNamePrefix);
+    }
 
-    errno = 0;
-    mMessageQueueDescriptor = mq_open(mMessageQueueName.c_str(),
-                                      O_CREAT | O_RDWR,
-                                      0644,
-                                      &messageQueueAttributes);
-    if (mMessageQueueDescriptor == -1) {
-        throw std::runtime_error(classNamePrefix + "Failed to create message queue, errno=" + std::to_string(errno));
-    }
-    // Create and open message queue reversed
-    errno = 0;
-    mMessageQueueReversedDescriptor = mq_open(mMessageQueueReversedName.c_str(),
-                                              O_CREAT | O_RDWR,
-                                              0644,
-                                              &messageQueueAttributes);
-    if (mMessageQueueReversedDescriptor == -1) {
-        throw std::runtime_error(classNamePrefix + "Failed to create reversed message queue, errno=" + std::to_string(errno));
-    }
     // Set heartbeat receiver thread
     auto pt = std::packaged_task<void()>(std::bind(&TTChatHandler::heartbeat, this));
     mHeartbeatResult = pt.get_future();
@@ -56,46 +35,63 @@ TTChatHandler::TTChatHandler(std::string messageQueueName,
 }
 
 TTChatHandler::~TTChatHandler() {
+    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
     mForcedQuit.store(true);
     mQueueCondition.notify_one();
     mHeartbeatResult.wait();
     mHandlerResult.wait();
-    mq_unlink(mMessageQueueReversedName.c_str());
-    mq_unlink(mMessageQueueName.c_str());
 }
 
 bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timestamp) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    if (mForcedQuit.load()) {
+        logger.warning("{} Forced exit at send message type!", mClassNamePrefix);
+        return false;
+    }
     if (id >= mMessages.size()) {
+        logger.error("{} ID={} out of range at send message type!", mClassNamePrefix, id);
         return false;
     }
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::SEND, message, timestamp));
     if (mCurrentId == id) {
-        return send(TTChatMessageType::SEND, message, timestamp);
+        if (!send(TTChatMessageType::SEND, message, timestamp)) {
+            return false;
+        }
     }
-    if (mForcedQuit.load()) {
-        return false;
-    }
+    logger.info("{} Successfully updated storage with new send message type, ID={}", mClassNamePrefix, id);
     return true;
 }
 
 bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp timestamp) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    if (mForcedQuit.load()) {
+        logger.warning("{} Forced exit at receive message type!", mClassNamePrefix);
+        return false;
+    }
     if (id >= mMessages.size()) {
+        logger.error("{} ID={} out of range at receive message type!", mClassNamePrefix, id);
         return false;
     }
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::RECEIVE, message, timestamp));
     if (mCurrentId == id) {
-        return send(TTChatMessageType::RECEIVE, message, timestamp);
+        if (!send(TTChatMessageType::RECEIVE, message, timestamp)) {
+            return false;
+        }
     }
-    if (mForcedQuit.load()) {
-        return false;
-    }
+    logger.info("{} Successfully updated storage with new receive message type, ID={}", mClassNamePrefix, id);
     return true;
 }
 
 bool TTChatHandler::clear(size_t id) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    if (mForcedQuit.load()) {
+        logger.warning("{} Forced exit at clear message type!", mClassNamePrefix);
+        return false;
+    }
     if (id >= mMessages.size()) {
+        logger.error("{} ID={} out of range at clear message type!", mClassNamePrefix, id);
         return false;
     }
     if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {
@@ -108,30 +104,40 @@ bool TTChatHandler::clear(size_t id) {
             return false;
         }
     }
+    logger.info("{} Successfully cleared and updated current ID={}", mClassNamePrefix, id);
     return true;
 }
 
 bool TTChatHandler::create(size_t id) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (mForcedQuit.load()) {
+        logger.warning("{} Forced exit at create message type!", mClassNamePrefix);
         return false;
     }
     if (!mMessages.empty() && id < mMessages.size()) {
+        logger.error("{} ID={} is within existing range!", mClassNamePrefix, id);
         return false;
     }
     // New storage
     mMessages.push_back({});
+    logger.info("{} Successfully created new storage, ID={}", mClassNamePrefix, id);
     return true;
 }
 
 const TTChatEntries& TTChatHandler::get(size_t id) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (id >= mMessages.size()) {
-        throw std::runtime_error("TTChatHandler: Failed to return messages of id=" + std::to_string(id));
+        logger.error("{} Failed to return messages of ID={}", mClassNamePrefix, id);
+        throw std::runtime_error({});
     }
     return mMessages[id];
 }
 
 bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started preparing messages to be queued", mClassNamePrefix);
     if (mForcedQuit.load()) {
+        logger.warning("{} Forced exit at generic message type!", mClassNamePrefix);
         return false;
     }
 
@@ -158,131 +164,105 @@ bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimesta
         }
     }
     mQueueCondition.notify_one();
+    logger.info("{} Completed preparing messages to be queued", mClassNamePrefix);
     return true;
     
 }
 
-void TTChatHandler::heartbeat() {
-    try {
-        char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
-        for (auto i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT; i >= 0; --i) {
+std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started dequeue", mClassNamePrefix);
+    std::list<std::unique_ptr<TTChatMessage>> messages;
+    while (true)
+    {
+        bool predicate = true;
+        {
+            std::unique_lock<std::mutex> lock(mQueueMutex);
+            auto waitTimeMs = std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS);
+            predicate = mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
+                return !mQueuedMessages.empty() || mForcedQuit.load();
+            });
+
             if (mForcedQuit.load()) {
-                // Forced exit
+                logger.warning("{} Forced exit on dequeue", mClassNamePrefix);
                 throw std::runtime_error({});
             }
-            struct timespec ts;
-            if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                // Hard failure
-                throw std::runtime_error({});
+            
+            if (!mQueuedMessages.empty()) {
+                logger.info("{} Inserting queued messages...", mClassNamePrefix);
+                while (!mQueuedMessages.empty()) {
+                    messages.push_back(std::move(mQueuedMessages.front()));
+                    mQueuedMessages.pop();
+                }
+            } else {
+                logger.info("{} No queued messages", mClassNamePrefix);
             }
-            ts.tv_sec += TTCHAT_MESSAGE_RECEIVE_TIMEOUT_S;
-            errno = 0;
-            unsigned int priority = 0;
-            auto result = mq_timedreceive(mMessageQueueReversedDescriptor,
-                                          dummyBuffer,
-                                          TTCHAT_MESSAGE_MAX_LENGTH,
-                                          &priority,
-                                          &ts);
-            if (result != -1) {
-                i = TTCHAT_MESSAGE_RECEIVE_TRY_COUNT + 1;
-                continue;
-            }
-            if (errno == EAGAIN || errno == ETIMEDOUT) {
-                continue;
-            }
-            // Hard failure
-            throw std::runtime_error({});
+            // Do not remove scope guards, risk of deadlock
         }
-    } catch (...) {
-        // ...
+
+        if (!predicate) {
+            // There wasn't a new message in a queue
+            logger.info("{} Inserting heartbeat message...", mClassNamePrefix);
+            if (!send(TTChatMessageType::HEARTBEAT, {}, std::chrono::system_clock::now())) {
+                throw std::runtime_error({});
+            }
+            continue;
+        }
+
+        break;
+    }
+    logger.info("{} Completed dequeue", mClassNamePrefix);
+    return messages;
+}
+
+void TTChatHandler::heartbeat() {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started secondary (heartbeat) loop", mClassNamePrefix);
+    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) { 
+        try {
+            char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
+            while (true) {
+                if (mForcedQuit.load()) {
+                    logger.warning("{} Forced exit on secondary (heartbeat) loop", mClassNamePrefix);
+                    break;
+                }
+                if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&dummyBuffer[0]))) {
+                    logger.warning("{} Failed to receive heartbeat message!", mClassNamePrefix);
+                    break;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS));
+            }
+        } catch (...) {
+            logger.error("{} Caught unknown exception at secondary (heartbeat) loop!", mClassNamePrefix);
+        }
     }
     mForcedQuit.store(true);
+    logger.info("{} Completed secondary (heartbeat) loop", mClassNamePrefix);
 }
 
 void TTChatHandler::main() {
-    try {
-        while (true) {
-            // Fill the list of messages
-            std::list<std::unique_ptr<TTChatMessage>> messages;
-            while (true)
-            {
-                bool predicate = true;
-                {
-                    std::unique_lock<std::mutex> lock(mQueueMutex);
-                    auto waitTimeMs = std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS);
-                    predicate = mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
-                        return !mQueuedMessages.empty() || mForcedQuit.load();
-                    });
-
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started primary loop", mClassNamePrefix);
+    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
+        try {
+            while (true) {
+                decltype(auto) messages = dequeue();
+                for (auto &message : messages) {
+                    auto& refMessage = *message.get();
                     if (mForcedQuit.load()) {
+                        logger.warning("{} Forced exit on primary loop", mClassNamePrefix);
                         throw std::runtime_error({});
                     }
-                    while (!mQueuedMessages.empty()) {
-                        messages.push_back(std::move(mQueuedMessages.front()));
-                        mQueuedMessages.pop();
-                    }
-                    // Do not remove scope guards, risk of deadlock
-                }
-
-                if (!predicate) {
-                    // There wasn't a new message in a queue
-                    if (!send(TTChatMessageType::HEARTBEAT, {}, std::chrono::system_clock::now())) {
-                        break; // Fail
-                    }
-                    continue;
-                }
-
-                break;
-            }
-
-            for (auto &message : messages) {
-                int result = -1;
-                auto& refMessage = *message.get();
-                for (auto i = TTCHAT_MESSAGE_SEND_TRY_COUNT; i >= 0; --i) {
-                    if (mForcedQuit.load()) {
+                    if (!mPrimaryMessageQueue->send(reinterpret_cast<char*>(&refMessage))) {
+                        logger.warning("{} Failed to send message!", mClassNamePrefix);
                         throw std::runtime_error({});
                     }
-                    struct timespec ts;
-                    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                        throw std::runtime_error({}); // Hard failure
-                    }
-                    ts.tv_sec += TTCHAT_MESSAGE_SEND_TIMEOUT_S;
-                    errno = 0;
-                    result = mq_timedsend(mMessageQueueDescriptor,
-                                          reinterpret_cast<char*>(&refMessage),
-                                          TTCHAT_MESSAGE_MAX_LENGTH,
-                                          TTCHAT_MESSAGE_PRIORITY,
-                                          &ts);
-                    if (result != -1) {
-                        if (refMessage.type == TTChatMessageType::SEND) {
-                            if (mCallbackMessageSent) {
-                                mCallbackMessageSent();
-                            }
-                        } else if (refMessage.type == TTChatMessageType::RECEIVE) {
-                            if (mCallbackMessageReceived) {
-                                mCallbackMessageReceived();
-                            }
-                        }
-                        break; // Success
-                    }
-                    if (errno == EAGAIN) {
-                        continue; // Message queue is full, try again
-                    }
-                    if (errno == ETIMEDOUT) {
-                        continue; // Timeout, try again
-                    }
-                    // Hard failure
-                    throw std::runtime_error({});
-                }
-
-                if (result == -1) {
-                    // Hard failure
-                    throw std::runtime_error({});
                 }
             }
+        } catch (...) {
+            logger.error("{} Caught unknown exception at primary loop!", mClassNamePrefix);
         }
-    } catch (...) {
-        // ...
     }
     mForcedQuit.store(true);
+    logger.info("{} Completed primary loop", mClassNamePrefix);
 }
