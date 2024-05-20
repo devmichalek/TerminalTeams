@@ -2,14 +2,17 @@
 #include "TTDiagnosticsLogger.hpp"
 #include <thread>
 
-TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name, long queueSize, long messageSize) :
+TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
+    long queueSize,
+    long messageSize,
+    std::shared_ptr<TTUtilsSyscall> syscall) :
         mName(name),
         mDescriptor(-1),
         mDeleter([](const std::string&){}),
         mQueueSize(queueSize),
-        mMessageSize(messageSize) {
+        mMessageSize(messageSize),
+        mSyscall(syscall) {
     TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
-    mBuffer.resize(mMessageSize);
 }
 
 TTUtilsMessageQueue::~TTUtilsMessageQueue() {
@@ -30,18 +33,19 @@ bool TTUtilsMessageQueue::create() {
     messageQueueAttributes.mq_msgsize = mMessageSize;
     messageQueueAttributes.mq_flags = 0;
     errno = 0;
-    mDescriptor = mq_open(mName.c_str(), O_CREAT | O_RDWR, 0644, &messageQueueAttributes);
+    mDescriptor = mSyscall->mq_open(mName.c_str(), O_CREAT | O_RDWR, 0644, &messageQueueAttributes);
     if (mDescriptor == -1) {
         logger.error("{} Failed to create message queue, errno={}", mClassNamePrefix, errno);
         return false;
     }
-    mDeleter = [](const std::string& name){ mq_unlink(name.c_str()); };
+    mDeleter = [this](const std::string& name){ mSyscall->mq_unlink(name.c_str()); };
+    logger.info("{} Successfully created!", mClassNamePrefix);
     return true;
 }
 
 bool TTUtilsMessageQueue::open(long attempts, long timeoutMs) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Initializing...", mClassNamePrefix);
+    logger.info("{} Opening...", mClassNamePrefix);
     if (alive()) {
         logger.error("{} Cannot reopen!", mClassNamePrefix);
         return false;
@@ -52,7 +56,7 @@ bool TTUtilsMessageQueue::open(long attempts, long timeoutMs) {
     messageQueueAttributes.mq_flags = 0;
     errno = 0;
     for (auto attempt = attempts; attempt > 0; --attempt) {
-        mDescriptor = mq_open(mName.c_str(), O_RDWR, 0644, &messageQueueAttributes);
+        mDescriptor = mSyscall->mq_open(mName.c_str(), O_RDWR, 0644, &messageQueueAttributes);
         if (mDescriptor != -1) {
             break; // Success
         }
@@ -62,7 +66,7 @@ bool TTUtilsMessageQueue::open(long attempts, long timeoutMs) {
         logger.error("{} Failed to open message queue, errno={}", mClassNamePrefix, errno);
         return false;
     }
-
+    logger.info("{} Successfully opened!", mClassNamePrefix);
     return true;
 }
 
@@ -78,13 +82,13 @@ bool TTUtilsMessageQueue::receive(char* message, long attempts, long timeoutMs) 
         for (auto i = attempts; i > 0; --i) {
             errno = 0;
             struct timespec ts;
-            if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+            if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                 logger.error("{} Hard failure while sending message, fetching clock time, errno={}", mClassNamePrefix, errno);
                 break;
             }
             ts.tv_sec += timeoutSecs;
             unsigned int priority = 0;
-            auto res = mq_timedreceive(mDescriptor, message, mMessageSize, &priority, &ts);
+            auto res = mSyscall->mq_timedreceive(mDescriptor, message, mMessageSize, &priority, &ts);
             if (res != -1) {
                 logger.error("{} Successfully received message!", mClassNamePrefix);
                 result = true;
@@ -113,13 +117,13 @@ bool TTUtilsMessageQueue::send(const char* message, long attempts, long timeoutM
         for (auto i = attempts; i > 0; --i) {
             errno = 0;
             struct timespec ts;
-            if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+            if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                 logger.error("{} Hard failure while sending message, fetching clock time, errno={}", mClassNamePrefix, errno);
                 break;
             }
             ts.tv_sec += timeoutSecs;
             unsigned int priority = 0;
-            auto res = mq_timedsend(mDescriptor, message, mMessageSize, priority, &ts);
+            auto res = mSyscall->mq_timedsend(mDescriptor, message, mMessageSize, priority, &ts);
             if (res != -1) {
                 logger.error("{} Successfully send message!", mClassNamePrefix);
                 result = true;

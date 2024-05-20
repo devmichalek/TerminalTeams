@@ -5,18 +5,15 @@
 #include <signal.h>
 #include <atomic>
 
-// Logger
+// Application
+std::unique_ptr<TTChat> application;
 const std::string LOGGER_PREFIX = "Main:";
 TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-chat");
 
-// Quit handler
-std::atomic<bool> quitHandle{false};
-bool quit() {
-    return quitHandle.load();
-}
-
 void signalInterruptHandler(int) {
-    quitHandle.store(true);
+    if (application) {
+        application->stop();
+    }
 }
 
 int main(int argc, char** argv) {
@@ -38,10 +35,10 @@ int main(int argc, char** argv) {
         // Run main app
         TTChatSettings settings(argc, argv);
         const TTUtilsOutputStream outputStream;
-        TTChat chat(settings, &quit, outputStream);
+        application = std::make_unique<TTChat>(settings, outputStream);
         DT_END("main", "initialization");
         DT_BEGIN("main", "run");
-        chat.run();
+        application->run();
         DT_END("main", "run");
     } catch (const std::exception& exp) {
         logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());

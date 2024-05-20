@@ -30,4 +30,9 @@ public:
         std::cout << std::flush;
         return *this;
     }
+
+    virtual const TTUtilsOutputStream& clear() const {
+        print("\033[2J\033[1;1H").flush()
+        return *this;
+    }
 };

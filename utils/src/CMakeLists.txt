@@ -18,6 +18,7 @@ set(TT_UTILS_LIB tteams-utils)
 add_library(${TT_UTILS_LIB}
   "${TT_UTILS_SRC_DIRECTORY}/TTUtilsMessageQueue.cpp"
   "${TT_UTILS_SRC_DIRECTORY}/TTUtilsSharedMem.cpp"
+  "${TT_UTILS_SRC_DIRECTORY}/TTUtilsNamedPipe.cpp"
 )
 set_target_properties(${TT_UTILS_LIB} PROPERTIES VERSION ${PROJECT_VERSION})
 target_include_directories(${TT_UTILS_LIB} PUBLIC "${PROJECT_BINARY_DIR}")

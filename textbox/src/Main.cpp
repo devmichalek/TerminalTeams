@@ -3,6 +3,8 @@
 #include <memory>
 
 std::unique_ptr<TTTextBox> application;
+const std::string LOGGER_PREFIX = "Main:";
+TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox");
 
 void signalInterruptHandler(int) {
     if (application) {
@@ -22,7 +24,8 @@ int main(int argc, char** argv) {
 
     // Run application
     TTTextBoxSettings settings(argc, argv);
-    application = std::make_unique<TTTextBox>(settings);
+    const TTUtilsOutputStream outputStream;
+    application = std::make_unique<TTTextBox>(settings, outputStream);
     application->run();
     return 0;
 }

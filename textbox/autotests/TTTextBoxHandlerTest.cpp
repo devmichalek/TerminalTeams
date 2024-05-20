@@ -5,6 +5,9 @@
 #include <cstring>
 #include <signal.h>
 
+// Logger
+TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox-handler");
+
 void messageSent(std::string msg) {
     std::cout << msg << std::endl;
 }

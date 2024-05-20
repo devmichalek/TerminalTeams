@@ -2,9 +2,6 @@
 #include <cstring>
 #include <iostream>
 #include <thread>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 TTUtilsSharedMem::TTUtilsSharedMem(const std::string& sharedMemoryName,
     const std::string& dataConsumedSemName,
@@ -40,7 +37,7 @@ bool TTUtilsSharedMem::create() {
     }
 
     errno = 0;
-    int fd = shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         logger.error("{} Failed to create shared object, errno={}", mClassNamePrefix, errno);
         return false;
@@ -48,38 +45,39 @@ bool TTUtilsSharedMem::create() {
     mSharedMemoryCreated = true;
 
     errno = 0;
-    if (ftruncate(fd, mSharedMessageSize) == -1) {
+    if (mSyscall->ftruncate(fd, mSharedMessageSize) == -1) {
         logger.error("{} Failed to truncate shared object, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
-    mSharedMessage = mmap(nullptr, mSharedMessageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    mSharedMessage = mSyscall->mmap(nullptr, mSharedMessageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (!mSharedMessage) {
         logger.error("{} Failed to mmap shared message!", mClassNamePrefix);
         return false;
     }
 
     errno = 0;
-    if ((mDataProducedSemaphore = sem_open(mDataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
+    if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
         logger.error("{} Failed to create data produced semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
     mDataProducedSemCreated = true;
 
     errno = 0;
-    if ((mDataConsumedSemaphore = sem_open(mDataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
+    if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
         logger.error("{} Failed to create data consumed semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
     mDataConsumedSemCreated = true;
 
+    logger.info("{} Successfully created!", mClassNamePrefix);
     mAlive = true;
     return true;
 }
 
 bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Initializing...", mClassNamePrefix);
+    logger.info("{} Opening...", mClassNamePrefix);
     if (alive()) {
         logger.error("{} Cannot reopen!", mClassNamePrefix);
         return false;
@@ -117,7 +115,7 @@ bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
         return false;
     }
 
-    logger.info("{} Successfully initialized!", mClassNamePrefix);
+    logger.info("{} Successfully opened!", mClassNamePrefix);
     mAlive = true;
     return true;
 }
@@ -172,7 +170,7 @@ bool TTUtilsSharedMem::send(const void* message, long attempts, long timeoutMs) 
     if (alive()) {
         do {
             memcpy(mSharedMessage, message, mSharedMessageSize);
-            if (sem_post(mDataProducedSemaphore) == -1) {
+            if (mSyscall->sem_post(mDataProducedSemaphore) == -1) {
                 logger.error("{} Failed to notify other process about sent data!", mClassNamePrefix);
                 break;
             } else {
@@ -183,13 +181,13 @@ bool TTUtilsSharedMem::send(const void* message, long attempts, long timeoutMs) 
             for (auto attempt = attempts; attempt > 0; --attempt) {
                 logger.info("{} Waiting for the other process to consume the data, attempt={}", mClassNamePrefix, (attempts - attempt));
                 struct timespec ts;
-                if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+                if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
                     code = -1;
                     logger.error("{} Hard failure at fetching clock time after data was sent!", mClassNamePrefix);
                     break;
                 }
                 ts.tv_sec += timeoutSecs;
-                code = sem_timedwait(mDataConsumedSemaphore, &ts);
+                code = mSyscall->sem_timedwait(mDataConsumedSemaphore, &ts);
                 if (code != -1) {
                     logger.info("{} Sent data to other process", mClassNamePrefix);
                     result = true;
@@ -212,15 +210,15 @@ bool TTUtilsSharedMem::alive() const {
 
 void TTUtilsSharedMem::destroy() {
     if (mSharedMemoryCreated) {
-        shm_unlink(mSharedMemoryName.c_str());
+        mSyscall->shm_unlink(mSharedMemoryName.c_str());
         mSharedMemoryCreated = false;
     }
     if (mDataConsumedSemCreated) {
-        sem_unlink(mDataConsumedSemName.c_str());
+        mSyscall->sem_unlink(mDataConsumedSemName.c_str());
         mDataConsumedSemCreated = false;
     }
     if (mDataProducedSemCreated) {
-        sem_unlink(mDataProducedSemName.c_str());
+        mSyscall->sem_unlink(mDataProducedSemName.c_str());
         mDataProducedSemCreated = false;
     }
 }

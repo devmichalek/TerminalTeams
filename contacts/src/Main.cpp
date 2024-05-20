@@ -5,19 +5,15 @@
 #include <signal.h>
 #include <atomic>
 
-// Logger
+// Application
+std::unique_ptr<TTContacts> application;
 const std::string LOGGER_PREFIX = "Main:";
 TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-contacts");
 
-// Quit handler
-std::atomic<bool> quitHandle{false};
-bool quit() {
-    return quitHandle.load();
-}
-
 void signalInterruptHandler(int) {
-    TTDiagnosticsLogger::getInstance().info("{} Received interrupt signal!", LOGGER_PREFIX);
-    quitHandle.store(true);
+    if (application) {
+        application->stop();
+    }
 }
 
 int main(int argc, char** argv) {
@@ -40,14 +36,14 @@ int main(int argc, char** argv) {
         // Set contacts
         const TTContactsSettings settings(argc, argv);
         const TTUtilsOutputStream outputStream;
-        TTContacts contacts(settings, &quit, outputStream);
+        application = std::make_unique<TTContacts>(settings, outputStream);
         logger.info("{} Contacts initialized", LOGGER_PREFIX);
         DT_END("main", "initialization");
         // Run main app
         DT_BEGIN("main", "run");
         try {
             if (!quitHandle.load()) {
-                contacts.run();
+                application->run();
             } else {
                 logger.warning("{} Application was shut down out of a sudden", LOGGER_PREFIX);
             }

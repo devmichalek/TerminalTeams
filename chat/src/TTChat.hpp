@@ -5,13 +5,9 @@
 #include <future>
 #include <functional>
 
-using TTChatCallbackQuit = std::function<bool()>;
-
 class TTChat {
 public:
-    explicit TTChat(const TTChatSettings& settings,
-        TTChatCallbackQuit callbackQuit,
-        const TTUtilsOutputStream& outputStream);
+    explicit TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& outputStream);
     virtual ~TTChat();
     TTChat(const TTChat&) = delete;
     TTChat(const TTChat&&) = delete;
@@ -19,6 +15,10 @@ public:
     TTChat operator=(const TTChat&&) = delete;
     // Receives main data
     virtual void run();
+    // Stops applications
+    virtual void stop();
+    // Returns true if application is stopped
+    virtual bool stopped() const;
 private:
     // Sends heartbeat periodically
     void heartbeat(std::promise<void> promise);
@@ -26,8 +26,6 @@ private:
     void handle(const TTChatMessage& message);
     // Prints message in a defined format
     void print(const char* cmessage, TTChatTimestamp timestmap, bool received);
-    // Callbacks
-    TTChatCallbackQuit mCallbackQuit;
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;

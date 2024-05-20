@@ -8,4 +8,5 @@ class TTUtilsOutputStreamMock : public TTUtilsOutputStream {
     MOCK_METHOD(const TTUtilsOutputStream&, print, (std::string), (const, override));
     MOCK_METHOD(const TTUtilsOutputStream&, endl, (), (const, override));
     MOCK_METHOD(const TTUtilsOutputStream&, flush, (), (const, override));
+    MOCK_METHOD(const TTUtilsOutputStream&, clear, (), (const, override));
 };

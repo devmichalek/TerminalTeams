@@ -9,13 +9,9 @@
 #include <string>
 #include <functional>
 
-using TTContactsCallbackQuit = std::function<bool()>;
-
 class TTContacts {
 public:
-    explicit TTContacts(const TTContactsSettings& settings,
-        TTContactsCallbackQuit callbackQuit,
-        const TTUtilsOutputStream& outputStream);
+    explicit TTContacts(const TTContactsSettings& settings, const TTUtilsOutputStream& outputStream);
     virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
     TTContacts(const TTContacts&&) = delete;
@@ -23,6 +19,10 @@ public:
     TTContacts operator=(const TTContacts&&) = delete;
     // Receives main data and sends confirmation
     virtual void run();
+    // Stops applications
+    virtual void stop();
+    // Returns true if application is stopped
+    virtual bool stopped() const;
     // Returns number of contacts
     virtual size_t size() const;
 private:
@@ -30,14 +30,14 @@ private:
     bool handle(const TTContactsMessage& message);
     // Refreshes window
     void refresh();
-    // Callbacks
-    TTContactsCallbackQuit mCallbackQuit;
     // Output stream
     const TTUtilsOutputStream& mOutputStream;
     // Logger
     inline static const std::string mClassNamePrefix = "TTContacts:";
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
+    // Thread concurrent message communication
+    std::atomic<bool> mForcedQuit;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;

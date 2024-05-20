@@ -1,31 +1,22 @@
 #include "TTTextBoxHandler.hpp"
 #include "TTTextBoxSettings.hpp"
 #include "TTTextBoxMessage.hpp"
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
-TTTextBoxHandler::TTTextBoxHandler(std::string uniqueName,
+TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
     TTTextBoxCallbackMessageSent callbackMessageSent,
     TTTextBoxCallbackContactSwitch callbackContactsSwitch) :
+        mPipe(settings.getNamedPipe()),
         mCallbackMessageSent(callbackMessageSent),
         mCallbackContactsSwitch(callbackContactsSwitch),
-        mNamedPipeDescriptor(-1),
-        mNamedPipePath(TTTextBoxSettings::getPipePath(uniqueName)),
         mStopped{false} {
-    const std::string classNamePrefix = "TTTextBoxHandler: ";
-    errno = 0;
-    if (mkfifo(mNamedPipePath.c_str(), 0666) < 0) {
-        throw std::runtime_error(classNamePrefix + "Failed to create named pipe, errno=" + std::to_string(errno));
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Constructing...", mClassNamePrefix);
+    // Create pipe
+    if (!mPipe->create()) {
+        throw std::runtime_error(mClassNamePrefix + "Failed to create named pipe!");
+    } else {
+        logger.info("{} Successfully created named pipe!", mClassNamePrefix);
     }
-
-    mNamedPipeDescriptor = open(mNamedPipePath.c_str(), O_RDONLY);
-    if (mNamedPipeDescriptor == -1) {
-        throw std::runtime_error(classNamePrefix + "Failed to open named pipe, errno=" + std::to_string(errno));
-    }
-
     // Set main receiver thread
     std::promise<void> mainPromise;
     mBlockers.push_back(mainPromise.get_future());
@@ -34,15 +25,15 @@ TTTextBoxHandler::TTTextBoxHandler(std::string uniqueName,
 }
 
 TTTextBoxHandler::~TTTextBoxHandler() {
+    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
     stop();
     for (auto &blocker : mBlockers) {
         blocker.wait();
     }
-    close(mNamedPipeDescriptor);
-    unlink(mNamedPipePath.c_str());
 }
 
 void TTTextBoxHandler::stop() {
+    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
     mStopped.store(true);
 }
 
@@ -51,42 +42,51 @@ bool TTTextBoxHandler::stopped() const {
 }
 
 void TTTextBoxHandler::main(std::promise<void> promise) {
-    try {
-        for (auto i = TTTEXTBOX_RECEIVE_TRY_COUNT; i >= 0; --i) {
-            if (stopped()) {
-                break;
-            }
-            TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);
-            if (read(mNamedPipeDescriptor, &message, sizeof(TTTextBoxMessage)) < 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_RECEIVE_TIMEOUT_MS));
-                continue;
-            }
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
+    logger.info("{} Started textbox handler loop", mClassNamePrefix);
+    if (mPipe->alive()) {
+        try {
+            for (auto i = TTTEXTBOX_RECEIVE_TRY_COUNT; i >= 0; --i) {
+                if (stopped()) {
+                    break;
+                }
+                TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);
+                if (mPipe->receive(&message)) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_RECEIVE_TIMEOUT_MS));
+                    continue;
+                }
 
-            switch (message.status) {
-                case TTTextBoxStatus::HEARTBEAT:
-                    break;
-                case TTTextBoxStatus::CONTACTS_SWITCH:
-                {
-                    size_t id = 0;
-                    memcpy(&id, message.data, message.dataLength);
-                    mCallbackContactsSwitch(id);
-                    break;
+                switch (message.status) {
+                    case TTTextBoxStatus::HEARTBEAT:
+                        logger.info("{} Received heartbeat message", mClassNamePrefix);
+                        break;
+                    case TTTextBoxStatus::CONTACTS_SWITCH:
+                    {
+                        logger.info("{} Received contacts switch message", mClassNamePrefix);
+                        size_t id = 0;
+                        memcpy(&id, message.data, message.dataLength);
+                        mCallbackContactsSwitch(id);
+                        break;
+                    }
+                    case TTTextBoxStatus::MESSAGE:
+                    {
+                        logger.info("{} Received message", mClassNamePrefix);
+                        std::string msg(message.data, message.dataLength);
+                        mCallbackMessageSent(std::move(msg));
+                        break;
+                    }
+                    case TTTextBoxStatus::UNDEFINED:
+                    default:
+                        logger.error("{} Received undefined message!", mClassNamePrefix);
+                        throw std::runtime_error({});
                 }
-                case TTTextBoxStatus::MESSAGE:
-                {
-                    std::string msg(message.data, message.dataLength);
-                    mCallbackMessageSent(std::move(msg));
-                    break;
-                }
-                case TTTextBoxStatus::UNDEFINED:
-                default:
-                    throw std::runtime_error({});
+                i = TTTEXTBOX_RECEIVE_TRY_COUNT + 1;
             }
-            i = TTTEXTBOX_RECEIVE_TRY_COUNT + 1;
+        } catch (...) {
+            // ...
         }
-    } catch (...) {
-        // ...
     }
     stop();
     promise.set_value();
+    logger.info("{} Completed textbox handler loop", mClassNamePrefix);
 }

@@ -5,10 +5,7 @@
 #include <iomanip>
 #include <chrono>
 
-TTChat::TTChat(const TTChatSettings& settings,
-    TTChatCallbackQuit callbackQuit,
-    const TTUtilsOutputStream& outputStream) :
-        mCallbackQuit(callbackQuit),
+TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& outputStream) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
         mForcedQuit{false},
@@ -50,7 +47,7 @@ void TTChat::run() {
         try {
             TTChatMessage message;
             while (true) {
-                if (mForcedQuit.load() || (mCallbackQuit())) {
+                if (mForcedQuit.load()) {
                     logger.warning("{} Forced exit on primary loop", mClassNamePrefix);
                     break;
                 }
@@ -69,6 +66,15 @@ void TTChat::run() {
     logger.info("{} Completed primary loop", mClassNamePrefix);
 }
 
+void TTChat::stop() {
+    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
+    mStopped.store(true);
+}
+
+bool TTChat::stopped() const {
+    return mStopped.load();
+}
+
 void TTChat::heartbeat(std::promise<void> promise) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Started secondary (heartbeat) loop", mClassNamePrefix);
@@ -76,7 +82,7 @@ void TTChat::heartbeat(std::promise<void> promise) {
         try {
             char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
             while (true) {
-                if (mForcedQuit.load() || (mCallbackQuit())) {
+                if (mForcedQuit.load()) {
                     logger.warning("{} Forced exit on secondary (heartbeat) loop", mClassNamePrefix);
                     break;
                 }
@@ -100,7 +106,7 @@ void TTChat::handle(const TTChatMessage& message) {
     switch (message.type) {
         case TTChatMessageType::CLEAR:
             logger.info("{} Received clear message", mClassNamePrefix);
-            mOutputStream.print("\033[2J\033[1;1H").flush(); // Clear window
+            mOutputStream.clear();
             break;
         case TTChatMessageType::SEND:
             logger.info("{} Received sender message", mClassNamePrefix);

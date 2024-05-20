@@ -1,11 +1,7 @@
 #include "TTContacts.hpp"
 
-TTContacts::TTContacts(const TTContactsSettings& settings,
-    TTContactsCallbackQuit callbackQuit,
-    const TTUtilsOutputStream& outputStream) :
+TTContacts::TTContacts(const TTContactsSettings& settings, const TTUtilsOutputStream& outputStream) :
         mSharedMem(std::move(settings.getSharedMemory())),
-        mCallbackQuit(callbackQuit),
-        mOutputStream(outputStream),
         mTerminalWidth(settings.getTerminalWidth()),
         mTerminalHeight(settings.getTerminalHeight()) {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
@@ -24,7 +20,7 @@ TTContacts::~TTContacts() {
 void TTContacts::run() {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Started contacts loop", mClassNamePrefix);
-    while (!mCallbackQuit() && mSharedMem->alive()) {
+    while (!stopped() && mSharedMem->alive()) {
         TTContactsMessage newMessage;
         if (!mSharedMem->receive(reinterpret_cast<void*>(&newMessage))) {
             logger.warning("{} Failed to receive message!", mClassNamePrefix);
@@ -35,6 +31,15 @@ void TTContacts::run() {
         }
     }
     logger.info("{} Completed contacts loop", mClassNamePrefix);
+}
+
+void TTContacts::stop() {
+    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
+    mStopped.store(true);
+}
+
+bool TTContacts::stopped() const {
+    return mStopped.load();
 }
 
 size_t TTContacts::size() const {
@@ -64,7 +69,7 @@ bool TTContacts::handle(const TTContactsMessage& message) {
 void TTContacts::refresh() {
     decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     logger.info("{} Started refreshing window, number of contacts={}", mClassNamePrefix, size());
-    mOutputStream.print("\033[2J\033[1;1H").flush(); // Clear window
+    mOutputStream.clear();
     const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
     for (auto &contact : mContacts) {
         mOutputStream.print("#").print(std::to_string(std::get<0>(contact)));
