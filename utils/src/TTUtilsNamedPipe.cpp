@@ -1,11 +1,13 @@
 #include "TTUtilsNamedPipe.hpp"
+#include "TTDiagnosticsLogger.hpp"
 
-TTUtilsNamedPipe::TTUtilsNamedPipe(std::string path,
+TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
     long messageSize,
     std::shared_ptr<TTUtilsSyscall> syscall) :
         mNamedPipePath(path),
         mMessageSize(messageSize), 
-        mNamedPipeDescriptor(-1) {
+        mNamedPipeDescriptor(-1),
+        mSyscall(std::move(syscall)) {
     TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
 }
 
@@ -22,7 +24,7 @@ TTUtilsNamedPipe::~TTUtilsNamedPipe() {
 }
 
 bool TTUtilsNamedPipe::alive() const {
-    mNamedPipeDescriptor != -1;
+    return mNamedPipeDescriptor != -1;
 }
 
 bool TTUtilsNamedPipe::create() {
@@ -73,21 +75,23 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
 }
 
 bool TTUtilsNamedPipe::receive(char* message) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     errno = 0;
-    bool result = mSyscall->read(mNamedPipeDescriptor, message, messageSize) < 0;
-    if (!result) {
+    if (mSyscall->read(mNamedPipeDescriptor, message, mMessageSize) < 0) {
         logger.error("{} Hard failure while receiving message, errno={}", mClassNamePrefix, errno);
+        return false;
     }
     logger.info("{} Successfully received message!", mClassNamePrefix);
-    return result;
+    return true;
 }
 
 bool TTUtilsNamedPipe::send(const char* message) {
+    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     errno = 0;
-    bool result = mSyscall->write(mNamedPipeDescriptor, message, messageSize) < 0;
-    if (!result) {
-        logger.error("{} Hard failure while receiving message, errno={}", mClassNamePrefix, errno);
+    if (mSyscall->write(mNamedPipeDescriptor, message, mMessageSize) < 0) {
+        logger.error("{} Hard failure while sending message, errno={}", mClassNamePrefix, errno);
+        return false;
     }
-    logger.info("{} Successfully received message!", mClassNamePrefix);
-    return result;
+    logger.info("{} Successfully sent message!", mClassNamePrefix);
+    return true;
 }

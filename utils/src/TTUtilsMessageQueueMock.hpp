@@ -3,7 +3,7 @@
 #include "TTUtilsMessageQueue.hpp"
 
 class TTUtilsMessageQueueMock : public TTUtilsMessageQueue {
- public:
+public:
     MOCK_METHOD(bool, create, (), (override));
     MOCK_METHOD(bool, alive, (), (const, override));
     MOCK_METHOD(bool, open, (long attempts, long timeoutMs), (override));

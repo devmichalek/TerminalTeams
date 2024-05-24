@@ -11,7 +11,7 @@ TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
         mDeleter([](const std::string&){}),
         mQueueSize(queueSize),
         mMessageSize(messageSize),
-        mSyscall(syscall) {
+        mSyscall(std::move(syscall)) {
     TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
 }
 

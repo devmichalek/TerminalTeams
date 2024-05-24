@@ -5,7 +5,7 @@
 #include <functional>
 
 class TTUtilsMessageQueue {
- public:
+public:
     explicit TTUtilsMessageQueue(std::string name,
         long queueSize,
         long messageSize,
@@ -20,7 +20,9 @@ class TTUtilsMessageQueue {
     virtual bool alive() const;
     virtual bool receive(char* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool send(const char* message, long attempts = 3, long timeoutMs = 1000);
- private:
+ protected:
+    TTUtilsMessageQueue() = default;
+private:
     // IPC shared memory communication
     std::string mName;
     mqd_t mDescriptor;

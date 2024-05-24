@@ -3,7 +3,7 @@
 #include "TTUtilsOutputStream.hpp"
 
 class TTUtilsOutputStreamMock : public TTUtilsOutputStream {
- public:
+public:
     MOCK_METHOD(const TTUtilsOutputStream&, print, (const char*), (const, override));
     MOCK_METHOD(const TTUtilsOutputStream&, print, (std::string), (const, override));
     MOCK_METHOD(const TTUtilsOutputStream&, endl, (), (const, override));

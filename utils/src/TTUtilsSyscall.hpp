@@ -87,7 +87,7 @@ public:
     }
 
     virtual int mkfifo(const char* pathname, mode_t mode) {
-        return mkfifo(pathname, mode);
+        return ::mkfifo(pathname, mode);
     }
 
     virtual ssize_t read(int fd, void* buf, size_t count) {

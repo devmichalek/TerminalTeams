@@ -32,7 +32,7 @@ public:
     }
 
     virtual const TTUtilsOutputStream& clear() const {
-        print("\033[2J\033[1;1H").flush()
+        print("\033[2J\033[1;1H").flush();
         return *this;
     }
 };

@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include "TTUtilsNamedPipe.hpp"
+#include "TTTextBoxSettings.hpp"
 
 using TTTextBoxCallbackMessageSent = std::function<void(std::string)>;
 using TTTextBoxCallbackContactSwitch = std::function<void(size_t)>;
@@ -32,5 +33,5 @@ private:
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
     // Logger
-    inline static const std::string mClassNamePrefix = "TTTextBox:";
+    inline static const std::string mClassNamePrefix = "TTTextBoxHandler:";
 };

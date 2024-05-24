@@ -1,5 +1,6 @@
 #include "TTTextBoxSettings.hpp"
-#include <string>
+#include "TTTextBoxMessage.hpp"
+#include "TTUtilsSyscall.hpp"
 #include <sstream>
 #include <iostream>
 
@@ -24,5 +25,12 @@ TTTextBoxSettings::TTTextBoxSettings(int argc, char** argv) {
         throw std::runtime_error(classNamePrefix + "invalid terminal emulator height=" + heightStr);
     }
 
-    mUniqueName = argv[3];
+    const std::string uniqueName = argv[3];
+    mUniquePath = "/tmp/" + uniqueName + "-pipe";
+}
+
+std::shared_ptr<TTUtilsNamedPipe> TTTextBoxSettings::getNamedPipe() const {
+    return std::make_shared<TTUtilsNamedPipe>(mUniquePath,
+                                              sizeof(TTTextBoxMessage),
+                                              std::make_shared<TTUtilsSyscall>());
 }

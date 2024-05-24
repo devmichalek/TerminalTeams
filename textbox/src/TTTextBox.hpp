@@ -5,6 +5,7 @@
 #include "TTTextBoxSettings.hpp"
 #include "TTTextBoxMessage.hpp"
 #include "TTUtilsNamedPipe.hpp"
+#include "TTUtilsOutputStream.hpp"
 
 class TTTextBox {
 public:

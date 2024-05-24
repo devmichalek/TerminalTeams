@@ -1,6 +1,6 @@
 #include "TTTextBoxHandler.hpp"
-#include "TTTextBoxSettings.hpp"
 #include "TTTextBoxMessage.hpp"
+#include "TTDiagnosticsLogger.hpp"
 
 TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
     TTTextBoxCallbackMessageSent callbackMessageSent,
@@ -51,7 +51,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                     break;
                 }
                 TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);
-                if (mPipe->receive(&message)) {
+                if (mPipe->receive(reinterpret_cast<char*>(&message))) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_RECEIVE_TIMEOUT_MS));
                     continue;
                 }

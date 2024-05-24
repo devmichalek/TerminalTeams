@@ -81,11 +81,13 @@ void TTTextBox::main(std::promise<void> promise) {
                         return !mQueuedMessages.empty();
                     });
                     if (!mQueuedMessages.empty()) {
-                        logger.info("{} Inserting messages...", mClassNamePrefix);
+                        size_t counter = 0;
                         while (!mQueuedMessages.empty()) {
+                            ++counter;
                             messages.push_back(std::move(mQueuedMessages.front()));
                             mQueuedMessages.pop();
                         }
+                        logger.info("{} Inserted {} messages...", mClassNamePrefix, counter);
                     }
                     // Do not remove scope guards, risk of deadlock
                 }
@@ -94,9 +96,9 @@ void TTTextBox::main(std::promise<void> promise) {
                     logger.info("{} Inserting heartbeat message...", mClassNamePrefix);
                     messages.push_back(std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::HEARTBEAT, 0, nullptr));
                 }
-                // Queue all messages
+                // Send all messages
                 for (auto &message : messages) {
-                    if (!mPipe->send(message.get())) {
+                    if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
                         logger.error("{} Failed to send message!", mClassNamePrefix);
                         throw std::runtime_error({});
                     }

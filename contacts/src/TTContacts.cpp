@@ -1,6 +1,7 @@
 #include "TTContacts.hpp"
 
 TTContacts::TTContacts(const TTContactsSettings& settings, const TTUtilsOutputStream& outputStream) :
+        mOutputStream(outputStream),
         mSharedMem(std::move(settings.getSharedMemory())),
         mTerminalWidth(settings.getTerminalWidth()),
         mTerminalHeight(settings.getTerminalHeight()) {

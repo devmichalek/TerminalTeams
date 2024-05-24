@@ -20,7 +20,7 @@ using tt::HelloReply;
 using tt::HelloRequest;
 
 class GreeterClient {
- public:
+public:
   GreeterClient(std::shared_ptr<Channel> channel)
       : stub_(Greeter::NewStub(channel)) {}
 
@@ -51,7 +51,7 @@ class GreeterClient {
     }
   }
 
- private:
+private:
   std::unique_ptr<Greeter::Stub> stub_;
 };
 

@@ -7,7 +7,7 @@
 #include <spdlog/sinks/rotating_file_sink.h>
 
 class TTDiagnosticsLogger {
- public:
+public:
     ~TTDiagnosticsLogger() = default;
 
     template <typename... Args>
@@ -47,7 +47,7 @@ class TTDiagnosticsLogger {
         return mInstance;
     }
 
- private:
+private:
     explicit TTDiagnosticsLogger(std::string name, size_t maxSize = 1048576 * 5) {
         const auto uniquePath = TTDiagnosticsHelper::generateUniquePath(name, ".log.txt");
         mLogger = spdlog::rotating_logger_mt(name, uniquePath.c_str(), maxSize, 1);
@@ -67,7 +67,7 @@ class TTDiagnosticsLogger {
 #include <spdlog/spdlog.h>
 
 class TTDiagnosticsLogger {
- public:
+public:
     ~TTDiagnosticsLogger() = default;
     
     template <typename... Args>
@@ -100,7 +100,7 @@ class TTDiagnosticsLogger {
         return mInstance;
     }
 
- private:
+private:
     explicit TTDiagnosticsLogger(std::string name, size_t maxSize = 1048576 * 5) {}
     TTDiagnosticsLogger(const TTDiagnosticsLogger&) = delete;
     TTDiagnosticsLogger(const TTDiagnosticsLogger&&) = delete;

@@ -4,8 +4,8 @@
 #include <memory>
 
 class TTUtilsNamedPipe {
- public:
-    explicit TTUtilsNamedPipe(std::string path,
+public:
+    explicit TTUtilsNamedPipe(const std::string& path,
         long messageSize,
         std::shared_ptr<TTUtilsSyscall> syscall);
     virtual ~TTUtilsNamedPipe();
@@ -18,11 +18,14 @@ class TTUtilsNamedPipe {
     virtual bool open(long attempts = 3, long timeoutMs = 500);
     virtual bool receive(char* message);
     virtual bool send(const char* message);
- private:
+ protected:
+    TTUtilsNamedPipe() = default;
+private:
     // IPC shared memory communication
     std::string mNamedPipePath;
     long mMessageSize;
     int mNamedPipeDescriptor;
+    std::shared_ptr<TTUtilsSyscall> mSyscall;
     // Logger
-    inline static const std::string mClassNamePrefix = "TTUtilsMessageQueue:";
+    inline static const std::string mClassNamePrefix = "TTUtilsNamedPipe:";
 };

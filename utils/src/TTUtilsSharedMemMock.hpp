@@ -3,7 +3,7 @@
 #include "TTUtilsSharedMem.hpp"
 
 class TTUtilsSharedMemMock : public TTUtilsSharedMem {
- public:
+public:
     MOCK_METHOD(bool, open, (long attempts, long timeoutMs), (override));
     MOCK_METHOD(bool, create, (), (override));
     MOCK_METHOD(bool, receive, (void* memory, long attempts, long timeoutMs), (override));

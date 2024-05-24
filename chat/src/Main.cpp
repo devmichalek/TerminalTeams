@@ -12,6 +12,7 @@ TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-chat");
 
 void signalInterruptHandler(int) {
     if (application) {
+        TTDiagnosticsLogger::getInstance().warning("{} Stopping due to caught signal", LOGGER_PREFIX);
         application->stop();
     }
 }

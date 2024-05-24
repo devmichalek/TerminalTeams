@@ -3,7 +3,7 @@
 #include "TTContactsSettings.hpp"
 
 class TTContactsSettingsMock : public TTContactsSettings {
- public:
+public:
     explicit TTContactsSettingsMock(int argc, const char* const* argv) : 
         TTContactsSettings(argc, argv) {}
     MOCK_METHOD(size_t, getTerminalWidth, (), (const, override));

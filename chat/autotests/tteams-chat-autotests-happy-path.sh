@@ -66,13 +66,13 @@ EXIT_STATUS=0
 APP_PID=$(pgrep -f "${APP_CMD}" | head -n 1)
 if [[ "${APP_PID}" ]]; then
     echo "Error: Application is still running! Killing pid=$APP_PID..."
-    kill $APP_PID
+    kill -9 $APP_PID
     EXIT_STATUS=1
 fi
 APP_HANDLER_PID=$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)
 if [[ "${APP_HANDLER_PID}" ]]; then
     echo "Error: Application handler is still running! Killing pid=$APP_HANDLER_PID..."
-    kill $APP_HANDLER_PID
+    kill -9 $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
 MSG_QUEUE_PATH="/dev/mqueue/${MSG_QUEUE_NAME}"

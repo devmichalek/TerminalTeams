@@ -37,7 +37,7 @@ private:
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication
-    std::atomic<bool> mForcedQuit;
+    std::atomic<bool> mStopped;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;

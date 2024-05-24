@@ -30,7 +30,7 @@ private:
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
     // Thread concurrent message communication
-    std::atomic<bool> mForcedQuit;
+    std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;
     std::thread mHeartbeatThread;
     // Terminal data

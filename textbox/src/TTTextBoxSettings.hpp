@@ -1,21 +1,22 @@
 #pragma once
-#include <string>
+#include "TTUtilsNamedPipe.hpp"
 
 class TTTextBoxSettings {
 public:
     explicit TTTextBoxSettings(int argc, char** argv);
-    virtual ~TTTextBoxSettings() {}
+    virtual ~TTTextBoxSettings() = default;
     TTTextBoxSettings(const TTTextBoxSettings&) = delete;
     TTTextBoxSettings(TTTextBoxSettings&&) = delete;
     TTTextBoxSettings& operator=(const TTTextBoxSettings&) = delete;
     TTTextBoxSettings& operator=(TTTextBoxSettings&&) = delete;
-    size_t getTerminalWidth() const { return mWidth; }
-    size_t getTerminalHeight() const { return mHeight; }
-    std::string getUniqueName() const { return mUniqueName; }
-    static std::string getPipePath(std::string uniqueName) { return "/tmp/" + uniqueName + "-pipe"; }
+    virtual size_t getTerminalWidth() const { return mWidth; }
+    virtual size_t getTerminalHeight() const { return mHeight; }
+    virtual std::shared_ptr<TTUtilsNamedPipe> getNamedPipe() const;
+protected:
+    TTTextBoxSettings() = default;
 private:
     size_t mWidth;
     size_t mHeight;
-    std::string mUniqueName;
+    std::string mUniquePath;
     static inline constexpr int MAX_ARGC = 4;
 };

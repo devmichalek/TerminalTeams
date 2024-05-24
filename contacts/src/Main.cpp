@@ -12,6 +12,7 @@ TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-contacts");
 
 void signalInterruptHandler(int) {
     if (application) {
+        TTDiagnosticsLogger::getInstance().warning("{} Stopping due to caught signal", LOGGER_PREFIX);
         application->stop();
     }
 }
@@ -42,7 +43,7 @@ int main(int argc, char** argv) {
         // Run main app
         DT_BEGIN("main", "run");
         try {
-            if (!quitHandle.load()) {
+            if (!application->stopped()) {
                 application->run();
             } else {
                 logger.warning("{} Application was shut down out of a sudden", LOGGER_PREFIX);
