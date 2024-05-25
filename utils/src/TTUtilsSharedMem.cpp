@@ -86,20 +86,20 @@ bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
     errno = 0;
     for (auto attempt = attempts; attempt > 0; --attempt) {
         
-        if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), 0)) != SEM_FAILED) {
+        if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) != SEM_FAILED) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
     }
 
-    if (mDataProducedSemaphore == SEM_FAILED) {
-        logger.error("{} Failed to open data produced semaphore, errno={}", mClassNamePrefix, errno);
+    if (mDataConsumedSemaphore == SEM_FAILED) {
+        logger.error("{} Failed to open data consumed semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 
     errno = 0;
-    if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) == SEM_FAILED) {
-        logger.error("{} Failed to open data consumed semaphore, errno={}", mClassNamePrefix, errno);
+    if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), 0)) == SEM_FAILED) {
+        logger.error("{} Failed to open data produced semaphore, errno={}", mClassNamePrefix, errno);
         return false;
     }
 

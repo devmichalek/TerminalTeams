@@ -24,7 +24,6 @@ class TTContactsTest : public Test {
     }
     // Called after constructor, before each test
     virtual void SetUp() override {
-        setCallbackQuitFalse();
         EXPECT_CALL(*mSettingsMock, getTerminalWidth).Times(1);
         EXPECT_CALL(*mSettingsMock, getTerminalHeight).Times(1);
         EXPECT_CALL(*mSettingsMock, getSharedMemory)
@@ -36,19 +35,10 @@ class TTContactsTest : public Test {
 
     }
 
-    void setCallbackQuitTrue() {
-        mCallbackQuitMock = [](){ return true; };
-    }
-
-    void setCallbackQuitFalse() {
-        mCallbackQuitMock = [](){ return false; };
-    }
-
     void createContacts() {
-        mContacts = std::make_unique<TTContacts>(*mSettingsMock, mCallbackQuitMock, *mOutputStreamMock);
+        mContacts = std::make_unique<TTContacts>(*mSettingsMock, *mOutputStreamMock);
     }
 
-    TTContactsCallbackQuit mCallbackQuitMock;
     std::shared_ptr<TTContactsSettingsMock> mSettingsMock;
     std::shared_ptr<TTUtilsSharedMemMock> mSharedMemMock;
     std::shared_ptr<TTUtilsOutputStreamMock> mOutputStreamMock;
