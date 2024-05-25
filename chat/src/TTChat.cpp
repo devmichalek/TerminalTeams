@@ -8,7 +8,7 @@
 TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& outputStream) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
-        mForcedQuit{false},
+        mStopped{false},
         mHeartbeatResult{},
         mWidth(settings.getTerminalWidth()),
         mHeight(settings.getTerminalHeight()),
@@ -36,7 +36,7 @@ TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& output
 
 TTChat::~TTChat() {
     TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
-    mForcedQuit.store(true);
+    mStopped.store(true);
     mHeartbeatResult.wait();
 }
 
@@ -47,7 +47,7 @@ void TTChat::run() {
         try {
             TTChatMessage message;
             while (true) {
-                if (mForcedQuit.load()) {
+                if (mStopped.load()) {
                     logger.warning("{} Forced exit on primary loop", mClassNamePrefix);
                     break;
                 }
@@ -62,7 +62,7 @@ void TTChat::run() {
             logger.error("{} Caught unknown exception at primary loop!", mClassNamePrefix);
         }
     }
-    mForcedQuit.store(true);
+    mStopped.store(true);
     logger.info("{} Completed primary loop", mClassNamePrefix);
 }
 
@@ -82,7 +82,7 @@ void TTChat::heartbeat(std::promise<void> promise) {
         try {
             char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
             while (true) {
-                if (mForcedQuit.load()) {
+                if (mStopped.load()) {
                     logger.warning("{} Forced exit on secondary (heartbeat) loop", mClassNamePrefix);
                     break;
                 }
@@ -96,7 +96,7 @@ void TTChat::heartbeat(std::promise<void> promise) {
             logger.error("{} Caught unknown exception at secondary (heartbeat) loop!", mClassNamePrefix);
         }
     }
-    mForcedQuit.store(true);
+    mStopped.store(true);
     promise.set_value();
     logger.info("{} Completed secondary (heartbeat) loop", mClassNamePrefix);
 }

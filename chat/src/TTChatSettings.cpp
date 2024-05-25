@@ -1,5 +1,6 @@
 #include "TTChatSettings.hpp"
 #include "TTChatMessage.hpp"
+#include "TTUtilsSyscall.hpp"
 #include <charconv>
 #include <cstring>
 #include <stdexcept>
@@ -33,10 +34,10 @@ TTChatSettings::TTChatSettings(int argc, char** argv) {
 
 std::shared_ptr<TTUtilsMessageQueue> TTChatSettings::getPrimaryMessageQueue() const {
     const auto queueName = mMessageQueueName + PRIMARY_POSTFIX;
-    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage));
+    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage), std::make_shared<TTUtilsSyscall>());
 }
 
 std::shared_ptr<TTUtilsMessageQueue> TTChatSettings::getSecondaryMessageQueue() const {
     const auto queueName = mMessageQueueName + SECONDARY_POSTFIX;
-    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage));
+    return std::make_shared<TTUtilsMessageQueue>(queueName, 8, sizeof(TTChatMessage), std::make_shared<TTUtilsSyscall>());
 }
