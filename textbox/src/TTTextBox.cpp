@@ -72,7 +72,7 @@ void TTTextBox::main(std::promise<void> promise) {
     if (mPipe->alive()) {
         try {
             while (!stopped()) {
-                // Fill the list of messages
+                logger.info("{} Filling the list of messages...", mClassNamePrefix);
                 std::list<std::unique_ptr<TTTextBoxMessage>> messages;
                 {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
@@ -96,19 +96,19 @@ void TTTextBox::main(std::promise<void> promise) {
                     logger.info("{} Inserting heartbeat message...", mClassNamePrefix);
                     messages.push_back(std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::HEARTBEAT, 0, nullptr));
                 }
-                // Send all messages
+                logger.info("{} Sending all messages...", mClassNamePrefix);
                 for (auto &message : messages) {
                     if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
                         logger.error("{} Failed to send message!", mClassNamePrefix);
                         throw std::runtime_error({});
                     }
                 }
+                logger.info("{} Successfully sent all messages!", mClassNamePrefix);
                 std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_SEND_TIMEOUT_MS));
             }
         } catch (...) {
             logger.error("{} Caught unknown exception at textbox loop!", mClassNamePrefix);
         }
-        
     }
     stop();
     promise.set_value();
@@ -171,5 +171,4 @@ void TTTextBox::send(const char* cbegin, const char* cend) {
     }
     mOutputStream.clear();
     logger.info("{} Successfully splitted string into smaller chunks!", mClassNamePrefix);
-
 }

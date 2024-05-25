@@ -17,7 +17,8 @@ ${APP_HANDLER_CMD} < "${HANDLER_STDIN}" &
 ${APP_CMD} &> "${HANDLER_STDOUT}" &
 
 # Test scenario
-sleep 3 # Wait for synchronization
+echo "Info: Waiting for synchronization..."
+sleep 3
 echo "create 0" > "${HANDLER_STDIN}"
 echo "create 1" > "${HANDLER_STDIN}"
 echo "clear 0" > "${HANDLER_STDIN}"
@@ -28,7 +29,8 @@ echo "clear 1" > "${HANDLER_STDIN}"
 echo "send 1 What's up bro?" > "${HANDLER_STDIN}"
 echo "receive 1 Nothing" > "${HANDLER_STDIN}"
 echo "clear 0" > "${HANDLER_STDIN}"
-sleep 3 # Wait for data to be set
+echo "Info: Waiting for data to be set..."
+sleep 3
 
 # Expected output
 EXPECTED_RESULTS_RAW="\033[2J\033[1;1H                     1970-01-01 01:00:00
@@ -59,7 +61,9 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-sleep 6 # Wait for stop
+echo "Info: Waiting for application to stop..."
+sleep 6
+echo "Info: Application shall be stopped now"
 
 # Test verdict
 EXIT_STATUS=0
@@ -88,7 +92,7 @@ if [ -f "${MSG_QUEUE_REVERSED_PATH}" ]; then
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
-    echo "Error: Test failed!"
+    echo "Error: Actual results are different than expected!"
     printf "%s" "$ACTUAL_RESULTS" > actual_results.txt
     printf "%s" "$EXPECTED_RESULTS" > expected_results.txt
     EXIT_STATUS=1

@@ -18,7 +18,8 @@ ${APP_HANDLER_CMD} &> "${HANDLER_STDOUT}" &
 ${APP_CMD} < "${HANDLER_STDIN}" &> ${APP_STDOUT} &
 
 # Test scenario
-sleep 3 # Wait for synchronization
+echo "Info: Waiting for synchronization..."
+sleep 3
 echo "#0" > "${HANDLER_STDIN}"
 echo "Hello John, how are you?" > "${HANDLER_STDIN}"
 echo "Hi Freddie, good and you?" > "${HANDLER_STDIN}"
@@ -26,7 +27,8 @@ echo "Fine" > "${HANDLER_STDIN}"
 echo "#1" > "${HANDLER_STDIN}"
 echo "What's up bro?" > "${HANDLER_STDIN}"
 echo "Nevermind" > "${HANDLER_STDIN}"
-sleep 3 # Wait for data to be set
+echo "Info: Waiting for data to be set..."
+sleep 3
 
 # Expected output
 EXPECTED_RESULTS_RAW="#0
@@ -41,7 +43,9 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-sleep 3 # Wait for stop
+echo "Info: Waiting for application to stop..."
+sleep 6
+echo "Info: Application shall be stopped now"
 
 # Test verdict
 EXIT_STATUS=0
@@ -64,7 +68,7 @@ if [ -f "${UNIQUE_PATH}" ]; then
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
-    echo "Error: Test failed!"
+    echo "Error: Actual results are different than expected!"
     printf "%s" "$ACTUAL_RESULTS" > actual_results.txt
     printf "%s" "$EXPECTED_RESULTS" > expected_results.txt
     EXIT_STATUS=1

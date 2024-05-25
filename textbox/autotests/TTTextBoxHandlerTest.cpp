@@ -47,6 +47,7 @@ int main(int argc, char** argv) {
     } catch (const std::exception& exp) {
         logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
     }
+    handler.reset();
     logger.info("{} Successfully flushed all logs", LOGGER_PREFIX);
     return 0;
 }

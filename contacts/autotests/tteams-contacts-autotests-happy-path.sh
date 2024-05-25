@@ -17,10 +17,12 @@ ${APP_HANDLER_CMD} < "${HANDLER_STDIN}" &
 ${APP_CMD} &> "${HANDLER_STDOUT}" &
 
 # Test scenario
-sleep 3 # Wait for synchronization
+echo "Info: Waiting for synchronization..."
+sleep 3
 echo "create John" > "${HANDLER_STDIN}"
 echo "create Camille" > "${HANDLER_STDIN}"
-sleep 3 # Wait for data to be set
+echo "Info: Waiting for data to be set..."
+sleep 3
 
 # Expected output
 EXPECTED_RESULTS_RAW="\033[2J\033[1;1H#0 John 
@@ -31,7 +33,9 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
 # Test cleanup
 kill $HANDLER_STDIN_PID
-sleep 6 # Wait for stop
+echo "Info: Waiting for application to stop..."
+sleep 6
+echo "Info: Application shall be stopped now"
 
 # Test verdict
 EXIT_STATUS=0
