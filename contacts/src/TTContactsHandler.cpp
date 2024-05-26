@@ -9,20 +9,19 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mForcedQuit{false},
         mHandlerThread{&TTContactsHandler::main, this},
         mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
-        throw std::runtime_error(mClassNamePrefix + "Failed to create shared memory!");
+        throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
     } else {
-        logger.info("{} Successfully created shared memory!", mClassNamePrefix);
+        LOG_INFO("Successfully created shared memory!");
     }
     mHandlerThread.detach();
     mHeartbeatThread.detach();
-    logger.info("{} Successfully detached threads", mClassNamePrefix);
+    LOG_INFO("Successfully detached threads");
 }
 
 TTContactsHandler::~TTContactsHandler() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
     mForcedQuit.store(true);
     mQueueCondition.notify_one();
     // Wait until main thread is destroyed

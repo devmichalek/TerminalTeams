@@ -42,6 +42,4 @@ private:
     // Messages storage
     size_t mCurrentId;
     std::vector<TTChatEntries> mMessages;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTChatHandler:";
 };

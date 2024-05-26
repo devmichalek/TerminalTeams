@@ -32,6 +32,4 @@ private:
     std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTTextBoxHandler:";
 };

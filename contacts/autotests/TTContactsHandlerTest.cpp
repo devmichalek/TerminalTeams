@@ -5,7 +5,7 @@
 #include <signal.h>
 
 // Logger
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-contacts-handler");
+LOG_DECLARE("tteams-contacts-handler");
 
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {

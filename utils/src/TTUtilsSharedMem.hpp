@@ -18,8 +18,8 @@ public:
     TTUtilsSharedMem& operator=(TTUtilsSharedMem&&) = delete;
     virtual bool create();
     virtual bool open(long attempts = 5, long timeoutMs = 1000);
-    virtual bool receive(void* message, long attempts = 2, long timeoutMs = 2000);
-    virtual bool send(const void* message, long attempts = 2, long timeoutMs = 2000);
+    virtual bool receive(void* message, long attempts = 3, long timeoutMs = 1000);
+    virtual bool send(const void* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool alive() const;
     virtual void destroy();
 protected:
@@ -40,6 +40,4 @@ private:
     bool mSharedMemoryCreated;
     bool mDataConsumedSemCreated;
     bool mDataProducedSemCreated;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTUtilsSharedMem:";
 };

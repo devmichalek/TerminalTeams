@@ -5,37 +5,35 @@ TTContacts::TTContacts(const TTContactsSettings& settings, const TTUtilsOutputSt
         mSharedMem(std::move(settings.getSharedMemory())),
         mTerminalWidth(settings.getTerminalWidth()),
         mTerminalHeight(settings.getTerminalHeight()) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
     if (!mSharedMem->open()) {
-        throw std::runtime_error(mClassNamePrefix + "Failed to open shared memory!");
+        throw std::runtime_error("TTContacts: Failed to open shared memory!");
     } else {
-        logger.info("{} Successfully opened shared memory!", mClassNamePrefix);
+        LOG_INFO("Successfully opened shared memory!");
     }
 }
 
 TTContacts::~TTContacts() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
 }
 
 void TTContacts::run() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Started contacts loop", mClassNamePrefix);
+    LOG_INFO("Started contacts loop");
     while (!stopped() && mSharedMem->alive()) {
         TTContactsMessage newMessage;
         if (!mSharedMem->receive(reinterpret_cast<void*>(&newMessage))) {
-            logger.warning("{} Failed to receive message!", mClassNamePrefix);
+            LOG_WARNING("Failed to receive message!");
             break;
         }
         if (handle(newMessage)) {
             refresh();
         }
     }
-    logger.info("{} Completed contacts loop", mClassNamePrefix);
+    LOG_INFO("Completed contacts loop");
 }
 
 void TTContacts::stop() {
-    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
+    LOG_INFO("Forced stop...");
     mStopped.store(true);
 }
 
@@ -48,28 +46,26 @@ size_t TTContacts::size() const {
 }
 
 bool TTContacts::handle(const TTContactsMessage& message) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (message.status == TTContactsStatus::HEARTBEAT) {
-        logger.info("{} Received heartbeat message", mClassNamePrefix);
+        LOG_INFO("Received heartbeat message");
         return false;
     } else {
         if (message.status == TTContactsStatus::ACTIVE && message.id >= mContacts.size()) {
             std::string nickname(message.data, message.data + message.dataLength);
             auto newContact = std::make_tuple(message.id, nickname, message.status);
             mContacts.push_back(newContact);
-            logger.info("{} Received new contact message id={}, nickname={}, status={}", mClassNamePrefix, message.id, nickname, (size_t)message.status);
+            LOG_INFO("Received new contact message id={}, nickname={}, status={}", message.id, nickname, (size_t)message.status);
         } else {
             auto& contact = mContacts[message.id];
             std::get<2>(contact) = message.status;
-            logger.info("{} Received update contact message id={}, status={}", mClassNamePrefix, message.id, (size_t)message.status);
+            LOG_INFO("Received update contact message id={}, status={}", message.id, (size_t)message.status);
         }
     }
     return true;
 }
 
 void TTContacts::refresh() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Started refreshing window, number of contacts={}", mClassNamePrefix, size());
+    LOG_INFO("Started refreshing window, number of contacts={}", size());
     mOutputStream.clear();
     const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
     for (auto &contact : mContacts) {

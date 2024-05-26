@@ -26,6 +26,4 @@ private:
     long mMessageSize;
     int mNamedPipeDescriptor;
     std::shared_ptr<TTUtilsSyscall> mSyscall;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTUtilsNamedPipe:";
 };

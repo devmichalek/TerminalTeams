@@ -7,19 +7,17 @@
 
 // Application
 std::unique_ptr<TTChat> application;
-const std::string LOGGER_PREFIX = "Main:";
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-chat");
+LOG_DECLARE("tteams-chat");
 
 void signalInterruptHandler(int) {
     if (application) {
-        TTDiagnosticsLogger::getInstance().warning("{} Stopping due to caught signal", LOGGER_PREFIX);
+        LOG_WARNING("Stopping due to caught signal");
         application->stop();
     }
 }
 
 int main(int argc, char** argv) {
     DT_INIT(DT_UNIQUE_PATH("tteams-chat").c_str());
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     DT_META_PROCESS_NAME("tteams-chat");
     DT_META_THREAD_NAME("main");
     try {
@@ -42,10 +40,10 @@ int main(int argc, char** argv) {
         application->run();
         DT_END("main", "run");
     } catch (const std::exception& exp) {
-        logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
+        LOG_ERROR("Exception captured: {}", exp.what());
     }
     application.reset();
-    logger.info("{} Successfully flushed all logs", LOGGER_PREFIX);
+    LOG_INFO("Successfully flushed all logs");
     DT_FLUSH();
     DT_SHUTDOWN();
     return 0;

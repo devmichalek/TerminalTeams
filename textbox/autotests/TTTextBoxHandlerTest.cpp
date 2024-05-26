@@ -7,8 +7,7 @@
 #include <signal.h>
 
 std::unique_ptr<TTTextBoxHandler> handler;
-const std::string LOGGER_PREFIX = "Main:";
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox-handler");
+LOG_DECLARE("tteams-textbox-handler");
 
 void messageSent(std::string msg) {
     std::cout << msg << std::endl;
@@ -20,13 +19,12 @@ void contactsSwitch(size_t id) {
 
 void signalInterruptHandler(int) {
     if (handler) {
-        TTDiagnosticsLogger::getInstance().warning("{} Stopping due to caught signal", LOGGER_PREFIX);
+        LOG_WARNING("Stopping due to caught signal");
         handler->stop();
     }
 }
 
 int main(int argc, char** argv) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     try {
         // Signal handling
         struct sigaction signalAction;
@@ -36,18 +34,18 @@ int main(int argc, char** argv) {
         sigaction(SIGINT, &signalAction, nullptr);
         sigaction(SIGTERM, &signalAction, nullptr);
         sigaction(SIGSTOP, &signalAction, nullptr);
-        logger.info("{} Signal handling initialized", LOGGER_PREFIX);
+        LOG_INFO("Signal handling initialized");
         // Run main app
         const TTTextBoxSettings settings(argc, argv);
         handler = std::make_unique<TTTextBoxHandler>(settings, &messageSent, &contactsSwitch);
-        logger.info("{} Textbox handler initialized", LOGGER_PREFIX);
+        LOG_INFO("Textbox handler initialized");
         while (!handler->stopped()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     } catch (const std::exception& exp) {
-        logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
+        LOG_INFO("Exception captured: {}", exp.what());
     }
     handler.reset();
-    logger.info("{} Successfully flushed all logs", LOGGER_PREFIX);
+    LOG_INFO("Successfully flushed all logs");
     return 0;
 }

@@ -18,7 +18,7 @@ ${APP_CMD} &> "${HANDLER_STDOUT}" &
 
 # Test scenario
 echo "Info: Waiting for synchronization..."
-sleep 3
+sleep 5
 echo "create John" > "${HANDLER_STDIN}"
 echo "create Camille" > "${HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."

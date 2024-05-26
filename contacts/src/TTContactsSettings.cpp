@@ -6,14 +6,14 @@
 
 TTContactsSettings::TTContactsSettings(int argc, const char* const* argv) {
     if (argc != MAX_ARGC) {
-        throw std::runtime_error(mClassNamePrefix + "invalid number of arguments");
+        throw std::runtime_error("TTContactsSettings: Invalid number of arguments");
     }
 
     const auto widthStr = std::string(argv[1]);
     std::stringstream ss(widthStr);
     ss >> mWidth;
     if (ss.fail()) {
-        throw std::runtime_error(mClassNamePrefix + "invalid terminal emulator width=" + widthStr);
+        throw std::runtime_error(std::string("TTContactsSettings: Invalid terminal emulator width=") + widthStr);
     }
 
     const auto heightStr = std::string(argv[2]);
@@ -21,7 +21,7 @@ TTContactsSettings::TTContactsSettings(int argc, const char* const* argv) {
     ss.clear();
     ss >> mHeight;
     if (ss.fail()) {
-        throw std::runtime_error(mClassNamePrefix + "invalid terminal emulator height=" + heightStr);
+        throw std::runtime_error(std::string("TTContactsSettings: Invalid terminal emulator height=") + heightStr);
     }
 
     mSharedMemoryName = argv[3];

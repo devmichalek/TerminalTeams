@@ -20,26 +20,26 @@ TEST(TTContactsSettingsTest, NotEnoughArguments) {
     const int argc = 1;
     const char* const argv[1] = { "a" };
     EXPECT_THAT([&]() {TTContactsSettings(argc, argv);},
-        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: invalid number of arguments")));
+        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: Invalid number of arguments")));
 }
 
 TEST(TTContactsSettingsTest, TooManyArguments) {
     const int argc = 5;
     const char* const argv[5] = { "a", "b", "c", "d", "e" };
     EXPECT_THAT([&]() {TTContactsSettings(argc, argv);},
-        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: invalid number of arguments")));
+        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: Invalid number of arguments")));
 }
 
 TEST(TTContactsSettingsTest, InvalidTerminalWidth) {
     const int argc = 4;
     const char* const argv[4] = { "/tmp", "blahblah", "45", "contacts" };
     EXPECT_THAT([&]() {TTContactsSettings(argc, argv);},
-        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: invalid terminal emulator width=blahblah")));
+        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: Invalid terminal emulator width=blahblah")));
 }
 
 TEST(TTContactsSettingsTest, InvalidTerminalHeight) {
     const int argc = 4;
     const char* const argv[4] = { "/tmp", "90", "blahblah", "contacts" };
     EXPECT_THAT([&]() {TTContactsSettings(argc, argv);},
-        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: invalid terminal emulator height=blahblah")));
+        ThrowsMessage<std::runtime_error>(HasSubstr("TTContactsSettings: Invalid terminal emulator height=blahblah")));
 }

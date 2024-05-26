@@ -9,13 +9,12 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStrea
         mPipe(settings.getNamedPipe()),
         mOutputStream(outputStream),
         mStopped{false} {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
     // Open pipe
     if (!mPipe->open()) {
-        throw std::runtime_error(mClassNamePrefix + "Failed to open named pipe!");
+        throw std::runtime_error("TTTextBox: Failed to open named pipe!");
     } else {
-        logger.info("{} Successfully opened named pipe!", mClassNamePrefix);
+        LOG_INFO("Successfully opened named pipe!");
     }
     // Set main sender thread
     std::promise<void> mainPromise;
@@ -25,7 +24,7 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStrea
 }
 
 TTTextBox::~TTTextBox() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
     stop();
     for (auto &blocker : mBlockers) {
         blocker.wait();
@@ -33,9 +32,8 @@ TTTextBox::~TTTextBox() {
 }
 
 void TTTextBox::run() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (!mPipe->alive()) {
-        logger.error("{} Failed to run, pipe is not open!", mClassNamePrefix);
+        LOG_ERROR("Failed to run, pipe is not open!");
         return;
     }
     try {
@@ -45,20 +43,20 @@ void TTTextBox::run() {
             std::string line;
             std::getline(std::cin, line);
             if (line.empty()) {
-                logger.warning("{} Received empty line from input!", mClassNamePrefix);
+                LOG_WARNING("Received empty line from input!");
                 break;
             }
-            logger.info("{} Received next line from input", mClassNamePrefix);
+            LOG_INFO("Received next line from the input");
             send(line.c_str(), line.c_str() + line.size());
         }
     } catch (...) {
-        logger.error("{} Caught unknown exception!", mClassNamePrefix);
+        LOG_ERROR("Caught unknown exception!");
     }
     stop();
 }
 
 void TTTextBox::stop() {
-    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
+    LOG_INFO("Forced stop...");
     mStopped.store(true);
 }
 
@@ -67,12 +65,11 @@ bool TTTextBox::stopped() const {
 }
 
 void TTTextBox::main(std::promise<void> promise) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Started textbox loop", mClassNamePrefix);
+    LOG_INFO("Started textbox loop");
     if (mPipe->alive()) {
         try {
             while (!stopped()) {
-                logger.info("{} Filling the list of messages...", mClassNamePrefix);
+                LOG_INFO("Filling the list of messages...");
                 std::list<std::unique_ptr<TTTextBoxMessage>> messages;
                 {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
@@ -87,45 +84,44 @@ void TTTextBox::main(std::promise<void> promise) {
                             messages.push_back(std::move(mQueuedMessages.front()));
                             mQueuedMessages.pop();
                         }
-                        logger.info("{} Inserted {} messages...", mClassNamePrefix, counter);
+                        LOG_INFO("Inserted {} messages...", counter);
                     }
                     // Do not remove scope guards, risk of deadlock
                 }
                 // If there are no new messages insert heartbeat message
                 if (messages.empty()) {
-                    logger.info("{} Inserting heartbeat message...", mClassNamePrefix);
+                    LOG_INFO("Inserting heartbeat message...");
                     messages.push_back(std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::HEARTBEAT, 0, nullptr));
                 }
-                logger.info("{} Sending all messages...", mClassNamePrefix);
+                LOG_INFO("Sending all messages...");
                 for (auto &message : messages) {
                     if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
-                        logger.error("{} Failed to send message!", mClassNamePrefix);
+                        LOG_ERROR("Failed to send message!");
                         throw std::runtime_error({});
                     }
                 }
-                logger.info("{} Successfully sent all messages!", mClassNamePrefix);
+                LOG_INFO("Successfully sent all messages!");
                 std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_SEND_TIMEOUT_MS));
             }
         } catch (...) {
-            logger.error("{} Caught unknown exception at textbox loop!", mClassNamePrefix);
+            LOG_ERROR("Caught unknown exception at textbox loop!");
         }
     }
     stop();
     promise.set_value();
-    logger.info("{} Completed textbox loop", mClassNamePrefix);
+    LOG_INFO("Completed textbox loop");
 }
 
 void TTTextBox::send(const char* cbegin, const char* cend) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     if (*cbegin == '#' && (cbegin + 1 < cend)) {
-        logger.info("{} Converting string to decimal...", mClassNamePrefix);
+        LOG_INFO("Converting string to decimal...");
         if (std::all_of(cbegin + 1, cend, ::isdigit)) {
             if ((cend - cbegin - 1) <= TTTEXTBOX_DATA_MAX_DIGITS) {
                 {
                     size_t id = 0;
                     auto [ptr, ec] = std::from_chars(cbegin + 1, cend, id);
                     if (ec != std::errc()) {
-                        logger.error("{} Failed to convert string to decimal!", mClassNamePrefix);
+                        LOG_ERROR("Failed to convert string to decimal!");
                         throw std::runtime_error({});
                     }
                     std::scoped_lock<std::mutex> lock(mQueueMutex);
@@ -137,12 +133,12 @@ void TTTextBox::send(const char* cbegin, const char* cend) {
                 }
                 mQueueCondition.notify_one();
                 mOutputStream.clear();
-                logger.info("{} Successfully converted string to decimal!", mClassNamePrefix);
+                LOG_INFO("Successfully converted string to decimal!");
                 return;
             }
         }
     }
-    logger.info("{} Splitting string into smaller chunks...", mClassNamePrefix);
+    LOG_INFO("Splitting string into smaller chunks...");
     const long numOfMessages = (cend - cbegin) / TTTEXTBOX_DATA_MAX_LENGTH;
     if (numOfMessages > 0) {
         for (auto i = numOfMessages; i > 0; --i) {
@@ -170,5 +166,5 @@ void TTTextBox::send(const char* cbegin, const char* cend) {
         mQueueCondition.notify_one();
     }
     mOutputStream.clear();
-    logger.info("{} Successfully splitted string into smaller chunks!", mClassNamePrefix);
+    LOG_INFO("Successfully splitted string into smaller chunks!");
 }

@@ -40,6 +40,4 @@ private:
     std::string mBlankLine;
     // Output stream
     const TTUtilsOutputStream& mOutputStream;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTChat:";
 };

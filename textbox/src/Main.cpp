@@ -4,18 +4,16 @@
 #include <memory>
 
 std::unique_ptr<TTTextBox> application;
-const std::string LOGGER_PREFIX = "Main:";
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-textbox");
+LOG_DECLARE("tteams-textbox");
 
 void signalInterruptHandler(int) {
     if (application) {
-        TTDiagnosticsLogger::getInstance().warning("{} Stopping due to caught signal", LOGGER_PREFIX);
+        LOG_WARNING("Stopping due to caught signal");
         application->stop();
     }
 }
 
 int main(int argc, char** argv) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     try {
         // Signal handling
         struct sigaction signalAction;
@@ -25,26 +23,26 @@ int main(int argc, char** argv) {
         sigaction(SIGINT, &signalAction, nullptr);
         sigaction(SIGTERM, &signalAction, nullptr);
         sigaction(SIGSTOP, &signalAction, nullptr);
-        logger.info("{} Signal handling initialized", LOGGER_PREFIX);
+        LOG_INFO("Signal handling initialized");
         // Run application
         TTTextBoxSettings settings(argc, argv);
         const TTUtilsOutputStream outputStream;
         application = std::make_unique<TTTextBox>(settings, outputStream);
-        logger.info("{} Textbox initialized", LOGGER_PREFIX);
+        LOG_INFO("Textbox initialized");
         try {
             if (!application->stopped()) {
                 application->run();
             } else {
-                logger.warning("{} Application was shut down out of a sudden", LOGGER_PREFIX);
+                LOG_WARNING("Application was shut down out of a sudden");
             }
         } catch (const std::exception& exp) {
-            logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
+            LOG_ERROR("Exception captured: {}", exp.what());
             throw;
         }
     } catch (const std::exception& exp) {
-        logger.info("{} Exception captured: {}", LOGGER_PREFIX, exp.what());
+        LOG_ERROR("Exception captured: {}", exp.what());
     }
     application.reset();
-    logger.info("{} Successfully flushed all logs", LOGGER_PREFIX);
+    LOG_INFO("Successfully flushed all logs");
     return 0;
 }

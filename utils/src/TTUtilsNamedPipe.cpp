@@ -8,11 +8,11 @@ TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
         mMessageSize(messageSize), 
         mNamedPipeDescriptor(-1),
         mSyscall(std::move(syscall)) {
-    TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
 }
 
 TTUtilsNamedPipe::~TTUtilsNamedPipe() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
     if (alive()) {
         mSyscall->close(mNamedPipeDescriptor);
         mNamedPipeDescriptor = -1;
@@ -28,32 +28,30 @@ bool TTUtilsNamedPipe::alive() const {
 }
 
 bool TTUtilsNamedPipe::create() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Creating...", mClassNamePrefix);
+    LOG_INFO("Creating...");
     if (alive()) {
-        logger.error("{} Cannot recreate!", mClassNamePrefix);
+        LOG_ERROR("Cannot recreate!");
         return false;
     }
     errno = 0;
     if (mSyscall->mkfifo(mNamedPipePath.c_str(), 0666) < 0) {
-        logger.error("{} Failed to create named pipe, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Failed to create named pipe, errno={}", errno);
         return false;
     }
 
     mNamedPipeDescriptor = mSyscall->open(mNamedPipePath.c_str(), O_RDONLY);
     if (mNamedPipeDescriptor == -1) {
-        logger.error("{} Failed to open named pipe, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Failed to open named pipe, errno={}", errno);
         return false;
     }
-    logger.info("{} Successfully created!", mClassNamePrefix);
+    LOG_INFO("Successfully created!");
     return true;
 }
 
 bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Opening...", mClassNamePrefix);
+    LOG_INFO("Opening...");
     if (alive()) {
-        logger.error("{} Cannot reopen!", mClassNamePrefix);
+        LOG_ERROR("Cannot reopen!");
         return false;
     }
     const auto path = mNamedPipePath;
@@ -67,31 +65,29 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     }
 
     if (mNamedPipeDescriptor == -1) {
-        logger.error("{} Failed to open named pipe, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Failed to open named pipe, errno={}", errno);
         return false;
     }
-    logger.info("{} Successfully opened!", mClassNamePrefix);
+    LOG_INFO("Successfully opened!");
     return true;
 }
 
 bool TTUtilsNamedPipe::receive(char* message) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     errno = 0;
     if (mSyscall->read(mNamedPipeDescriptor, message, mMessageSize) < 0) {
-        logger.error("{} Hard failure while receiving message, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Hard failure while receiving message, errno={}", errno);
         return false;
     }
-    logger.info("{} Successfully received message!", mClassNamePrefix);
+    LOG_INFO("Successfully received message!");
     return true;
 }
 
 bool TTUtilsNamedPipe::send(const char* message) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     errno = 0;
     if (mSyscall->write(mNamedPipeDescriptor, message, mMessageSize) < 0) {
-        logger.error("{} Hard failure while sending message, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Hard failure while sending message, errno={}", errno);
         return false;
     }
-    logger.info("{} Successfully sent message!", mClassNamePrefix);
+    LOG_INFO("Successfully sent message!");
     return true;
 }

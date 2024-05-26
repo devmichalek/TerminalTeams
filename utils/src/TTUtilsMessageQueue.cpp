@@ -12,20 +12,19 @@ TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
         mQueueSize(queueSize),
         mMessageSize(messageSize),
         mSyscall(std::move(syscall)) {
-    TTDiagnosticsLogger::getInstance().info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
 }
 
 TTUtilsMessageQueue::~TTUtilsMessageQueue() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
     mDeleter(mName);
     mDescriptor = -1;
 }
 
 bool TTUtilsMessageQueue::create() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Creating...", mClassNamePrefix);
+    LOG_INFO("Creating...");
     if (alive()) {
-        logger.error("{} Cannot recreate!", mClassNamePrefix);
+        LOG_ERROR("Cannot recreate!");
         return false;
     }
     struct mq_attr messageQueueAttributes;
@@ -35,19 +34,18 @@ bool TTUtilsMessageQueue::create() {
     errno = 0;
     mDescriptor = mSyscall->mq_open(mName.c_str(), O_CREAT | O_RDWR, 0644, &messageQueueAttributes);
     if (mDescriptor == -1) {
-        logger.error("{} Failed to create message queue, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Failed to create message queue, errno={}", errno);
         return false;
     }
     mDeleter = [this](const std::string& name){ mSyscall->mq_unlink(name.c_str()); };
-    logger.info("{} Successfully created!", mClassNamePrefix);
+    LOG_INFO("Successfully created!");
     return true;
 }
 
 bool TTUtilsMessageQueue::open(long attempts, long timeoutMs) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Opening...", mClassNamePrefix);
+    LOG_INFO("Opening...");
     if (alive()) {
-        logger.error("{} Cannot reopen!", mClassNamePrefix);
+        LOG_ERROR("Cannot reopen!");
         return false;
     }
     struct mq_attr messageQueueAttributes;
@@ -63,10 +61,10 @@ bool TTUtilsMessageQueue::open(long attempts, long timeoutMs) {
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
     }
     if (mDescriptor == -1) {
-        logger.error("{} Failed to open message queue, errno={}", mClassNamePrefix, errno);
+        LOG_ERROR("Failed to open message queue, errno={}", errno);
         return false;
     }
-    logger.info("{} Successfully opened!", mClassNamePrefix);
+    LOG_INFO("Successfully opened!");
     return true;
 }
 
@@ -75,7 +73,6 @@ bool TTUtilsMessageQueue::alive() const {
 }
 
 bool TTUtilsMessageQueue::receive(char* message, long attempts, long timeoutMs) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     const auto timeoutSecs = timeoutMs / 1000;
     bool result = false;
     if (alive()) {
@@ -83,26 +80,26 @@ bool TTUtilsMessageQueue::receive(char* message, long attempts, long timeoutMs) 
             errno = 0;
             struct timespec ts;
             if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                logger.error("{} Hard failure while sending message, fetching clock time, errno={}", mClassNamePrefix, errno);
+                LOG_ERROR("Hard failure while sending message, fetching clock time, errno={}", errno);
                 break;
             }
             ts.tv_sec += timeoutSecs;
             unsigned int priority = 0;
             auto res = mSyscall->mq_timedreceive(mDescriptor, message, mMessageSize, &priority, &ts);
             if (res != -1) {
-                logger.error("{} Successfully received message!", mClassNamePrefix);
+                LOG_ERROR("Successfully received message!");
                 result = true;
                 break;
             }
             if (errno == EAGAIN) {
-                logger.warning("{} Soft failure while receiving message, resource temporarily unavailable, errno={}", mClassNamePrefix, errno);
+                LOG_WARNING("Soft failure while receiving message, resource temporarily unavailable, errno={}", errno);
                 continue;
             }
             if (errno == ETIMEDOUT) {
-                logger.warning("{} Soft failure while receiving message, timeout, errno={}", mClassNamePrefix, errno);
+                LOG_WARNING("Soft failure while receiving message, timeout, errno={}", errno);
                 continue;
             }
-            logger.error("{} Hard failure while receiving message, errno={}", mClassNamePrefix, errno);
+            LOG_ERROR("Hard failure while receiving message, errno={}", errno);
             break;
         }
     }
@@ -110,7 +107,6 @@ bool TTUtilsMessageQueue::receive(char* message, long attempts, long timeoutMs) 
 }
 
 bool TTUtilsMessageQueue::send(const char* message, long attempts, long timeoutMs) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     const auto timeoutSecs = timeoutMs / 1000;
     bool result = false;
     if (alive()) {
@@ -118,26 +114,26 @@ bool TTUtilsMessageQueue::send(const char* message, long attempts, long timeoutM
             errno = 0;
             struct timespec ts;
             if (mSyscall->clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-                logger.error("{} Hard failure while sending message, fetching clock time, errno={}", mClassNamePrefix, errno);
+                LOG_ERROR("Hard failure while sending message, fetching clock time, errno={}", errno);
                 break;
             }
             ts.tv_sec += timeoutSecs;
             unsigned int priority = 0;
             auto res = mSyscall->mq_timedsend(mDescriptor, message, mMessageSize, priority, &ts);
             if (res != -1) {
-                logger.error("{} Successfully send message!", mClassNamePrefix);
+                LOG_ERROR("Successfully send message!");
                 result = true;
                 break;
             }
             if (errno == EAGAIN) {
-                logger.warning("{} Soft failure while sending message, resource temporarily unavailable, errno={}", mClassNamePrefix, errno);
+                LOG_WARNING("Soft failure while sending message, resource temporarily unavailable, errno={}", errno);
                 continue;
             }
             if (errno == ETIMEDOUT) {
-                logger.warning("{} Soft failure while sending message, timeout, errno={}", mClassNamePrefix, errno);
+                LOG_WARNING("Soft failure while sending message, timeout, errno={}", errno);
                 continue;
             }
-            logger.error("{} Hard failure while sending message, errno={}", mClassNamePrefix, errno);
+            LOG_ERROR("Hard failure while sending message, errno={}", errno);
             break;
         }
     }

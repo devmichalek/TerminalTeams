@@ -30,6 +30,4 @@ private:
     long mQueueSize;
     long mMessageSize;
     std::shared_ptr<TTUtilsSyscall> mSyscall;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTUtilsMessageQueue:";
 };

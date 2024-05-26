@@ -5,6 +5,7 @@
 #include "TTDiagnosticsHelper.hpp"
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/rotating_file_sink.h>
+#include <string.h>
 
 class TTDiagnosticsLogger {
 public:
@@ -61,52 +62,21 @@ private:
     static TTDiagnosticsLogger mInstance;
 };
 
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define _LOG_GEN_(FUN_NAME, FORMAT_STR) FUN_NAME("[{}:{}] " FORMAT_STR, __FILENAME__, __LINE__)
+#define _LOG_GEN_MANY(FUN_NAME, FORMAT_STR, ...) FUN_NAME("[{}:{}] " FORMAT_STR, __FILENAME__, __LINE__, __VA_ARGS__)
+#define LOG_DEBUG(FORMAT_STR, ...) _LOG_GEN_ ## __VA_OPT__(MANY) (TTDiagnosticsLogger::getInstance().debug, FORMAT_STR __VA_OPT__(,) __VA_ARGS__)
+#define LOG_INFO(FORMAT_STR, ...) _LOG_GEN_ ## __VA_OPT__(MANY) (TTDiagnosticsLogger::getInstance().info, FORMAT_STR __VA_OPT__(,) __VA_ARGS__)
+#define LOG_WARNING(FORMAT_STR, ...) _LOG_GEN_ ## __VA_OPT__(MANY) (TTDiagnosticsLogger::getInstance().warning, FORMAT_STR __VA_OPT__(,) __VA_ARGS__)
+#define LOG_ERROR(FORMAT_STR, ...) _LOG_GEN_ ## __VA_OPT__(MANY) (TTDiagnosticsLogger::getInstance().error, FORMAT_STR __VA_OPT__(,) __VA_ARGS__)
+#define LOG_DECLARE(FILENAME) TTDiagnosticsLogger TTDiagnosticsLogger::mInstance(FILENAME)
+
 #else
 
-#include <string>
-#include <spdlog/spdlog.h>
-
-class TTDiagnosticsLogger {
-public:
-    ~TTDiagnosticsLogger() = default;
-    
-    template <typename... Args>
-    void debug(Args &&...args) const {
-    }
-
-    template <typename... Args>
-    void info(Args &&...args) const {
-    }
-
-    template <typename... Args>
-    void warning(Args &&...args) const {
-    }
-
-    template <typename... Args>
-    void error(Args &&...args) const {
-    }
-
-    template <typename... Args>
-    void critical(Args &&...args) const {
-    }
-
-    void setLevel(spdlog::level::level_enum logLevel) const {
-    }
-
-    void setPattern(std::string pattern, spdlog::pattern_time_type timeType = spdlog::pattern_time_type::local) const {
-    }
-
-    static const TTDiagnosticsLogger& getInstance() {
-        return mInstance;
-    }
-
-private:
-    explicit TTDiagnosticsLogger(std::string name, size_t maxSize = 1048576 * 5) {}
-    TTDiagnosticsLogger(const TTDiagnosticsLogger&) = delete;
-    TTDiagnosticsLogger(const TTDiagnosticsLogger&&) = delete;
-    TTDiagnosticsLogger operator=(const TTDiagnosticsLogger&) = delete;
-    TTDiagnosticsLogger operator=(const TTDiagnosticsLogger&&) = delete;
-    static TTDiagnosticsLogger mInstance;
-};
+#define LOG_DEBUG(...)
+#define LOG_INFO(...)
+#define LOG_WARNING(...)
+#define LOG_ERROR(...)
+#define LOG_DECLARE(FILENAME)
 
 #endif

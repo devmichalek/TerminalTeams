@@ -6,7 +6,7 @@
 #include <signal.h>
 
 // Logger
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-chat-handler");
+LOG_DECLARE("tteams-chat-handler");
 
 std::atomic<bool> quitHandle{false};
 void signalInterruptHandler(int) {

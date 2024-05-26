@@ -32,8 +32,6 @@ private:
     void refresh();
     // Output stream
     const TTUtilsOutputStream& mOutputStream;
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTContacts:";
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication

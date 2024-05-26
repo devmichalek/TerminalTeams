@@ -15,17 +15,16 @@ TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& output
         mSideWidth(mWidth * settings.getRatio()),
         mBlankLine(mWidth, ' '),
         mOutputStream(outputStream) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Constructing...", mClassNamePrefix);
+    LOG_INFO("Constructing...");
     if (!mPrimaryMessageQueue->open()) {
-        throw std::runtime_error(mClassNamePrefix + "Failed to open primary message queue!");
+        throw std::runtime_error("TTChat: Failed to open primary message queue!");
     } else {
-        logger.info("{} Successfully opened primary message queue!", mClassNamePrefix);
+        LOG_INFO("Successfully opened primary message queue!");
     }
     if (!mSecondaryMessageQueue->open()) {
-        throw std::runtime_error(mClassNamePrefix + "Failed to open secondary message queue!");
+        throw std::runtime_error("TTChat: Failed to open secondary message queue!");
     } else {
-        logger.info("{} Successfully opened secondary message queue!", mClassNamePrefix);
+        LOG_INFO("Successfully opened secondary message queue!");
     }
     // Set heartbeat sender thread
     std::promise<void> promise;
@@ -35,39 +34,38 @@ TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& output
 }
 
 TTChat::~TTChat() {
-    TTDiagnosticsLogger::getInstance().info("{} Destructing...", mClassNamePrefix);
+    LOG_INFO("Destructing...");
     mStopped.store(true);
     mHeartbeatResult.wait();
 }
 
 void TTChat::run() {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Started primary loop", mClassNamePrefix);
+    LOG_INFO("Started primary loop");
     if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
         try {
             TTChatMessage message;
             while (true) {
                 if (mStopped.load()) {
-                    logger.warning("{} Forced exit on primary loop", mClassNamePrefix);
+                    LOG_WARNING("Forced exit on primary loop");
                     break;
                 }
                 if (!mPrimaryMessageQueue->receive(reinterpret_cast<char*>(&message))) {
-                    logger.warning("{} Failed to send message!", mClassNamePrefix);
+                    LOG_WARNING("Failed to send message!");
                     break;
                 }
                 message.data[message.dataLength] = '\0';
                 handle(message);
             }
         } catch (...) {
-            logger.error("{} Caught unknown exception at primary loop!", mClassNamePrefix);
+            LOG_ERROR("Caught unknown exception at primary loop!");
         }
     }
     mStopped.store(true);
-    logger.info("{} Completed primary loop", mClassNamePrefix);
+    LOG_INFO("Completed primary loop");
 }
 
 void TTChat::stop() {
-    TTDiagnosticsLogger::getInstance().info("{} Forced stop...", mClassNamePrefix);
+    LOG_INFO("Forced stop...");
     mStopped.store(true);
 }
 
@@ -76,56 +74,53 @@ bool TTChat::stopped() const {
 }
 
 void TTChat::heartbeat(std::promise<void> promise) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Started secondary (heartbeat) loop", mClassNamePrefix);
+    LOG_INFO("Started secondary (heartbeat) loop");
     if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
         try {
             char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
             while (true) {
                 if (mStopped.load()) {
-                    logger.warning("{} Forced exit on secondary (heartbeat) loop", mClassNamePrefix);
+                    LOG_WARNING("Forced exit on secondary (heartbeat) loop");
                     break;
                 }
                 if (!mSecondaryMessageQueue->send(reinterpret_cast<const char*>(&dummyBuffer[0]))) {
-                    logger.warning("{} Failed to send heartbeat message!", mClassNamePrefix);
+                    LOG_WARNING("Failed to send heartbeat message!");
                     break;
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS));
             }
         } catch (...) {
-            logger.error("{} Caught unknown exception at secondary (heartbeat) loop!", mClassNamePrefix);
+            LOG_ERROR("Caught unknown exception at secondary (heartbeat) loop!");
         }
     }
     mStopped.store(true);
     promise.set_value();
-    logger.info("{} Completed secondary (heartbeat) loop", mClassNamePrefix);
+    LOG_INFO("Completed secondary (heartbeat) loop");
 }
 
 void TTChat::handle(const TTChatMessage& message) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
     switch (message.type) {
         case TTChatMessageType::CLEAR:
-            logger.info("{} Received clear message", mClassNamePrefix);
+            LOG_INFO("Received clear message");
             mOutputStream.clear();
             break;
         case TTChatMessageType::SEND:
-            logger.info("{} Received sender message", mClassNamePrefix);
+            LOG_INFO("Received sender message");
             print(message.data, message.timestamp, false);
             break;
         case TTChatMessageType::RECEIVE:
-            logger.info("{} Received receiver message", mClassNamePrefix);
+            LOG_INFO("Received receiver message");
             print(message.data, message.timestamp, true);
             break;
         case TTChatMessageType::HEARTBEAT:
-            logger.info("{} Received heartbeat message", mClassNamePrefix);
+            LOG_INFO("Received heartbeat message");
         default:
             break;
     }
 }
 
 void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool received) {
-    decltype(auto) logger = TTDiagnosticsLogger::getInstance();
-    logger.info("{} Formatting message to be printed...", mClassNamePrefix);
+    LOG_INFO("Formatting message to be printed...");
     // Remove spaces from the beggining and end
     std::string message = cmessage;
     const std::string delimiter = " ";
@@ -203,7 +198,7 @@ void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool receive
     const auto timestamp = ss.str();
 
     // Print message based on side
-    logger.info("{} Printing message...", mClassNamePrefix);
+    LOG_INFO("Printing message...");
     if (received) {
         mOutputStream.print(timestamp).endl();
         for (auto &line : lines) {

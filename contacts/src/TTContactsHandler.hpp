@@ -34,8 +34,6 @@ private:
     void heartbeat();
     // Sends main data if available and receives confirmation
     void main();
-    // Logger
-    inline static const std::string mClassNamePrefix = "TTContactsHandler:";
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Quit flag

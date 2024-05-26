@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "TTDiagnosticsLogger.hpp"
 
-TTDiagnosticsLogger TTDiagnosticsLogger::mInstance("tteams-utils-unittests");
+LOG_DECLARE("tteams-utils-unittests");
 
 int main(int argc, char *argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
