@@ -6,7 +6,9 @@
 #include <cstring>
 #include <signal.h>
 
+// Handler
 std::unique_ptr<TTTextBoxHandler> handler;
+// Logger
 LOG_DECLARE("tteams-textbox-handler");
 
 void messageSent(std::string msg) {
@@ -19,7 +21,7 @@ void contactsSwitch(size_t id) {
 
 void signalInterruptHandler(int) {
     if (handler) {
-        LOG_WARNING("Stopping due to caught signal");
+        LOG_WARNING("Stopping due to caught signal!");
         handler->stop();
     }
 }
@@ -43,7 +45,7 @@ int main(int argc, char** argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     } catch (const std::exception& exp) {
-        LOG_INFO("Exception captured: {}", exp.what());
+        LOG_ERROR("Exception captured: {}", exp.what());
     }
     handler.reset();
     LOG_INFO("Successfully flushed all logs");

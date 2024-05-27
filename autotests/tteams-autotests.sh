@@ -5,6 +5,8 @@ function exit-with-error() {
     exit 1
 }
 
+echo "Info: Running all autotests..."
+
 ./tteams-chat-autotests.sh || exit-with-error "\"chat\""
 ./tteams-contacts-autotests.sh || exit-with-error "\"contacts\""
 ./tteams-textbox-autotests.sh || exit-with-error "\"textbox\""

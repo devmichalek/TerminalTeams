@@ -10,6 +10,8 @@ function run-and-exit-on-error() {
     $@ || exit-with-error $@
 }
 
+echo "Info: Running \"chat\" autotests..."
+
 run-and-exit-on-error ./tteams-chat-autotests-happy-path.sh
 
 echo "Success: Autotests \"chat\" passed!"

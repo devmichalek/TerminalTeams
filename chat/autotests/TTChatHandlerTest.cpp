@@ -37,46 +37,51 @@ std::vector<std::string> getTokens(std::string line) {
 }
 
 int main(int argc, char** argv) {
-    // Signal handling
-    struct sigaction signalAction;
-    memset(&signalAction, 0, sizeof(signalAction));
-    signalAction.sa_handler = signalInterruptHandler;
-    sigfillset(&signalAction.sa_mask);
-    sigaction(SIGINT, &signalAction, nullptr);
-    sigaction(SIGTERM, &signalAction, nullptr);
-    sigaction(SIGSTOP, &signalAction, nullptr);
-
-    // Run main app
-    const TTChatSettings settings(argc, argv);
-    TTChatHandler handler(settings);
-    while (!quitHandle.load()) {
-        // Get tokens
-        std::string line;
-        std::getline(std::cin, line);
-        if (quitHandle.load()) {
-            break;
-        }
-        auto tokens = getTokens(line);
-        bool status = false;
-        if (!tokens.empty()) {
-            const std::string& command = tokens[0];
-            const auto id = std::stoi(tokens[1]);
-            // Send command
-            const std::chrono::time_point<std::chrono::system_clock> dt(std::chrono::milliseconds(0));
-            if (command == "send") {
-                status = handler.send(id, tokens[2], dt);
-            } else if (command == "receive") {
-                status = handler.receive(id, tokens[2], dt);
-            } else if (command == "clear") {
-                status = handler.clear(id);
-            } else if (command == "create") {
-                status = handler.create(id);
+    try {
+        // Signal handling
+        struct sigaction signalAction;
+        memset(&signalAction, 0, sizeof(signalAction));
+        signalAction.sa_handler = signalInterruptHandler;
+        sigfillset(&signalAction.sa_mask);
+        sigaction(SIGINT, &signalAction, nullptr);
+        sigaction(SIGTERM, &signalAction, nullptr);
+        sigaction(SIGSTOP, &signalAction, nullptr);
+        LOG_INFO("Signal handling initialized");
+        // Run main app
+        const TTChatSettings settings(argc, argv);
+        TTChatHandler handler(settings);
+        LOG_INFO("Chat handler initialized");
+        while (!quitHandle.load()) {
+            // Get tokens
+            std::string line;
+            std::getline(std::cin, line);
+            if (quitHandle.load()) {
+                break;
+            }
+            auto tokens = getTokens(line);
+            bool status = false;
+            if (!tokens.empty()) {
+                const std::string& command = tokens[0];
+                const auto id = std::stoi(tokens[1]);
+                // Send command
+                const std::chrono::time_point<std::chrono::system_clock> dt(std::chrono::milliseconds(0));
+                if (command == "send") {
+                    status = handler.send(id, tokens[2], dt);
+                } else if (command == "receive") {
+                    status = handler.receive(id, tokens[2], dt);
+                } else if (command == "clear") {
+                    status = handler.clear(id);
+                } else if (command == "create") {
+                    status = handler.create(id);
+                }
+            }
+            if (!status) {
+                break;
             }
         }
-        if (!status) {
-            break;
-        }
+    } catch (const std::exception& exp) {
+        LOG_ERROR("Exception captured: {}", exp.what());
     }
-
+    LOG_INFO("Successfully flushed all logs");
     return 0;
 }

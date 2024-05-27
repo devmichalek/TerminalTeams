@@ -23,7 +23,7 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
 
 TTContactsHandler::~TTContactsHandler() {
     LOG_INFO("Destructing...");
-    mForcedQuit.store(true);
+    stop();
     mQueueCondition.notify_one();
     // Wait until main thread is destroyed
     std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
@@ -226,9 +226,9 @@ void TTContactsHandler::heartbeat() {
             std::this_thread::sleep_for(std::chrono::milliseconds(TTCONTACTS_HEARTBEAT_TIMEOUT_MS));
         }
     } catch (...) {
-        // ...
+        LOG_ERROR("Caught unknown exception at heartbeat loop!");
     }
-    mForcedQuit.store(true);
+    stop();
     LOG_INFO("Completed heartbeat loop");
 }
 
@@ -269,10 +269,10 @@ void TTContactsHandler::main() {
             }
         } while (!exit);
     } catch (...) {
-        // ...
+        LOG_ERROR("Caught unknown exception at main loop!");
     }
     mSharedMem->destroy();
-    mForcedQuit.store(true);
+    stop();
     LOG_INFO("Completed main loop");
 }
 
@@ -281,4 +281,9 @@ bool TTContactsHandler::establish() {
     TTContactsMessage message;
     message.status = TTContactsStatus::HEARTBEAT;
     return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
+}
+
+void TTContactsHandler::stop() {
+    LOG_INFO("Forced stop...");
+    mForcedQuit.store(true);
 }

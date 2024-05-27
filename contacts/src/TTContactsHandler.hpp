@@ -37,6 +37,8 @@ private:
     void main();
     // Establish connection with the other process
     bool establish();
+    // Calls stop handler
+    void stop();
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Quit flag
