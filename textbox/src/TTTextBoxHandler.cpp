@@ -13,14 +13,13 @@ TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
     // Create pipe
     if (!mPipe->create()) {
         throw std::runtime_error("TTTextBoxHandler: Failed to create named pipe!");
-    } else {
-        LOG_INFO("Successfully created named pipe!");
     }
     // Set main receiver thread
     std::promise<void> mainPromise;
     mBlockers.push_back(mainPromise.get_future());
     mThreads.push_back(std::thread(&TTTextBoxHandler::main, this, std::move(mainPromise)));
     mThreads.back().detach();
+    LOG_INFO("Successfully constructed!");
 }
 
 TTTextBoxHandler::~TTTextBoxHandler() {
@@ -29,6 +28,7 @@ TTTextBoxHandler::~TTTextBoxHandler() {
     for (auto &blocker : mBlockers) {
         blocker.wait();
     }
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTTextBoxHandler::stop() {

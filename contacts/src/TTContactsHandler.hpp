@@ -29,11 +29,14 @@ public:
     virtual bool unselect(size_t id);
     virtual const TTContactsEntry& get(size_t id) const;
 private:
+    // Send generic method
     bool send(const TTContactsMessage& message);
     // Sends heartbeat periodically
     void heartbeat();
     // Sends main data if available and receives confirmation
     void main();
+    // Establish connection with the other process
+    bool establish();
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Quit flag

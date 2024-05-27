@@ -15,15 +15,10 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
     LOG_INFO("Constructing...");
     if (!mPrimaryMessageQueue->create()) {
         throw std::runtime_error("TTChatHandler: Failed to create primary message queue!");
-    } else {
-        LOG_INFO("Successfully created primary message queue!");
     }
     if (!mSecondaryMessageQueue->create()) {
         throw std::runtime_error("TTChatHandler: Failed to create secondary message queue!");
-    } else {
-        LOG_INFO("Successfully created secondary message queue!");
     }
-
     // Set heartbeat receiver thread
     auto pt = std::packaged_task<void()>(std::bind(&TTChatHandler::heartbeat, this));
     mHeartbeatResult = pt.get_future();
@@ -31,6 +26,7 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
     mHeartbeatThread.detach();
     // Set handler thread
     mHandlerResult = std::async(std::launch::async, std::bind(&TTChatHandler::main, this));
+    LOG_INFO("Successfully constructed!");
 }
 
 TTChatHandler::~TTChatHandler() {
@@ -39,6 +35,7 @@ TTChatHandler::~TTChatHandler() {
     mQueueCondition.notify_one();
     mHeartbeatResult.wait();
     mHandlerResult.wait();
+    LOG_INFO("Successfully destructed!");
 }
 
 bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timestamp) {

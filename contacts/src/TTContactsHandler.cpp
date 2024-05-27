@@ -12,12 +12,13 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
         throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
-    } else {
-        LOG_INFO("Successfully created shared memory!");
+    }
+    if (!establish()) {
+        throw std::runtime_error("TTContactsHandler: Failed to establish connection!");
     }
     mHandlerThread.detach();
     mHeartbeatThread.detach();
-    LOG_INFO("Successfully detached threads");
+    LOG_INFO("Successfully constructed!");
 }
 
 TTContactsHandler::~TTContactsHandler() {
@@ -28,9 +29,11 @@ TTContactsHandler::~TTContactsHandler() {
     std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
     // Wait until heartbeat thread is destroyed
     std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
+    LOG_INFO("Successfully destructed!");
 }
 
 bool TTContactsHandler::create(std::string nickname, std::string fullname, std::string ipAddressAndPort) {
+    LOG_INFO("Called create nickname={}, fullname={}, ipAddressAndPort={}", nickname, fullname, ipAddressAndPort);
     TTContactsMessage message;
     message.status = TTContactsStatus::ACTIVE;
     message.id = mContacts.size();
@@ -42,6 +45,7 @@ bool TTContactsHandler::create(std::string nickname, std::string fullname, std::
 }
 
 bool TTContactsHandler::send(size_t id) {
+    LOG_INFO("Called send ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -67,6 +71,7 @@ bool TTContactsHandler::send(size_t id) {
 }
 
 bool TTContactsHandler::receive(size_t id) {
+    LOG_INFO("Called receive ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -92,6 +97,7 @@ bool TTContactsHandler::receive(size_t id) {
 }
 
 bool TTContactsHandler::activate(size_t id) {
+    LOG_INFO("Called activate ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -116,6 +122,7 @@ bool TTContactsHandler::activate(size_t id) {
 }
 
 bool TTContactsHandler::deactivate(size_t id) {
+    LOG_INFO("Called deactivate ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -140,6 +147,7 @@ bool TTContactsHandler::deactivate(size_t id) {
 }
 
 bool TTContactsHandler::select(size_t id) {
+    LOG_INFO("Called select ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -164,6 +172,7 @@ bool TTContactsHandler::select(size_t id) {
 }
 
 bool TTContactsHandler::unselect(size_t id) {
+    LOG_INFO("Called unselect ID={}", id);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -188,6 +197,7 @@ bool TTContactsHandler::unselect(size_t id) {
 }
 
 const TTContactsEntry& TTContactsHandler::get(size_t id) const {
+    LOG_INFO("Called get ID={}", id);
     return mContacts[id];
 }
 
@@ -204,6 +214,7 @@ bool TTContactsHandler::send(const TTContactsMessage& message) {
 }
 
 void TTContactsHandler::heartbeat() {
+    LOG_INFO("Started heartbeat loop");
     std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
     try {
         while (!mForcedQuit.load()) {
@@ -218,9 +229,11 @@ void TTContactsHandler::heartbeat() {
         // ...
     }
     mForcedQuit.store(true);
+    LOG_INFO("Completed heartbeat loop");
 }
 
 void TTContactsHandler::main() {
+    LOG_INFO("Started main loop");
     std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
     try {
         bool exit = false;
@@ -260,4 +273,12 @@ void TTContactsHandler::main() {
     }
     mSharedMem->destroy();
     mForcedQuit.store(true);
+    LOG_INFO("Completed main loop");
+}
+
+bool TTContactsHandler::establish() {
+    LOG_INFO("Establishing connection...");
+    TTContactsMessage message;
+    message.status = TTContactsStatus::HEARTBEAT;
+    return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
 }

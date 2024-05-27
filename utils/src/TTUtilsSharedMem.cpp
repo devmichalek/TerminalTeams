@@ -36,7 +36,7 @@ bool TTUtilsSharedMem::create() {
     }
 
     errno = 0;
-    int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
+    const int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
         LOG_ERROR("Failed to create shared object, errno={}", errno);
         return false;
@@ -81,33 +81,51 @@ bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
         return false;
     }
 
-    errno = 0;
+    int dataProducedSemErrno = 0;
+    int dataConsumedSemErrno = 0;
+    int sharedMemErrno = 0;
+    int fileDescriptor = 0;
     for (auto attempt = attempts; attempt > 0; --attempt) {
         
-        if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0)) != SEM_FAILED) {
+        if (!mDataProducedSemaphore) {
+            errno = 0;
+            mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), 0);
+            dataProducedSemErrno = errno;
+        }
+        if (!mDataConsumedSemaphore) {
+            errno = 0;
+            mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0);
+            dataConsumedSemErrno = errno;
+        }
+        if (!fileDescriptor) {
+            errno = 0;
+            fileDescriptor = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
+            sharedMemErrno = errno;
+        }
+
+        if (mDataProducedSemaphore && mDataConsumedSemaphore && fileDescriptor) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
     }
 
-    if (mDataConsumedSemaphore == SEM_FAILED) {
-        LOG_ERROR("Failed to open data consumed semaphore, errno={}", errno);
+    if (!mDataProducedSemaphore) {
+        LOG_ERROR("Failed to open data produced semaphore, errno={}", dataProducedSemErrno);
+        return false;
+    }
+
+    if (!mDataConsumedSemaphore) {
+        LOG_ERROR("Failed to open data consumed semaphore, errno={}", dataConsumedSemErrno);
         return false;
     }
 
     errno = 0;
-    if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), 0)) == SEM_FAILED) {
-        LOG_ERROR("Failed to open data produced semaphore, errno={}", errno);
+    if (fileDescriptor < 0) {
+        LOG_ERROR("Failed to open shared object, errno={}", sharedMemErrno);
         return false;
     }
 
-    int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
-    if (fd < 0) {
-        LOG_ERROR("Failed to open shared object, errno={}", errno);
-        return false;
-    }
-
-    mSharedMessage = mSyscall->mmap(nullptr, mSharedMessageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    mSharedMessage = mSyscall->mmap(nullptr, mSharedMessageSize, PROT_READ | PROT_WRITE, MAP_SHARED, fileDescriptor, 0);
     if (!mSharedMessage) {
         LOG_ERROR("Failed to mmap shared message!");
         return false;
