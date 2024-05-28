@@ -10,7 +10,7 @@ TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
         mMessageSize(messageSize), 
         mNamedPipeDescriptor(-1),
         mSyscall(std::move(syscall)) {
-    LOG_INFO("Constructing...");
+    LOG_INFO("Successfully constructed!");
 }
 
 TTUtilsNamedPipe::~TTUtilsNamedPipe() {
@@ -23,6 +23,7 @@ TTUtilsNamedPipe::~TTUtilsNamedPipe() {
         mSyscall->unlink(mNamedPipePath.c_str());
         mNamedPipePath.clear();
     }
+    LOG_INFO("Successfully destructed!");
 }
 
 bool TTUtilsNamedPipe::alive() const {

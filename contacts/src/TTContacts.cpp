@@ -8,13 +8,12 @@ TTContacts::TTContacts(const TTContactsSettings& settings, const TTUtilsOutputSt
     LOG_INFO("Constructing...");
     if (!mSharedMem->open()) {
         throw std::runtime_error("TTContacts: Failed to open shared memory!");
-    } else {
-        LOG_INFO("Successfully opened shared memory!");
     }
+    LOG_INFO("Successfully constructed!");
 }
 
 TTContacts::~TTContacts() {
-    LOG_INFO("Destructing...");
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTContacts::run() {

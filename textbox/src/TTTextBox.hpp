@@ -16,7 +16,7 @@ public:
     TTTextBox operator=(const TTTextBox&) = delete;
     TTTextBox operator=(const TTTextBox&&) = delete;
     virtual void run();
-    // Stops applications
+    // Stops application
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;

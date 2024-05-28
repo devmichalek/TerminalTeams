@@ -18,25 +18,23 @@ TTChat::TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& output
     LOG_INFO("Constructing...");
     if (!mPrimaryMessageQueue->open()) {
         throw std::runtime_error("TTChat: Failed to open primary message queue!");
-    } else {
-        LOG_INFO("Successfully opened primary message queue!");
     }
     if (!mSecondaryMessageQueue->open()) {
         throw std::runtime_error("TTChat: Failed to open secondary message queue!");
-    } else {
-        LOG_INFO("Successfully opened secondary message queue!");
     }
     // Set heartbeat sender thread
     std::promise<void> promise;
     mHeartbeatResult = promise.get_future();
     mHeartbeatThread = std::thread(&TTChat::heartbeat, this, std::move(promise));
     mHeartbeatThread.detach();
+    LOG_INFO("Successfully constructed!");
 }
 
 TTChat::~TTChat() {
     LOG_INFO("Destructing...");
     mStopped.store(true);
     mHeartbeatResult.wait();
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTChat::run() {

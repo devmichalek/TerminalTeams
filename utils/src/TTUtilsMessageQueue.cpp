@@ -12,13 +12,14 @@ TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
         mQueueSize(queueSize),
         mMessageSize(messageSize),
         mSyscall(std::move(syscall)) {
-    LOG_INFO("Constructing...");
+    LOG_INFO("Successfully constructed!");
 }
 
 TTUtilsMessageQueue::~TTUtilsMessageQueue() {
     LOG_INFO("Destructing...");
     mDeleter(mName);
     mDescriptor = -1;
+    LOG_INFO("Successfully destructed!");
 }
 
 bool TTUtilsMessageQueue::create() {

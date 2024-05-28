@@ -9,10 +9,20 @@ class TTEngine {
 public:
     explicit TTEngine(const TTEngineSettings& settings,
         std::vector<tt::Greeter::Service> services);
-    ~TTEngine();
-    void run();
-    void stop();
+    virtual ~TTEngine();
+    TTTextBox(const TTTextBox&) = delete;
+    TTTextBox(const TTTextBox&&) = delete;
+    TTTextBox operator=(const TTTextBox&) = delete;
+    TTTextBox operator=(const TTTextBox&&) = delete;
+    // Starts application
+    virtual void run();
+    // Stops application
+    virtual void stop();
+    // Returns true if application is stopped
+    virtual bool stopped() const;
 private:
+    // Server thread
+    void server(std::promise<void> promise);
     // Callback functions
     void textBoxMessageSent(std::string message);
     void textBoxContactSwitch(size_t message);
@@ -27,6 +37,8 @@ private:
     // Server
     std::vector<tt::Greeter::Service> mServices;
     std::unique_ptr<grpc::Server> mServer;
-    std::thread mServerThread;
-    std::future<void> mServerBlocker;
+    // Concurrent communication
+    std::atomic<bool> mStopped;
+    std::deque<std::thread> mThreads;
+    std::deque<std::future<void>> mBlockers;
 }

@@ -20,12 +20,13 @@ TTUtilsSharedMem::TTUtilsSharedMem(const std::string& sharedMemoryName,
         mSharedMemoryCreated(false),
         mDataConsumedSemCreated(false),
         mDataProducedSemCreated(false) {
-    LOG_INFO("Constructing...");
+    LOG_INFO("Successfully constructed!");
 }
 
 TTUtilsSharedMem::~TTUtilsSharedMem() {
     LOG_INFO("Destructing...");
     destroy();
+    LOG_INFO("Successfully destructed!");
 }
 
 bool TTUtilsSharedMem::create() {

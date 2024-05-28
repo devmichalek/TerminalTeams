@@ -11,45 +11,80 @@ TTEngine::TTEngine(const TTEngineSettings& settings,
         mIpAddressAndPort(absl::StrFormat("%s:%d", settings.getIpAddress().c_str(), settings.getPort())),
         mNeighbors(settings.getNeighbors()),
         mServices(services) {
-    mContacts = std::make_unique<TTContactsHandler>(settings.getContactsSharedName(),
-        std::bind(&TTEngine::contactsDataProduced, this),
-        std::bind(&TTEngine::contactsDataConsumed, this));
-    mChat = std::make_unique<TTChatHandler>(settings.getChatQueueName(),
-        std::bind(&TTEngine::chatMessageSent, this),
-        std::bind(&TTEngine::chatMessageReceived, this));
-    mTextBox = std::make_unique<TTTextBoxHandler>(settings.getTextboxPipeName(),
+    LOG_INFO("Constructing...");
+    mContacts = std::make_unique<TTContactsHandler>(settings.getContactsSettings());
+    mChat = std::make_unique<TTChatHandler>(settings.getChatSettings());
+    mTextBox = std::make_unique<TTTextBoxHandler>(settings.getTextBoxSettings(),
         std::bind(&TTEngine::textBoxMessageSent, this),
         std::bind(&TTEngine::textBoxContactSwitch, this));
-    grpc::EnableDefaultHealthCheckService(true);
-    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    grpc::ServerBuilder builder;
-    // Listen on the given address without any authentication mechanism.
-    builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
-    // Register synchronous services.
-    for (auto &service : mServices) {
-        builder.RegisterService(&service);
+    // Set server thread
+    {
+        std::promise<void> serverPromise;
+        mBlockers.push_back(serverPromise.get_future());
+        mThreads.push_back(std::thread(&TTTextBox::server, this, std::move(serverPromise)));
+        mThreads.back().detach();
     }
-    // Finally assemble the server and wait for the server to shutdown.
-    mServer = std::make_unique<grpc::Server>(builder.BuildAndStart());
+    LOG_INFO("Successfully constructed!");
 }
 
 TTEngine::~TTEngine() {
+    LOG_INFO("Destructing...");
     stop();
-    mServerBlocker.wait();
+    if (mServer) {
+        LOG_INFO("Stopping server...");
+        mServer->Shutdown();
+    } else {
+        LOG_WARNING("Failed stop already stopped server!");
+    }
+    for (auto &blocker : mBlockers) {
+        blocker.wait();
+    }
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTEngine::run() {
-    mServer->Wait();
+    LOG_INFO("Started main loop");
+
+    LOG_INFO("Completed main loop");
 }
 
 void TTEngine::stop() {
-    mServer->Shutdown();
+    LOG_INFO("Forced stop...");
+    mStopped.store(true);
+}
+
+bool TTTextBox::stopped() const {
+    return mStopped.load();
+}
+
+void TTEngine::server(std::promise<void> promise) {
+    // Setup
+    LOG_INFO("Setting up server...");
+    grpc::EnableDefaultHealthCheckService(true);
+    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
+    grpc::ServerBuilder builder;
+    LOG_INFO("Listening on the given address without any authentication mechanism...");
+    builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
+    LOG_INFO("Registering synchronous services...");
+    for (auto &service : mServices) {
+        builder.RegisterService(&service);
+    }
+    LOG_INFO("Assembling the server and waiting for the server to shutdown...");
+    mServer = std::make_unique<grpc::Server>(builder.BuildAndStart());
+    // Start
+    LOG_INFO("Started server loop");
+    mServer->Wait();
+    stop();
+    promise.set_value();
+    LOG_INFO("Completed server loop");
 }
 
 void TTEngine::textBoxMessageSent(std::string message) {
+    LOG_INFO("Received callback - message sent");
 
 }
 
 void TTEngine::textBoxContactSwitch(size_t message) {
+    LOG_INFO("Received callback - contacts switch");
 
 }

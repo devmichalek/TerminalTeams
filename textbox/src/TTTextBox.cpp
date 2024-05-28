@@ -13,14 +13,13 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStrea
     // Open pipe
     if (!mPipe->open()) {
         throw std::runtime_error("TTTextBox: Failed to open named pipe!");
-    } else {
-        LOG_INFO("Successfully opened named pipe!");
     }
     // Set main sender thread
     std::promise<void> mainPromise;
     mBlockers.push_back(mainPromise.get_future());
     mThreads.push_back(std::thread(&TTTextBox::main, this, std::move(mainPromise)));
     mThreads.back().detach();
+    LOG_INFO("Successfully constructed!");
 }
 
 TTTextBox::~TTTextBox() {
@@ -29,6 +28,7 @@ TTTextBox::~TTTextBox() {
     for (auto &blocker : mBlockers) {
         blocker.wait();
     }
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTTextBox::run() {

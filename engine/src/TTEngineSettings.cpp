@@ -35,7 +35,7 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         args.push_back(argv[0]);
         args.push_back("0");
         args.push_back("0");
-        args.push_back(argv[2]);
+        args.push_back(argv[3]);
         mTextBoxSettings = std::make_unique<TTTextBoxSettings>(args.size(), args.data());
     }
 
