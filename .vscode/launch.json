@@ -1,0 +1,41 @@
+{
+    "version": "0.2.0",
+    "configurations":[
+        {
+            "name": "Debug Unit Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/../install/unittests/tteams-${input:componentType}-unittests",
+            "args": [
+                "--gtest_filter=${fileBasenameNoExtension}.*"
+            ],
+            "miDebuggerPath": "/usr/bin/gdb",
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "logging": {
+                "exceptions": true
+            }
+        }
+    ],
+    "inputs": [
+        {
+          "type": "pickString",
+          "id": "componentType",
+          "description": "What type of component do you want to test?",
+          "options": [
+            "contacts",
+            "chat",
+            "textbox",
+            "engine"
+          ]
+        }
+      ]
+}

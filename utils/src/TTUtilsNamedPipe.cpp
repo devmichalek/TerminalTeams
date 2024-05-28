@@ -1,5 +1,7 @@
 #include "TTUtilsNamedPipe.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include <thread>
+#include <chrono>
 
 TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
     long messageSize,

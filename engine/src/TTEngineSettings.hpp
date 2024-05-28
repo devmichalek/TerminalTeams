@@ -1,21 +1,31 @@
 #pragma once
-#include <string>
+#include "TTContactsSettings.hpp"
+#include "TTChatSettings.hpp"
+#include "TTEngineSettings.hpp"
+#include "TTUtilsSyscall"
 
 class TTEngineSettings {
 public:
-    explicit TTChatSettings(int argc, char** argv);
-    std::string getContactsSharedName() const { return mContactsSharedName; }
-    std::string getChatQueueName() const { return mChatQueueName; }
-    std::string getTextboxPipeName() const { return mTextboxPipeName; }
-    std::string getInterface() const { return mInterface; }
-    std::string getIpAddress() const { return mIpAddress; }
-    uint16_t getPort() const { return mPort; }
-    const std::vector<std::string>& getNeighbors() const { return mNeighbors; }
+    explicit TTChatSettings(int argc, const char* const* argv);
+    virtual ~TTEngineSettings() = default;
+    TTEngineSettings(const TTEngineSettings&) = delete;
+    TTEngineSettings(TTEngineSettings&&) = delete;
+    TTEngineSettings& operator=(const TTEngineSettings&) = delete;
+    TTEngineSettings& operator=(TTEngineSettings&&) = delete;
+    virtual const TTContactsSettings& getContactsSettings() const { return *mContactsSettings; }
+    virtual const TTChatSettings& getChatSettings() const { return *mChatSettings; }
+    virtual const TTTextBoxSettings& getTextBoxSettings() const { return *mTextBoxSettings; }
+    virtual std::string getInterface() const { return mInterface; }
+    virtual std::string getIpAddress() const { return mIpAddress; }
+    virtual uint16_t getPort() const { return mPort; }
+    virtual const std::vector<std::string>& getNeighbors() const { return mNeighbors; }
 
 private:
-    std::string mContactsSharedName;
-    std::string mChatQueueName;
-    std::string mTextboxPipeName;
+    // Delegated settings
+    std::unique_ptr<TTContactsSettings> mContactsSettings;
+    std::unique_ptr<TTChatSettings> mChatSettings;
+    std::unique_ptr<TTTextBoxSettings> mTextBoxSettings;
+    // Other settings
     std::string mInterface;
     std::string mIpAddress;
     uint16_t mPort;

@@ -14,10 +14,6 @@ public:
     void stop();
 private:
     // Callback functions
-    void contactsDataProduced();
-    void contactsDataConsumed();
-    void chatMessageSent();
-    void chatMessageReceived();
     void textBoxMessageSent(std::string message);
     void textBoxContactSwitch(size_t message);
     // Handlers, IPC communication

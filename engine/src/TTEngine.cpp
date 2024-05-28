@@ -46,22 +46,6 @@ void TTEngine::stop() {
     mServer->Shutdown();
 }
 
-void TTEngine::contactsDataProduced() {
-    // Nothing to be done
-}
-
-void TTEngine::contactsDataConsumed() {
-    // Nothing to be done
-}
-
-void TTEngine::chatMessageSent() {
-    // Nothing to be done
-}
-
-void TTEngine::chatMessageReceived() {
-    // Nothing to be done
-}
-
 void TTEngine::textBoxMessageSent(std::string message) {
 
 }

@@ -3,21 +3,102 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "CMake Build",
+			"label": "UnitTestsBaseName",
+			"command": "echo unittests",
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
+		},
+		{
+			"type": "shell",
+			"label": "Configure",
 			"command": "cmake -B build",
-			"group": "build"
+			"group": "build",
+			"icon": {
+				"id": "pencil",
+				"color": "terminal.ansiYellow"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
 		},
 		{
 			"type": "shell",
-			"label": "Make Build",
-			"command": "make all -j 4 -C build",
-			"group": "build"
+			"label": "Configure Debug",
+			"command": "cmake -B build -DCMAKE_BUILD_TYPE=Debug",
+			"group": "build",
+			"icon": {
+				"id": "pencil",
+				"color": "terminal.ansiYellow"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
 		},
 		{
 			"type": "shell",
-			"label": "CMake Install",
+			"label": "Build",
+			"command": "cmake --build build --parallel 4",
+			"group": "build",
+			"icon": {
+				"id": "beaker",
+				"color": "terminal.ansiYellow"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
+		},
+		{
+			"type": "shell",
+			"label": "Install",
 			"command": "cmake --install build --prefix install",
-			"group": "build"
+			"group": "build",
+			"icon": {
+				"id": "files",
+				"color": "terminal.ansiYellow"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
 		},
+		{
+			"type": "shell",
+			"label": "Clean",
+			"command": "rm -rf ./build ./install",
+			"group": "build",
+			"icon": {
+				"id": "trash",
+				"color": "terminal.ansiRed"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
+		},
+		{
+			"label": "Deploy",
+			"dependsOrder": "sequence",
+			"dependsOn": ["Configure", "Build", "Install"],
+			"group": "build",
+			"icon": {
+				"id": "sync",
+				"color": "terminal.ansiGreen"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
+		},
+		{
+			"label": "Deploy Debug",
+			"dependsOrder": "sequence",
+			"dependsOn": ["Configure Debug", "Build", "Install"],
+			"group": "build",
+			"icon": {
+				"id": "sync",
+				"color": "terminal.ansiGreen"
+			},
+			"options": {
+				"cwd": "${fileDirname}/../"
+			}
+		}
 	]
 }

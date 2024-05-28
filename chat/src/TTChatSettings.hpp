@@ -3,7 +3,7 @@
 
 class TTChatSettings {
 public:
-    explicit TTChatSettings(int argc, char** argv);
+    explicit TTChatSettings(int argc, const char* const* argv);
     virtual ~TTChatSettings() {}
     TTChatSettings(const TTChatSettings&) = delete;
     TTChatSettings(TTChatSettings&&) = delete;

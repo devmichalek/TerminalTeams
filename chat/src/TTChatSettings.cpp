@@ -5,7 +5,7 @@
 #include <cstring>
 #include <stdexcept>
 
-TTChatSettings::TTChatSettings(int argc, char** argv) {
+TTChatSettings::TTChatSettings(int argc, const char* const* argv) {
     if (argc != MAX_ARGC) {
         throw std::runtime_error("TTChatSettings: Invalid number of arguments");
     }

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 
-TTTextBoxSettings::TTTextBoxSettings(int argc, char** argv) {
+TTTextBoxSettings::TTTextBoxSettings(int argc, const char* const* argv) {
     if (argc != MAX_ARGC) {
         throw std::runtime_error("TTTextBoxSettings: Invalid number of arguments");
     }

@@ -3,7 +3,7 @@
 
 class TTTextBoxSettings {
 public:
-    explicit TTTextBoxSettings(int argc, char** argv);
+    explicit TTTextBoxSettings(int argc, const char* const* argv);
     virtual ~TTTextBoxSettings() = default;
     TTTextBoxSettings(const TTTextBoxSettings&) = delete;
     TTTextBoxSettings(TTTextBoxSettings&&) = delete;
