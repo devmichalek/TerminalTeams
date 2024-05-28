@@ -3,23 +3,15 @@
 	"tasks": [
 		{
 			"type": "shell",
-			"label": "UnitTestsBaseName",
-			"command": "echo unittests",
-			"options": {
-				"cwd": "${fileDirname}/../"
-			}
-		},
-		{
-			"type": "shell",
 			"label": "Configure",
-			"command": "cmake -B build",
+			"command": "cmake -B build -DCMAKE_BUILD_TYPE=Release",
 			"group": "build",
 			"icon": {
 				"id": "pencil",
 				"color": "terminal.ansiYellow"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -32,7 +24,7 @@
 				"color": "terminal.ansiYellow"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -45,7 +37,7 @@
 				"color": "terminal.ansiYellow"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -58,7 +50,7 @@
 				"color": "terminal.ansiYellow"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -71,7 +63,7 @@
 				"color": "terminal.ansiRed"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -84,7 +76,7 @@
 				"color": "terminal.ansiGreen"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		},
 		{
@@ -97,7 +89,7 @@
 				"color": "terminal.ansiGreen"
 			},
 			"options": {
-				"cwd": "${fileDirname}/../"
+				"cwd": "${fileDirname}"
 			}
 		}
 	]
