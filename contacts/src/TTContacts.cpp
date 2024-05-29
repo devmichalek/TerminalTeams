@@ -70,7 +70,7 @@ void TTContacts::refresh() {
     for (auto &contact : mContacts) {
         mOutputStream.print("#").print(std::to_string(std::get<0>(contact)));
         mOutputStream.print(" ").print(std::get<1>(contact));
-        mOutputStream.print(" ").print(statuses[std::get<2>(contact)]);
+        mOutputStream.print(" ").print(statuses[static_cast<size_t>(std::get<2>(contact))]);
         mOutputStream.endl();
     }
 }

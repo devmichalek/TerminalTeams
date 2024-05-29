@@ -2,7 +2,7 @@
 #include <chrono>
 #include <cstring>
 
-enum TTChatMessageType : unsigned int {
+enum class TTChatMessageType : unsigned int {
     CLEAR = 0,
     SEND,
     RECEIVE,

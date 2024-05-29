@@ -1,11 +1,11 @@
 #pragma once
 #include "TTContactsSettings.hpp"
 #include "TTChatSettings.hpp"
-#include "TTEngineSettings.hpp"
+#include "TTTextBoxSettings.hpp"
 
 class TTEngineSettings {
 public:
-    explicit TTChatSettings(int argc, const char* const* argv);
+    explicit TTEngineSettings(int argc, const char* const* argv);
     virtual ~TTEngineSettings() = default;
     TTEngineSettings(const TTEngineSettings&) = delete;
     TTEngineSettings(TTEngineSettings&&) = delete;

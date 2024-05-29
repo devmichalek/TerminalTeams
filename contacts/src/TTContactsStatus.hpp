@@ -1,7 +1,7 @@
 #pragma once
 #include <cstring>
 
-enum TTContactsStatus : size_t {
+enum class TTContactsStatus : size_t {
     ACTIVE = 0, // Active contact, no unread/pending messages, not selected
     INACTIVE, // Inactive contact, no unread/pending messages, not selected
     SELECTED_ACTIVE, // Active contact, no unread/pending messages, selected

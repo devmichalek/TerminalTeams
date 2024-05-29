@@ -12,9 +12,9 @@ public:
     explicit TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStream& outputStream);
     virtual ~TTTextBox();
     TTTextBox(const TTTextBox&) = delete;
-    TTTextBox(const TTTextBox&&) = delete;
+    TTTextBox(TTTextBox&&) = delete;
     TTTextBox operator=(const TTTextBox&) = delete;
-    TTTextBox operator=(const TTTextBox&&) = delete;
+    TTTextBox operator=(TTTextBox&&) = delete;
     virtual void run();
     // Stops application
     virtual void stop();

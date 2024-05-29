@@ -48,8 +48,7 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
     }
 
     const auto portStr = std::string(argv[6]);
-    ss.str(portStr);
-    ss.clear();
+    std::stringstream ss(portStr);
     ss >> mPort;
     if (ss.fail()) {
         throw std::runtime_error(std::string("TTEngineSettings: Invalid port=") + portStr);
@@ -61,6 +60,6 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         if (inet_pton(AF_INET, neighbor.c_str(), &(sa.sin_addr)) == 0) {
             throw std::runtime_error(std::string("TTEngineSettings: Invalid neighbor IPv4 address=") + neighbor);
         }
-        mNeighbors.emplace_back(mNeighbors);
+        mNeighbors.emplace_back(neighbor);
     }
 }

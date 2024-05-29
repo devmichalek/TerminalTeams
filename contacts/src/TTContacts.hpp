@@ -15,9 +15,9 @@ public:
     explicit TTContacts(const TTContactsSettings& settings, const TTUtilsOutputStream& outputStream);
     virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
-    TTContacts(const TTContacts&&) = delete;
+    TTContacts(TTContacts&&) = delete;
     TTContacts operator=(const TTContacts&) = delete;
-    TTContacts operator=(const TTContacts&&) = delete;
+    TTContacts operator=(TTContacts&&) = delete;
     // Receives main data and sends confirmation
     virtual void run();
     // Stops applications

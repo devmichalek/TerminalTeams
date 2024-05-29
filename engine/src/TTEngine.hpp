@@ -1,19 +1,20 @@
 #pragma once
 #include "TTEngineSettings.hpp"
-#include <memory>
-#include <string>
-#include <thread>
-#include <future>
+#include "TTNeighborsChat.hpp"
+#include "TTNeighborsDiscovery.hpp"
+#include "TTContactsHandler.hpp"
+#include "TTChatHandler.hpp"
+#include "TTTextBoxHandler.hpp"
+#include <grpcpp/grpcpp.h>
 
 class TTEngine {
 public:
-    explicit TTEngine(const TTEngineSettings& settings,
-        std::vector<tt::Greeter::Service> services);
+    explicit TTEngine(const TTEngineSettings& settings);
     virtual ~TTEngine();
-    TTTextBox(const TTTextBox&) = delete;
-    TTTextBox(const TTTextBox&&) = delete;
-    TTTextBox operator=(const TTTextBox&) = delete;
-    TTTextBox operator=(const TTTextBox&&) = delete;
+    TTEngine(const TTEngine&) = delete;
+    TTEngine(TTEngine&&) = delete;
+    TTEngine operator=(const TTEngine&) = delete;
+    TTEngine operator=(TTEngine&&) = delete;
     // Starts application
     virtual void run();
     // Stops application
@@ -24,8 +25,8 @@ private:
     // Server thread
     void server(std::promise<void> promise);
     // Callback functions
-    void textBoxMessageSent(std::string message);
-    void textBoxContactSwitch(size_t message);
+    void mailbox(std::string message);
+    void switcher(size_t message);
     // Handlers, IPC communication
     std::unique_ptr<TTContactsHandler> mContacts;
     std::unique_ptr<TTChatHandler> mChat;
@@ -35,10 +36,11 @@ private:
     std::string mIpAddressAndPort;
     std::vector<std::string> mNeighbors;
     // Server
-    std::vector<tt::Greeter::Service> mServices;
     std::unique_ptr<grpc::Server> mServer;
+    TTNeighborsChat mNeighborsChat;
+    TTNeighborsDiscovery mNeighborsDiscovery;
     // Concurrent communication
     std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
-}
+};

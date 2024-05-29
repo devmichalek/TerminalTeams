@@ -153,13 +153,13 @@ bool TTContactsHandler::select(size_t id) {
     }
 
     switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
-        case TTContactsStatus::INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
+        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
+        case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
         case TTContactsStatus::SELECTED_ACTIVE: return false;
         case TTContactsStatus::SELECTED_INACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = SELECTED_ACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = SELECTED_INACTIVE; break;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = SELECTED_PENDING_MSG_INACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE; break;
         case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
         default:
             throw std::runtime_error("Failed to change contact status, internal error");
@@ -180,12 +180,12 @@ bool TTContactsHandler::unselect(size_t id) {
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: return false;
         case TTContactsStatus::INACTIVE: return false;
-        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = ACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = INACTIVE; break;
+        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
+        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
         case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
         case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = PENDING_MSG_INACTIVE; break;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
         default:
             throw std::runtime_error("Failed to change contact status, internal error");
     }

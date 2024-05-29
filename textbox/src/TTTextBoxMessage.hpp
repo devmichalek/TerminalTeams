@@ -10,7 +10,7 @@ inline const long TTTEXTBOX_NAMED_PIPE_READY_TRY_COUNT = 3;
 inline const unsigned int TTTEXTBOX_DATA_MAX_DIGITS = 4;
 inline const unsigned int TTTEXTBOX_DATA_MAX_LENGTH = 2048;
 
-enum TTTextBoxStatus : unsigned int {
+enum class TTTextBoxStatus : unsigned int {
     UNDEFINED = 0,
     HEARTBEAT,
     CONTACTS_SWITCH,
