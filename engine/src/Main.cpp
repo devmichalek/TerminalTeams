@@ -1,4 +1,6 @@
-#include "Engine.hpp"
+#include "TTEngine.hpp"
+#include "TTDiagnosticsTracer.hpp"
+#include "TTDiagnosticsLogger.hpp"
 #include <signal.h>
 
 // Application

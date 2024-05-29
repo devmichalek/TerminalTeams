@@ -22,8 +22,3 @@ class GreeterServiceImpl final : public tt::Greeter::Service {
     return grpc::Status::OK;
   }
 };
-
-
-void TTServer::run() {
-    
-}

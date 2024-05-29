@@ -5,13 +5,13 @@ package tt;
 // Neighbors discovery service
 service NeighborsDiscovery {
   rpc Greet (GreetRequest) returns (GreetReply) {}
-  rpc Heartbeat (HeartbeatRequest) return (HeartbeatReply) {}
+  rpc Heartbeat (HeartbeatRequest) returns (HeartbeatReply) {}
 }
 
 // Neighbors chat service
 service NeighborsChat {
   rpc Tell (TellRequest) returns (TellReply) {}
-  rpc Narrate (stream NarrateRequest) return (NarrateReply) {}
+  rpc Narrate (stream NarrateRequest) returns (NarrateReply) {}
 }
 
 message GreetRequest {
@@ -38,9 +38,9 @@ message HeartbeatReply {
 }
 
 enum Side {
-  UNSPECIFIED = 0
-  SENDER,
-  RECEIVER
+  UNSPECIFIED = 0;
+  SENDER = 1;
+  RECEIVER = 2;
 }
 
 message TellRequest {

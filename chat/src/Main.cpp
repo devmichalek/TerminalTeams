@@ -3,7 +3,6 @@
 #include "TTDiagnosticsTracer.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <signal.h>
-#include <atomic>
 
 // Application
 std::unique_ptr<TTChat> application;
