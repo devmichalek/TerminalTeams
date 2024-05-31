@@ -11,6 +11,8 @@ public:
     TTNeighborsChatService(TTNeighborsChatService&&) = delete;
     TTNeighborsChatService operator=(const TTNeighborsChatService&) = delete;
     TTNeighborsChatService operator=(TTNeighborsChatService&&) = delete;
+    grpc::Status Tell(grpc::ServerContext* context, const tt::TellRequest* request, tt::TellReply* reply) override;
+    grpc::Status Narrate(grpc::ServerContext* context, const grpc::ServerReader<tt::NarrateRequest>* stream, tt::NarrateReply* reply) override;
 private:
     TTNeighborsChat& mHandler;
 };
