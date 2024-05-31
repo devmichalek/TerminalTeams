@@ -3,12 +3,16 @@
 # Test setup
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
-SHARED_NAME=contacts
+SHARED_MEMORY_NAME=contacts
+NICKNAME=nickname
+IDENTITY=identity
+IP_ADDRESS=192.168.1.0
+PORT=11111
 APP_HANDLER="./tteams-contacts-handler"
-APP_HANDLER_ARGS=(0 0 "${SHARED_NAME}")
+APP_HANDLER_ARGS=(0 0 "${SHARED_MEMORY_NAME}" "${NICKNAME}" "${IDENTITY}" "${IP_ADDRESS}" "${PORT}")
 APP_HANDLER_CMD="${APP_HANDLER} ${APP_HANDLER_ARGS[@]}"
 APP="./tteams-contacts"
-APP_ARGS=(0 0 "${SHARED_NAME}")
+APP_ARGS=(0 0 "${SHARED_MEMORY_NAME}" "${NICKNAME}" "${IDENTITY}" "${IP_ADDRESS}" "${PORT}")
 APP_CMD="${APP} ${APP_ARGS[@]}"
 mkfifo ${HANDLER_STDIN}
 sleep infinity > ${HANDLER_STDIN} &
@@ -51,19 +55,19 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill -9 $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-SHARED_PATH="/dev/shm/${SHARED_NAME}"
-if [ -f "${SHARED_PATH}" ]; then
-    echo "Error: File ${SHARED_PATH} exists! Removing this file..."
-    rm -f "${SHARED_PATH}"
+SHARED_MEMORY_PATH="/dev/shm/${SHARED_MEMORY_NAME}"
+if [ -f "${SHARED_MEMORY_PATH}" ]; then
+    echo "Error: File ${SHARED_MEMORY_PATH} exists! Removing this file..."
+    rm -f "${SHARED_MEMORY_PATH}"
     EXIT_STATUS=1
 fi
-SEM_DATA_CONSUMED_PATH="/dev/shm/sem.${SHARED_NAME}-data-consumed"
+SEM_DATA_CONSUMED_PATH="/dev/shm/sem.${SHARED_MEMORY_NAME}-data-consumed"
 if [ -f "${SEM_DATA_CONSUMED_PATH}" ]; then
     echo "Error: File ${SEM_DATA_CONSUMED_PATH} exists! Removing this file..."
     rm -f "${SEM_DATA_CONSUMED_PATH}"
     EXIT_STATUS=1
 fi
-SEM_DATA_PRODUCED_PATH="/dev/shm/sem.${SHARED_NAME}-data-produced"
+SEM_DATA_PRODUCED_PATH="/dev/shm/sem.${SHARED_MEMORY_NAME}-data-produced"
 if [ -f "${SEM_DATA_PRODUCED_PATH}" ]; then
     echo "Error: File ${SEM_DATA_PRODUCED_PATH} exists! Removing this file..."
     rm -f "${SEM_DATA_PRODUCED_PATH}"

@@ -16,6 +16,10 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         args.push_back("0");
         args.push_back("0");
         args.push_back(argv[1]);
+        args.push_back(argv[4]);
+        args.push_back(argv[5]);
+        args.push_back(argv[7]);
+        args.push_back(argv[8]);
         mContactsSettings = std::make_unique<TTContactsSettings>(args.size(), args.data());
     }
 
@@ -39,15 +43,15 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         mTextBoxSettings = std::make_unique<TTTextBoxSettings>(args.size(), args.data());
     }
 
-    mInterface = argv[4];
+    mInterface = argv[6];
 
-    mIpAddress = argv[5];
+    mIpAddress = argv[7];
     sockaddr_in sa;
     if (inet_pton(AF_INET, mIpAddress.c_str(), &(sa.sin_addr)) == 0) {
         throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + mIpAddress);
     }
 
-    const auto portStr = std::string(argv[6]);
+    const auto portStr = std::string(argv[8]);
     std::stringstream ss(portStr);
     ss >> mPort;
     if (ss.fail()) {

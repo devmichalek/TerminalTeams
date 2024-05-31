@@ -5,7 +5,7 @@
             "name": "Debug Unit Tests",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}/../install/unittests/tteams-${input:componentType}-unittests",
+            "program": "${fileDirname}/install/unittests/tteams-${input:componentType}-unittests",
             "args": [
                 "--gtest_filter=${fileBasenameNoExtension}.*"
             ],

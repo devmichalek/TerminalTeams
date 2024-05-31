@@ -16,17 +16,15 @@ service NeighborsChat {
 
 message GreetRequest {
   string nickname = 1;
-  string fullname = 2;
-  string identity = 3;
-  string ipAddressAndPort = 4;
+  string identity = 2;
+  string ipAddressAndPort = 3;
 }
 
 message GreetReply {
   string nickname = 1;
-  string fullname = 2;
-  string identity = 3;
-  string ipAddressAndPort = 4;
-  int32 sequenceNumber = 5;
+  string identity = 2;
+  string ipAddressAndPort = 3;
+  int32 sequenceNumber = 4;
 }
 
 message HeartbeatRequest {

@@ -19,6 +19,12 @@ if ! which ip &> /dev/null; then
     exit 1
 fi
 
+if ! which sha1sum &> /dev/null; then
+    echo "Error: Failed to find sha1sum on your system!"
+    echo "Info: Please install sha1sum for your system"
+    exit 1
+fi
+
 if [ -z "${TT_SKIP_DIMENSIONS_CHECK}" ]; then
     if ! which xdpyinfo &> /dev/null; then
         echo "Error: Failed to find xdpyinfo on your system!"
@@ -103,9 +109,13 @@ fi
 
 PORT="${PORT:-17888}"
 
+read -p 'Enter your nickname: ' NICKNAME
+read -p 'Enter your passphrase: ' PASSPHRASE
+IDENTITY=$(echo "${PASSPHRASE}" | sha1sum)
+
 echo "Using ${IP_ADDRESS}:${PORT} over ${INTERFACE}..."
 sleep 3
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-engine.sh" "${INTERFACE}" "${IP_ADDRESS}" "${PORT}"
+${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-engine.sh" "${INTERFACE}" "${IP_ADDRESS}" "${PORT}" "${NICKNAME}" "${IDENTITY}"
 exit 0

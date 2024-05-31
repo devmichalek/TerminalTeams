@@ -29,5 +29,5 @@ private:
     std::string mIpAddress;
     uint16_t mPort;
     std::vector<std::string> mNeighbors;
-    static inline constexpr int MIN_ARGC = 7;
+    static inline constexpr int MIN_ARGC = 9;
 };

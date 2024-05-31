@@ -25,14 +25,10 @@ TTContactsSettings::TTContactsSettings(int argc, const char* const* argv) {
     }
 
     mSharedMemoryName = argv[3];
-}
-
-size_t TTContactsSettings::getTerminalWidth() const {
-    return mWidth;
-}
-
-size_t TTContactsSettings::getTerminalHeight() const {
-    return mHeight;
+    mNickname = argv[4];
+    mIdentity = argv[5];
+    mIpAddress = argv[6];
+    mPort = argv[7];
 }
 
 std::shared_ptr<TTUtilsSharedMem> TTContactsSettings::getSharedMemory() const {

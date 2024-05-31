@@ -18,6 +18,7 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     }
     mHandlerThread.detach();
     mHeartbeatThread.detach();
+    create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + settings.getPort());
     LOG_INFO("Successfully constructed!");
 }
 
@@ -32,15 +33,15 @@ TTContactsHandler::~TTContactsHandler() {
     LOG_INFO("Successfully destructed!");
 }
 
-bool TTContactsHandler::create(std::string nickname, std::string fullname, std::string ipAddressAndPort) {
-    LOG_INFO("Called create nickname={}, fullname={}, ipAddressAndPort={}", nickname, fullname, ipAddressAndPort);
+bool TTContactsHandler::create(std::string nickname, std::string identity, std::string ipAddressAndPort) {
+    LOG_INFO("Called create nickname={}, identity={}, ipAddressAndPort={}", nickname, identity, ipAddressAndPort);
     TTContactsMessage message;
     message.status = TTContactsStatus::ACTIVE;
     message.id = mContacts.size();
     message.dataLength = nickname.size();
     memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
     memcpy(&message.data[0], nickname.c_str(), message.dataLength);
-    mContacts.emplace_back(nickname, fullname, ipAddressAndPort);
+    mContacts.emplace_back(nickname, identity, ipAddressAndPort);
     return send(message);
 }
 
