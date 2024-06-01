@@ -8,6 +8,8 @@
 #include <vector>
 #include <list>
 
+// Class ment to be embedded into other higher abstract class.
+// Allows to control TTChat process concurrently.
 class TTChatHandler {
 public:
     explicit TTChatHandler(const TTChatSettings& settings);
@@ -21,6 +23,8 @@ public:
     virtual bool clear(size_t id);
     virtual bool create(size_t id);
     virtual const TTChatEntries& get(size_t id);
+    virtual void stop();
+    virtual bool stopped() const;
 private:
     bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
     std::list<std::unique_ptr<TTChatMessage>> dequeue();
@@ -32,7 +36,7 @@ private:
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
     // Thread concurrent message communication
-    std::atomic<bool> mForcedQuit;
+    std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;
     std::future<void> mHandlerResult;
     std::thread mHeartbeatThread;

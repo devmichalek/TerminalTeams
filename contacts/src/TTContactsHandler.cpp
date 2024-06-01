@@ -6,7 +6,7 @@
 
 TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mSharedMem(std::move(settings.getSharedMemory())),
-        mForcedQuit{false},
+        mStopped{false},
         mHandlerThread{},
         mHeartbeatThread{} {
     LOG_INFO("Constructing...");
@@ -204,8 +204,17 @@ const TTContactsEntry& TTContactsHandler::get(size_t id) const {
     return mContacts[id];
 }
 
+void TTContactsHandler::stop() {
+    LOG_INFO("Forced stop...");
+    mStopped.store(true);
+}
+
+bool TTContactsHandler::stopped() const {
+    return mStopped.load();
+}
+
 bool TTContactsHandler::send(const TTContactsMessage& message) {
-    if (mForcedQuit.load()) {
+    if (stopped()) {
         return false;
     }
     {
@@ -220,7 +229,7 @@ void TTContactsHandler::heartbeat() {
     LOG_INFO("Started heartbeat loop");
     std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
     try {
-        while (!mForcedQuit.load()) {
+        while (!stopped()) {
             TTContactsMessage message;
             message.status = TTContactsStatus::HEARTBEAT;
             if (!send(message)) {
@@ -246,10 +255,10 @@ void TTContactsHandler::main() {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 mQueueCondition.wait(lock, [this]() {
-                    return !mQueuedMessages.empty() || mForcedQuit.load();
+                    return !mQueuedMessages.empty() || stopped();
                 });
 
-                if (mForcedQuit.load()) {
+                if (stopped()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -261,7 +270,7 @@ void TTContactsHandler::main() {
             }
 
             for (auto &message : messages) {
-                if (mForcedQuit.load()) {
+                if (stopped()) {
                     exit = true;
                     break; // Forced exit
                 }
@@ -284,9 +293,4 @@ bool TTContactsHandler::establish() {
     TTContactsMessage message;
     message.status = TTContactsStatus::HEARTBEAT;
     return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
-}
-
-void TTContactsHandler::stop() {
-    LOG_INFO("Forced stop...");
-    mForcedQuit.store(true);
 }

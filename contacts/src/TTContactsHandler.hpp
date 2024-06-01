@@ -28,6 +28,8 @@ public:
     virtual bool select(size_t id);
     virtual bool unselect(size_t id);
     virtual const TTContactsEntry& get(size_t id) const;
+    virtual void stop();
+    virtual bool stopped() const;
 private:
     // Send generic method
     bool send(const TTContactsMessage& message);
@@ -37,13 +39,10 @@ private:
     void main();
     // Establish connection with the other process
     bool establish();
-    // Calls stop handler
-    void stop();
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
-    // Quit flag
-    std::atomic<bool> mForcedQuit;
     // Thread concurrent message communication
+    std::atomic<bool> mStopped;
     std::queue<std::unique_ptr<TTContactsMessage>> mQueuedMessages;
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;
