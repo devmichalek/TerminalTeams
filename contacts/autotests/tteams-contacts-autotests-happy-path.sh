@@ -4,7 +4,7 @@
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 SHARED_MEMORY_NAME=contacts
-NICKNAME=nickname
+NICKNAME=You
 IDENTITY=identity
 IP_ADDRESS=192.168.1.0
 PORT=11111
@@ -29,9 +29,12 @@ echo "Info: Waiting for data to be set..."
 sleep 3
 
 # Expected output
-EXPECTED_RESULTS_RAW="\033[2J\033[1;1H#0 John 
-\033[2J\033[1;1H#0 John 
-#1 Camille "
+EXPECTED_RESULTS_RAW="\033[2J\033[1;1H#0 You 
+\033[2J\033[1;1H#0 You 
+#1 John 
+\033[2J\033[1;1H#0 You 
+#1 John 
+#2 Camille "
 EXPECTED_RESULTS=$(echo -e "$EXPECTED_RESULTS_RAW")
 ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 

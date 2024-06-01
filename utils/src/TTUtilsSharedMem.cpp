@@ -98,13 +98,13 @@ bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
             mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), 0);
             dataConsumedSemErrno = errno;
         }
-        if (!fileDescriptor) {
+        if (fileDescriptor <= 0) {
             errno = 0;
             fileDescriptor = mSyscall->shm_open(mSharedMemoryName.c_str(), O_RDWR, S_IRUSR | S_IWUSR);
             sharedMemErrno = errno;
         }
 
-        if (mDataProducedSemaphore && mDataConsumedSemaphore && fileDescriptor) {
+        if (mDataProducedSemaphore && mDataConsumedSemaphore && fileDescriptor > 0) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));

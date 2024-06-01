@@ -7,8 +7,8 @@
 TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mSharedMem(std::move(settings.getSharedMemory())),
         mForcedQuit{false},
-        mHandlerThread{&TTContactsHandler::main, this},
-        mHeartbeatThread{&TTContactsHandler::heartbeat, this} {
+        mHandlerThread{},
+        mHeartbeatThread{} {
     LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
         throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
@@ -16,6 +16,8 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     if (!establish()) {
         throw std::runtime_error("TTContactsHandler: Failed to establish connection!");
     }
+    mHandlerThread = std::thread{&TTContactsHandler::main, this};
+    mHeartbeatThread = std::thread{&TTContactsHandler::heartbeat, this};
     mHandlerThread.detach();
     mHeartbeatThread.detach();
     create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + settings.getPort());
