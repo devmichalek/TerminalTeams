@@ -1,13 +1,11 @@
 #include "TTEngine.hpp"
-#include "TTNeighborsChatService.hpp"
-#include "TTNeighborsDiscoveryService.hpp"
-#include "absl/strings/str_format.h"
+#include "TTNeighborsService.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
 TTEngine::TTEngine(const TTEngineSettings& settings) :
-        mInterface(settings.getInterface()),
-        mIpAddressAndPort(absl::StrFormat("%s:%d", settings.getIpAddress().c_str(), settings.getPort())),
+        mCurrentContact(std::numeric_limits<size_t>::min()),
+        mPreviousContact(std::numeric_limits<size_t>::min()),
         mNeighbors(settings.getNeighbors()) {
     LOG_INFO("Constructing...");
     using namespace std::placeholders;
@@ -23,6 +21,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) :
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
         mThreads.back().detach();
     }
+    mNeighbors = std::make_unique<TTNeighbors>(settings.getInterface(), *mContacts, *mChat);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -41,15 +40,18 @@ TTEngine::~TTEngine() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTEngine::run() {
-    LOG_INFO("Started main loop");
-
-    LOG_INFO("Completed main loop");
-}
-
 void TTEngine::stop() {
     LOG_INFO("Forced stop...");
     mStopped.store(true);
+    if (mContacts) {
+        mContacts->stop();
+    }
+    if (mChat) {
+        mChat->stop();
+    }
+    if (mTextBox) {
+        mTextBox->stop();
+    }
 }
 
 bool TTEngine::stopped() const {
@@ -65,10 +67,8 @@ void TTEngine::server(std::promise<void> promise) {
     LOG_INFO("Listening on the given address without any authentication mechanism...");
     builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
     LOG_INFO("Registering synchronous services...");
-    TTNeighborsChatService neighborsChatService(mNeighborsChat);
-    TTNeighborsDiscoveryService neighborsDiscoveryService(mNeighborsDiscovery);
-    builder.RegisterService(&neighborsChatService);
-    builder.RegisterService(&neighborsDiscoveryService);
+    TTNeighborsService neighborsService(mNeighbors, mNeighbors);
+    neighborsService.registerServices(builder);
     LOG_INFO("Assembling the server and waiting for the server to shutdown...");
     mServer = std::unique_ptr<grpc::Server>(builder.BuildAndStart());
     // Start
@@ -81,10 +81,34 @@ void TTEngine::server(std::promise<void> promise) {
 
 void TTEngine::mailbox(std::string message) {
     LOG_INFO("Received callback - message sent");
-
+    if (mChat) {
+        std::scoped_lock<std::mutex> lock(mMailboxMutex);
+        const auto now = std::chrono::system_clock::now();
+        bool result = mChat->send(mCurrentContact, message, now);
+        result &= mContacts->send(mCurrentContact);
+        if (!result) {
+            LOG_ERROR("Received callback - failed to sent message!");
+            stop();
+        }
+    }
 }
 
 void TTEngine::switcher(size_t message) {
     LOG_INFO("Received callback - contacts switch");
-
+    if (mContacts) {
+        if (message < mContacts.size()) {
+            std::scoped_lock<std::mutex> lock(mSwitcherMutex);
+            mPreviousContact = mCurrentContact;
+            mCurrentContact = message;
+            bool result = mContacts->unselect(mPreviousContact);
+            result &= mContacts->select(mCurrentContact);
+            result &= mChat->clear(mCurrentContact);
+            if (!result) {
+                LOG_ERROR("Received callback - failed to switch contact!");
+                stop();
+            }
+        } else {
+            LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
+        }
+    }
 }

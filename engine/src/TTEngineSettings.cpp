@@ -43,20 +43,17 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         mTextBoxSettings = std::make_unique<TTTextBoxSettings>(args.size(), args.data());
     }
 
-    mInterface = argv[6];
-
-    mIpAddress = argv[7];
-    sockaddr_in sa;
-    if (inet_pton(AF_INET, mIpAddress.c_str(), &(sa.sin_addr)) == 0) {
-        throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + mIpAddress);
+    {
+        std::string name = argv[6];
+        std::string ipAddress = argv[7];
+        sockaddr_in sa;
+        if (inet_pton(AF_INET, mIpAddress.c_str(), &(sa.sin_addr)) == 0) {
+            throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + mIpAddress);
+        }
+        std::string port = argv[8];
+        mInterface = TTInterface(name, ipAddress, port);
     }
 
-    const auto portStr = std::string(argv[8]);
-    std::stringstream ss(portStr);
-    ss >> mPort;
-    if (ss.fail()) {
-        throw std::runtime_error(std::string("TTEngineSettings: Invalid port=") + portStr);
-    }
 
     for (int i = MIN_ARGC; i < argc; ++i) {
         std::string neighbor = argv[i];

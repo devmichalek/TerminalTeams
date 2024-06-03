@@ -20,7 +20,7 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     mHeartbeatThread = std::thread{&TTContactsHandler::heartbeat, this};
     mHandlerThread.detach();
     mHeartbeatThread.detach();
-    create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + settings.getPort());
+    create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + ":" + settings.getPort());
     LOG_INFO("Successfully constructed!");
 }
 
@@ -44,6 +44,7 @@ bool TTContactsHandler::create(std::string nickname, std::string identity, std::
     memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
     memcpy(&message.data[0], nickname.c_str(), message.dataLength);
     mContacts.emplace_back(nickname, identity, ipAddressAndPort);
+    mIdentityMap[identity] = message.id;
     return send(message);
 }
 
@@ -202,6 +203,19 @@ bool TTContactsHandler::unselect(size_t id) {
 const TTContactsEntry& TTContactsHandler::get(size_t id) const {
     LOG_INFO("Called get ID={}", id);
     return mContacts[id];
+}
+
+size_t TTContactsHandler::get(std::string id) const {
+    LOG_INFO("Called get ID={}", id);
+    decltype(auto) result = mIdentityMap.find(id);
+    if (result == mIdentityMap.end()) {
+        return std::numeric_limits<size_t>::max();
+    }
+    return result->second;
+}
+
+size_t TTContactsHandler::size() const {
+    return mContacts.size();
 }
 
 void TTContactsHandler::stop() {

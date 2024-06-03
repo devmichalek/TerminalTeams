@@ -14,9 +14,7 @@ public:
     virtual const TTContactsSettings& getContactsSettings() const { return *mContactsSettings; }
     virtual const TTChatSettings& getChatSettings() const { return *mChatSettings; }
     virtual const TTTextBoxSettings& getTextBoxSettings() const { return *mTextBoxSettings; }
-    virtual std::string getInterface() const { return mInterface; }
-    virtual std::string getIpAddress() const { return mIpAddress; }
-    virtual uint16_t getPort() const { return mPort; }
+    virtual TTInterface getInterface() const { return mInterface; }
     virtual const std::vector<std::string>& getNeighbors() const { return mNeighbors; }
 
 private:
@@ -25,9 +23,7 @@ private:
     std::unique_ptr<TTChatSettings> mChatSettings;
     std::unique_ptr<TTTextBoxSettings> mTextBoxSettings;
     // Other settings
-    std::string mInterface;
-    std::string mIpAddress;
-    uint16_t mPort;
+    TTInterface mInterface
     std::vector<std::string> mNeighbors;
     static inline constexpr int MIN_ARGC = 9;
 };

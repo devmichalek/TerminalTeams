@@ -24,7 +24,6 @@ message GreetReply {
   string nickname = 1;
   string identity = 2;
   string ipAddressAndPort = 3;
-  int32 sequenceNumber = 4;
 }
 
 message HeartbeatRequest {
@@ -45,8 +44,7 @@ message TellRequest {
   string identity = 1;
   string message = 2;
   int32 sequenceNumber = 3;
-  Side side = 4;
-  bytes timestamp = 5;
+  bytes timestamp = 4;
 }
 
 message TellReply {
@@ -57,8 +55,8 @@ message NarrateRequest {
   string identity = 1;
   string message = 2;
   int32 sequenceNumber = 3;
-  Side side = 4;
-  bytes timestamp = 5;
+  bytes timestamp = 4;
+  Side side = 5;
 }
 
 message NarrateReply {

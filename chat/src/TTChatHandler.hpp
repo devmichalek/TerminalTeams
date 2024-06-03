@@ -1,5 +1,5 @@
 #pragma once
-#include "TTChatEntry.hpp"
+#include "TTChatMessage.hpp"
 #include "TTChatSettings.hpp"
 #include <mqueue.h>
 #include <memory>
@@ -7,6 +7,10 @@
 #include <queue>
 #include <vector>
 #include <list>
+#include <shared_mutex>
+
+using TTChatEntry = std::tuple<TTChatMessageType, std::string, TTChatTimestamp>;
+using TTChatEntries = std::deque<TTChatEntry>;
 
 // Class ment to be embedded into other higher abstract class.
 // Allows to control TTChat process concurrently.
@@ -45,5 +49,7 @@ private:
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;
     // Messages storage
     size_t mCurrentId;
+    std::shared_mutex mCurrentIdMutex;
+    std::shared_mutex mMessagesMutex;
     std::vector<TTChatEntries> mMessages;
 };

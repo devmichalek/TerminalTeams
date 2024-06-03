@@ -1,7 +1,6 @@
 #pragma once
 #include "TTEngineSettings.hpp"
-#include "TTNeighborsChat.hpp"
-#include "TTNeighborsDiscovery.hpp"
+#include "TTNeighbors.hpp"
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTTextBoxHandler.hpp"
@@ -15,8 +14,6 @@ public:
     TTEngine(TTEngine&&) = delete;
     TTEngine operator=(const TTEngine&) = delete;
     TTEngine operator=(TTEngine&&) = delete;
-    // Starts application
-    virtual void run();
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
@@ -31,14 +28,13 @@ private:
     std::unique_ptr<TTContactsHandler> mContacts;
     std::unique_ptr<TTChatHandler> mChat;
     std::unique_ptr<TTTextBoxHandler> mTextBox;
+    std::mutex mMailboxMutex;
+    std::mutex mSwitcherMutex;
+    std::atomic<size_t> mCurrentContact;
+    std::atomic<size_t> mPreviousContact;
     // Node data
-    std::string mInterface;
-    std::string mIpAddressAndPort;
-    std::vector<std::string> mNeighbors;
-    // Server
     std::unique_ptr<grpc::Server> mServer;
-    TTNeighborsChat mNeighborsChat;
-    TTNeighborsDiscovery mNeighborsDiscovery;
+    std::unique_ptr<TTNeighbors> mNeighbors;
     // Concurrent communication
     std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;

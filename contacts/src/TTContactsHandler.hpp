@@ -4,11 +4,12 @@
 #include "TTContactsSettings.hpp"
 #include "TTUtilsSharedMem.hpp"
 #include <queue>
-#include <vector>
+#include <deque>
 #include <mutex>
 #include <thread>
 #include <condition_variable>
 #include <memory>
+#include <unordered_map>
 
 // Class ment to be embedded into other higher abstract class.
 // Allows to control TTContacts process concurrently.
@@ -28,6 +29,8 @@ public:
     virtual bool select(size_t id);
     virtual bool unselect(size_t id);
     virtual const TTContactsEntry& get(size_t id) const;
+    virtual size_t get(std::string id) const;
+    virtual size_t size() const;
     virtual void stop();
     virtual bool stopped() const;
 private:
@@ -52,5 +55,6 @@ private:
     std::thread mHeartbeatThread;
     std::mutex mHeartbeatQuitMutex;
     // Contacts storage
-    std::vector<TTContactsEntry> mContacts;
+    std::deque<TTContactsEntry> mContacts;
+    std::unordered_map<std::string, size_t> mIdentityMap;
 };
