@@ -9,21 +9,20 @@ struct TTNarrateMessage {
     int sequenceNumber;
     std::chrono::time_point<std::chrono::system_clock> timestamp;
     bool senderSide;
-}
+};
 
 using TTNarrateMessages = std::list<TTNarrateMessage>;
 
 class TTNeighborsChat {
 public:
-    virtual ~TTNeighborsChat();
+    TTNeighborsChat() = default;
+    virtual ~TTNeighborsChat() = default;
+    TTNeighborsChat(const TTNeighborsChat&) = default;
+    TTNeighborsChat(TTNeighborsChat&&) = default;
+    TTNeighborsChat& operator=(const TTNeighborsChat&) = default;
+    TTNeighborsChat& operator=(TTNeighborsChat&&) = default;
     virtual bool handleTell(const TTNarrateMessage& message) = 0;
     virtual bool handleNarrate(const TTNarrateMessages& messages) = 0;
     virtual std::string getIdentity() = 0;
-protected:
-    TTNeighborsChat() = default;
-    TTNeighborsChat(const TTNeighborsChat&) = delete;
-    TTNeighborsChat(TTNeighborsChat&&) = delete;
-    TTNeighborsChat operator=(const TTNeighborsChat&) = delete;
-    TTNeighborsChat operator=(TTNeighborsChat&&) = delete;
 };
 

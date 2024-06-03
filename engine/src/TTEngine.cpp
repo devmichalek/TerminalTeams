@@ -3,10 +3,7 @@
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
-TTEngine::TTEngine(const TTEngineSettings& settings) :
-        mCurrentContact(std::numeric_limits<size_t>::min()),
-        mPreviousContact(std::numeric_limits<size_t>::min()),
-        mNeighbors(settings.getNeighbors()) {
+TTEngine::TTEngine(const TTEngineSettings& settings) {
     LOG_INFO("Constructing...");
     using namespace std::placeholders;
     mContacts = std::make_unique<TTContactsHandler>(settings.getContactsSettings());
@@ -21,7 +18,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) :
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
         mThreads.back().detach();
     }
-    mNeighbors = std::make_unique<TTNeighbors>(settings.getInterface(), *mContacts, *mChat);
+    mNeighbors = std::make_unique<TTNeighbors>(settings.getInterface(), settings.getNeighbors(), *mContacts, *mChat);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -65,9 +62,9 @@ void TTEngine::server(std::promise<void> promise) {
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::ServerBuilder builder;
     LOG_INFO("Listening on the given address without any authentication mechanism...");
-    builder.AddListeningPort(mIpAddressAndPort, grpc::InsecureServerCredentials());
+    builder.AddListeningPort(mNeighbors->getIpAddressAndPort(), grpc::InsecureServerCredentials());
     LOG_INFO("Registering synchronous services...");
-    TTNeighborsService neighborsService(mNeighbors, mNeighbors);
+    TTNeighborsService neighborsService(*mNeighbors, *mNeighbors);
     neighborsService.registerServices(builder);
     LOG_INFO("Assembling the server and waiting for the server to shutdown...");
     mServer = std::unique_ptr<grpc::Server>(builder.BuildAndStart());
@@ -84,8 +81,8 @@ void TTEngine::mailbox(std::string message) {
     if (mChat) {
         std::scoped_lock<std::mutex> lock(mMailboxMutex);
         const auto now = std::chrono::system_clock::now();
-        bool result = mChat->send(mCurrentContact, message, now);
-        result &= mContacts->send(mCurrentContact);
+        bool result = mChat->send(mContacts->current(), message, now);
+        result &= mContacts->send(mContacts->current());
         if (!result) {
             LOG_ERROR("Received callback - failed to sent message!");
             stop();
@@ -96,13 +93,10 @@ void TTEngine::mailbox(std::string message) {
 void TTEngine::switcher(size_t message) {
     LOG_INFO("Received callback - contacts switch");
     if (mContacts) {
-        if (message < mContacts.size()) {
+        if (message < mContacts->size()) {
             std::scoped_lock<std::mutex> lock(mSwitcherMutex);
-            mPreviousContact = mCurrentContact;
-            mCurrentContact = message;
-            bool result = mContacts->unselect(mPreviousContact);
-            result &= mContacts->select(mCurrentContact);
-            result &= mChat->clear(mCurrentContact);
+            bool result = mContacts->select(message);
+            result &= mChat->clear(message);
             if (!result) {
                 LOG_ERROR("Received callback - failed to switch contact!");
                 stop();

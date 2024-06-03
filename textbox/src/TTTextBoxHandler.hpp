@@ -19,8 +19,8 @@ public:
     virtual ~TTTextBoxHandler();
     TTTextBoxHandler(const TTTextBoxHandler&) = delete;
     TTTextBoxHandler(TTTextBoxHandler&&) = delete;
-    TTTextBoxHandler operator=(const TTTextBoxHandler&) = delete;
-    TTTextBoxHandler operator=(TTTextBoxHandler&&) = delete;
+    TTTextBoxHandler& operator=(const TTTextBoxHandler&) = delete;
+    TTTextBoxHandler& operator=(TTTextBoxHandler&&) = delete;
     virtual void stop();
     virtual bool stopped() const;
 private:

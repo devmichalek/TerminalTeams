@@ -1,8 +1,8 @@
 #include "TTNeighbors.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTNeighbors(TTInterface interface, TTContactsHandler& contactsHandler, TTChatHandler& chatHandler) :
-        mInterface(interface), mContactsHandler(contactsHandler), mChatHandler(chatHandler) {
+TTNeighbors::TTNeighbors(TTNetworkInterface interface, std::deque<std::string> neighbors, TTContactsHandler& contactsHandler, TTChatHandler& chatHandler) :
+        mInterface(interface), mNeighbors(neighbors), mContactsHandler(contactsHandler), mChatHandler(chatHandler) {
 
 }
 
@@ -27,13 +27,13 @@ bool TTNeighbors::handleHeartbeat(const TTHeartbeatMessage& message) {
 }
 
 std::string TTNeighbors::getNickname() {
-    return contactsHandler.get(0).nickname;
+    return mContactsHandler.get(0).nickname;
 }
 
 std::string TTNeighbors::getIdentity() {
-    return contactsHandler.get(0).identity;
+    return mContactsHandler.get(0).identity;
 }
 
 std::string TTNeighbors::getIpAddressAndPort() {
-    return contactsHandler.get(0).ipAddressAndPort;
+    return mContactsHandler.get(0).ipAddressAndPort;
 }

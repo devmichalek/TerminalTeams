@@ -6,6 +6,7 @@
 #include <queue>
 #include <deque>
 #include <mutex>
+#include <shared_mutex>
 #include <thread>
 #include <condition_variable>
 #include <memory>
@@ -27,9 +28,9 @@ public:
     virtual bool activate(size_t id);
     virtual bool deactivate(size_t id);
     virtual bool select(size_t id);
-    virtual bool unselect(size_t id);
     virtual const TTContactsEntry& get(size_t id) const;
     virtual size_t get(std::string id) const;
+    virtual size_t current() const;
     virtual size_t size() const;
     virtual void stop();
     virtual bool stopped() const;
@@ -55,6 +56,9 @@ private:
     std::thread mHeartbeatThread;
     std::mutex mHeartbeatQuitMutex;
     // Contacts storage
+    mutable std::shared_mutex mContactsMutex;
+    size_t mCurrentContact;
+    size_t mPreviousContact;
     std::deque<TTContactsEntry> mContacts;
     std::unordered_map<std::string, size_t> mIdentityMap;
 };

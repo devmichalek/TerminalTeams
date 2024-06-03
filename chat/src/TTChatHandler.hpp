@@ -20,8 +20,8 @@ public:
     virtual ~TTChatHandler();
     TTChatHandler(const TTChatHandler&) = delete;
     TTChatHandler(TTChatHandler&&) = delete;
-    TTChatHandler operator=(const TTChatHandler&) = delete;
-    TTChatHandler operator=(TTChatHandler&&) = delete;
+    TTChatHandler& operator=(const TTChatHandler&) = delete;
+    TTChatHandler& operator=(TTChatHandler&&) = delete;
     virtual bool send(size_t id, std::string message, TTChatTimestamp timestamp);
     virtual bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
     virtual bool clear(size_t id);

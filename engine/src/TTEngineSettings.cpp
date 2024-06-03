@@ -47,11 +47,11 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         std::string name = argv[6];
         std::string ipAddress = argv[7];
         sockaddr_in sa;
-        if (inet_pton(AF_INET, mIpAddress.c_str(), &(sa.sin_addr)) == 0) {
-            throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + mIpAddress);
+        if (inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr)) == 0) {
+            throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + ipAddress);
         }
         std::string port = argv[8];
-        mInterface = TTInterface(name, ipAddress, port);
+        mInterface = TTNetworkInterface(name, ipAddress, port);
     }
 
 

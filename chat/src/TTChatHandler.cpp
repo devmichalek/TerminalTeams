@@ -95,7 +95,7 @@ bool TTChatHandler::clear(size_t id) {
     if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {
         return false;
     }
-    std::unique_lock currentIdLock(mCurrentIdMutex);
+    std::scoped_lock currentIdLock(mCurrentIdMutex);
     mCurrentId = id;
     auto& storage = mMessages[id];
     for (auto &message : storage) {
@@ -112,7 +112,7 @@ bool TTChatHandler::create(size_t id) {
         LOG_WARNING("Forced exit at create message type!");
         return false;
     }
-    std::unique_lock messagesLock(mMessagesMutex);
+    std::scoped_lock messagesLock(mMessagesMutex);
     if (!mMessages.empty() && id < mMessages.size()) {
         LOG_ERROR("ID={} is within existing range!", id);
         return false;

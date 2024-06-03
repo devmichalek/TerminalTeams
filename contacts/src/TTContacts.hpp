@@ -16,8 +16,8 @@ public:
     virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
     TTContacts(TTContacts&&) = delete;
-    TTContacts operator=(const TTContacts&) = delete;
-    TTContacts operator=(TTContacts&&) = delete;
+    TTContacts& operator=(const TTContacts&) = delete;
+    TTContacts& operator=(TTContacts&&) = delete;
     // Receives main data and sends confirmation
     virtual void run();
     // Stops applications

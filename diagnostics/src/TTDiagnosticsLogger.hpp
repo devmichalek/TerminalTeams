@@ -55,8 +55,8 @@ private:
     }
     TTDiagnosticsLogger(const TTDiagnosticsLogger&) = delete;
     TTDiagnosticsLogger(TTDiagnosticsLogger&&) = delete;
-    TTDiagnosticsLogger operator=(const TTDiagnosticsLogger&) = delete;
-    TTDiagnosticsLogger operator=(TTDiagnosticsLogger&&) = delete;
+    TTDiagnosticsLogger& operator=(const TTDiagnosticsLogger&) = delete;
+    TTDiagnosticsLogger& operator=(TTDiagnosticsLogger&&) = delete;
 
     std::shared_ptr<spdlog::logger> mLogger;
     static TTDiagnosticsLogger mInstance;

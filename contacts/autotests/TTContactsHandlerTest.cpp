@@ -63,8 +63,6 @@ int main(int argc, char** argv) {
                         status = handler.deactivate(id);
                     } else if (command == "select") {
                         status = handler.select(id);
-                    } else if (command == "unselect") {
-                        status = handler.unselect(id);
                     }
                 }
             }

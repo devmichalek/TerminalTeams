@@ -1,18 +1,18 @@
 #pragma once
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
-#include "TTInterface.hpp"
+#include "TTNetworkInterface.hpp"
 #include "TTNeighborsChat.hpp"
 #include "TTNeighborsDiscovery.hpp"
 
-class TTNeighbors : public TTNeighborsChat, TTNeighborsDiscovery {
+class TTNeighbors : public TTNeighborsChat, public TTNeighborsDiscovery {
 public:
-    TTNeighbors(TTInterface interface, TTContactsHandler& contactsHandler, TTChatHandler& chatHandler);
+    TTNeighbors(TTNetworkInterface interface, std::deque<std::string> neighbors, TTContactsHandler& contactsHandler, TTChatHandler& chatHandler);
     virtual ~TTNeighbors();
     TTNeighbors(const TTNeighbors&) = delete;
     TTNeighbors(TTNeighbors&&) = delete;
-    TTNeighbors operator=(const TTNeighbors&) = delete;
-    TTNeighbors operator=(TTNeighbors&&) = delete;
+    TTNeighbors& operator=(const TTNeighbors&) = delete;
+    TTNeighbors& operator=(TTNeighbors&&) = delete;
     virtual bool handleTell(const TTNarrateMessage& message);
     virtual bool handleNarrate(const TTNarrateMessages& messages);
     virtual bool handleGreet(const TTGreetMessage& message);
@@ -21,11 +21,10 @@ public:
     virtual std::string getIdentity();
     virtual std::string getIpAddressAndPort();
 private:
-    TTInterface mInterface;
+    TTNetworkInterface mInterface;
+    std::deque<std::string> mNeighbors;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
-
     std::deque<std::vector<TTNarrateMessage>> mUnorderedMessages;
     std::deque<std::vector<TTNarrateMessage>> mPendingMessages;
-    std::deque<std::string> mNeighbors;
 };

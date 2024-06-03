@@ -11,8 +11,8 @@ public:
     virtual ~TTChat();
     TTChat(const TTChat&) = delete;
     TTChat(TTChat&&) = delete;
-    TTChat operator=(const TTChat&) = delete;
-    TTChat operator=(TTChat&&) = delete;
+    TTChat& operator=(const TTChat&) = delete;
+    TTChat& operator=(TTChat&&) = delete;
     // Receives main data
     virtual void run();
     // Stops applications

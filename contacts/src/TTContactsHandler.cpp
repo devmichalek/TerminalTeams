@@ -8,7 +8,9 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mSharedMem(std::move(settings.getSharedMemory())),
         mStopped{false},
         mHandlerThread{},
-        mHeartbeatThread{} {
+        mHeartbeatThread{},
+        mCurrentContact(std::numeric_limits<size_t>::min()),
+        mPreviousContact(std::numeric_limits<size_t>::min()) {
     LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
         throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
@@ -29,14 +31,15 @@ TTContactsHandler::~TTContactsHandler() {
     stop();
     mQueueCondition.notify_one();
     // Wait until main thread is destroyed
-    std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
+    std::scoped_lock handlerQuitLock(mHandlerQuitMutex);
     // Wait until heartbeat thread is destroyed
-    std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
+    std::scoped_lock heartbeatQuitLock(mHeartbeatQuitMutex);
     LOG_INFO("Successfully destructed!");
 }
 
 bool TTContactsHandler::create(std::string nickname, std::string identity, std::string ipAddressAndPort) {
     LOG_INFO("Called create nickname={}, identity={}, ipAddressAndPort={}", nickname, identity, ipAddressAndPort);
+    std::scoped_lock contactsLock(mContactsMutex);
     TTContactsMessage message;
     message.status = TTContactsStatus::ACTIVE;
     message.id = mContacts.size();
@@ -50,6 +53,7 @@ bool TTContactsHandler::create(std::string nickname, std::string identity, std::
 
 bool TTContactsHandler::send(size_t id) {
     LOG_INFO("Called send ID={}", id);
+    std::scoped_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -76,6 +80,7 @@ bool TTContactsHandler::send(size_t id) {
 
 bool TTContactsHandler::receive(size_t id) {
     LOG_INFO("Called receive ID={}", id);
+    std::scoped_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -102,6 +107,7 @@ bool TTContactsHandler::receive(size_t id) {
 
 bool TTContactsHandler::activate(size_t id) {
     LOG_INFO("Called activate ID={}", id);
+    std::scoped_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -127,6 +133,7 @@ bool TTContactsHandler::activate(size_t id) {
 
 bool TTContactsHandler::deactivate(size_t id) {
     LOG_INFO("Called deactivate ID={}", id);
+    std::scoped_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {
         return false;
     }
@@ -152,10 +159,33 @@ bool TTContactsHandler::deactivate(size_t id) {
 
 bool TTContactsHandler::select(size_t id) {
     LOG_INFO("Called select ID={}", id);
+    std::scoped_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {
         return false;
     }
 
+    // Unselect
+    mPreviousContact = mCurrentContact;
+    switch (mContacts[mPreviousContact].status) {
+        case TTContactsStatus::ACTIVE: return false;
+        case TTContactsStatus::INACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::ACTIVE; break;
+        case TTContactsStatus::SELECTED_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::INACTIVE; break;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
+        default:
+            throw std::runtime_error("Failed to change contact status, internal error");
+    }
+    TTContactsMessage message;
+    message.status = mContacts[mPreviousContact].status;
+    message.id = mPreviousContact;
+    if (!send(message)) {
+        return false;
+    }
+    // Select
+    mCurrentContact = id;
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
         case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
@@ -168,33 +198,6 @@ bool TTContactsHandler::select(size_t id) {
         default:
             throw std::runtime_error("Failed to change contact status, internal error");
     }
-
-    TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
-    return send(message);
-}
-
-bool TTContactsHandler::unselect(size_t id) {
-    LOG_INFO("Called unselect ID={}", id);
-    if (id >= mContacts.size()) {
-        return false;
-    }
-
-    switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: return false;
-        case TTContactsStatus::INACTIVE: return false;
-        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-        default:
-            throw std::runtime_error("Failed to change contact status, internal error");
-    }
-
-    TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
     return send(message);
@@ -202,6 +205,7 @@ bool TTContactsHandler::unselect(size_t id) {
 
 const TTContactsEntry& TTContactsHandler::get(size_t id) const {
     LOG_INFO("Called get ID={}", id);
+    std::shared_lock contactsLock(mContactsMutex);
     return mContacts[id];
 }
 
@@ -212,6 +216,12 @@ size_t TTContactsHandler::get(std::string id) const {
         return std::numeric_limits<size_t>::max();
     }
     return result->second;
+}
+
+size_t TTContactsHandler::current() const {
+    LOG_INFO("Called current");
+    std::shared_lock contactsLock(mContactsMutex);
+    return mCurrentContact;
 }
 
 size_t TTContactsHandler::size() const {
@@ -232,7 +242,7 @@ bool TTContactsHandler::send(const TTContactsMessage& message) {
         return false;
     }
     {
-        std::scoped_lock<std::mutex> lock(mQueueMutex);
+        std::scoped_lock lock(mQueueMutex);
         mQueuedMessages.push(std::make_unique<TTContactsMessage>(message));
     }
     mQueueCondition.notify_one();
@@ -241,7 +251,7 @@ bool TTContactsHandler::send(const TTContactsMessage& message) {
 
 void TTContactsHandler::heartbeat() {
     LOG_INFO("Started heartbeat loop");
-    std::scoped_lock<std::mutex> heartbeatQuitLock(mHeartbeatQuitMutex);
+    std::scoped_lock heartbeatQuitLock(mHeartbeatQuitMutex);
     try {
         while (!stopped()) {
             TTContactsMessage message;
@@ -260,7 +270,7 @@ void TTContactsHandler::heartbeat() {
 
 void TTContactsHandler::main() {
     LOG_INFO("Started main loop");
-    std::scoped_lock<std::mutex> handlerQuitLock(mHandlerQuitMutex);
+    std::scoped_lock handlerQuitLock(mHandlerQuitMutex);
     try {
         bool exit = false;
         do {
