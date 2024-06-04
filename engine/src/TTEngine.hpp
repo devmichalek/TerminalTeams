@@ -1,6 +1,7 @@
 #pragma once
 #include "TTEngineSettings.hpp"
-#include "TTNeighbors.hpp"
+#include "TTBroadcasterChat.hpp"
+#include "TTBroadcasterDiscovery.hpp"
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTTextBoxHandler.hpp"
@@ -21,6 +22,9 @@ public:
 private:
     // Server thread
     void server(std::promise<void> promise);
+    // Broadcasters threads
+    void chat(std::promise<void> promise);
+    void discovery(std::promise<void> promise);
     // Callback functions
     void mailbox(std::string message);
     void switcher(size_t message);
@@ -32,7 +36,8 @@ private:
     std::mutex mSwitcherMutex;
     // Node data
     std::unique_ptr<grpc::Server> mServer;
-    std::unique_ptr<TTNeighbors> mNeighbors;
+    std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;
+    std::unique_ptr<TTBroadcasterDiscovery> mBroadcasterDiscovery;
     // Concurrent communication
     std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;

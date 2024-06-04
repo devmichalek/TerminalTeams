@@ -18,7 +18,6 @@ public:
     virtual const TTTextBoxSettings& getTextBoxSettings() const { return *mTextBoxSettings; }
     virtual const TTNetworkInterface& getInterface() const { return mInterface; }
     virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
-
 private:
     // Delegated settings
     std::unique_ptr<TTContactsSettings> mContactsSettings;

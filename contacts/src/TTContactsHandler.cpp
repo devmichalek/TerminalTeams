@@ -211,6 +211,7 @@ const TTContactsEntry& TTContactsHandler::get(size_t id) const {
 
 size_t TTContactsHandler::get(std::string id) const {
     LOG_INFO("Called get ID={}", id);
+    std::shared_lock contactsLock(mContactsMutex);
     decltype(auto) result = mIdentityMap.find(id);
     if (result == mIdentityMap.end()) {
         return std::numeric_limits<size_t>::max();

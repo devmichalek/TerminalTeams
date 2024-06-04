@@ -1,5 +1,6 @@
 #include "TTEngine.hpp"
-#include "TTNeighborsService.hpp"
+#include "TTNeighborsServiceChat.hpp"
+#include "TTNeighborsServiceDiscovery.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
@@ -11,6 +12,8 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
     mTextBox = std::make_unique<TTTextBoxHandler>(settings.getTextBoxSettings(),
         std::bind(&TTEngine::mailbox, this, _1),
         std::bind(&TTEngine::switcher, this, _1));
+    mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
+    mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
     // Set server thread
     {
         std::promise<void> serverPromise;
@@ -18,19 +21,26 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
         mThreads.back().detach();
     }
-    mNeighbors = std::make_unique<TTNeighbors>(settings.getInterface(), settings.getNeighbors(), *mContacts, *mChat);
+    // Set broadcaster chat thread
+    {
+        std::promise<void> broadcasterPromise;
+        mBlockers.push_back(broadcasterPromise.get_future());
+        mThreads.push_back(std::thread(&TTEngine::chat, this, std::move(broadcasterPromise)));
+        mThreads.back().detach();
+    }
+    // Set broadcaster discovery thread
+    {
+        std::promise<void> broadcasterPromise;
+        mBlockers.push_back(broadcasterPromise.get_future());
+        mThreads.push_back(std::thread(&TTEngine::discovery, this, std::move(broadcasterPromise)));
+        mThreads.back().detach();
+    }
     LOG_INFO("Successfully constructed!");
 }
 
 TTEngine::~TTEngine() {
     LOG_INFO("Destructing...");
     stop();
-    if (mServer) {
-        LOG_INFO("Stopping server...");
-        mServer->Shutdown();
-    } else {
-        LOG_WARNING("Failed stop already stopped server!");
-    }
     for (auto &blocker : mBlockers) {
         blocker.wait();
     }
@@ -40,6 +50,9 @@ TTEngine::~TTEngine() {
 void TTEngine::stop() {
     LOG_INFO("Forced stop...");
     mStopped.store(true);
+    if (mServer) {
+        mServer->Shutdown();
+    }
     if (mContacts) {
         mContacts->stop();
     }
@@ -48,6 +61,12 @@ void TTEngine::stop() {
     }
     if (mTextBox) {
         mTextBox->stop();
+    }
+    if (mBroadcasterChat) {
+        mBroadcasterChat->stop();
+    }
+    if (mBroadcasterDiscovery) {
+        mBroadcasterDiscovery->stop();
     }
 }
 
@@ -62,10 +81,12 @@ void TTEngine::server(std::promise<void> promise) {
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::ServerBuilder builder;
     LOG_INFO("Listening on the given address without any authentication mechanism...");
-    builder.AddListeningPort(mNeighbors->getIpAddressAndPort(), grpc::InsecureServerCredentials());
+    builder.AddListeningPort(mBroadcasterDiscovery->getIpAddressAndPort(), grpc::InsecureServerCredentials());
     LOG_INFO("Registering synchronous services...");
-    TTNeighborsService neighborsService(*mNeighbors, *mNeighbors);
-    neighborsService.registerServices(builder);
+    TTNeighborsServiceChat neighborsServiceChat(*mBroadcasterChat);
+    TTNeighborsServiceDiscovery neighborsServiceDiscovery(*mBroadcasterDiscovery);
+    builder.RegisterService(&neighborsServiceChat);
+    builder.RegisterService(&neighborsServiceDiscovery);
     LOG_INFO("Assembling the server and waiting for the server to shutdown...");
     mServer = std::unique_ptr<grpc::Server>(builder.BuildAndStart());
     // Start
@@ -74,6 +95,22 @@ void TTEngine::server(std::promise<void> promise) {
     stop();
     promise.set_value();
     LOG_INFO("Completed server loop");
+}
+
+void TTEngine::chat(std::promise<void> promise) {
+    LOG_INFO("Started chat loop");
+    mBroadcasterChat->run();
+    stop();
+    promise.set_value();
+    LOG_INFO("Completed chat loop");
+}
+
+void TTEngine::discovery(std::promise<void> promise) {
+    LOG_INFO("Started discovery loop");
+    mBroadcasterDiscovery->run();
+    stop();
+    promise.set_value();
+    LOG_INFO("Completed discovery loop");
 }
 
 void TTEngine::mailbox(std::string message) {

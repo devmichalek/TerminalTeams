@@ -103,8 +103,10 @@ add_executable(${TT_ENGINE_EXE}
   "${TT_ENGINE_SRC_DIRECTORY}/Main.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngine.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngineSettings.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighbors.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsService.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterChat.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterDiscovery.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceChat.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceDiscovery.cpp"
 )
 target_include_directories(${TT_ENGINE_EXE} PUBLIC "${PROJECT_BINARY_DIR}")
 target_link_libraries(${TT_ENGINE_EXE}
