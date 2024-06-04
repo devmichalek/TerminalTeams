@@ -19,7 +19,7 @@ void TTBroadcasterChat::run() {
 }
 
 void TTBroadcasterChat::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 

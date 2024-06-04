@@ -56,7 +56,7 @@ void TTTextBox::run() {
 }
 
 void TTTextBox::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 

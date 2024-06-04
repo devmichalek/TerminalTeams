@@ -132,7 +132,7 @@ const TTChatEntries& TTChatHandler::get(size_t id) {
 }
 
 void TTChatHandler::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 

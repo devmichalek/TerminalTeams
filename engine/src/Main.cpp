@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     DT_META_THREAD_NAME("main");
     try {
         // Initialize
-        DT_BEGIN("main", "run");
+        DT_BEGIN("main", "initialization");
         // Signal handling
         struct sigaction signalAction;
         memset(&signalAction, 0, sizeof(signalAction));
@@ -32,6 +32,19 @@ int main(int argc, char** argv) {
         // Run main app
         TTEngineSettings settings(argc, argv);
         application = std::make_unique<TTEngine>(settings);
+        DT_END("main", "initialization");
+        // Run main app
+        DT_BEGIN("main", "run");
+        try {
+            if (!application->stopped()) {
+                application->run();
+            } else {
+                LOG_WARNING("Application was shut down out of a sudden");
+            }
+        } catch (const std::exception& exp) {
+            LOG_ERROR("Exception captured: {}", exp.what());
+            throw;
+        }
         DT_END("main", "run");
     } catch (const std::exception& exp) {
         LOG_ERROR("Exception captured: {}", exp.what());

@@ -21,7 +21,7 @@ void TTBroadcasterDiscovery::run() {
 }
 
 void TTBroadcasterDiscovery::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 

@@ -15,6 +15,8 @@ public:
     TTEngine(TTEngine&&) = delete;
     TTEngine& operator=(const TTEngine&) = delete;
     TTEngine& operator=(TTEngine&&) = delete;
+    // Main loop
+    virtual void run();
     // Stops application
     virtual void stop();
     // Returns true if application is stopped

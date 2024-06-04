@@ -230,7 +230,7 @@ size_t TTContactsHandler::size() const {
 }
 
 void TTContactsHandler::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 

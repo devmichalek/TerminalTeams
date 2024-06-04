@@ -44,19 +44,19 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
     }
 
     {
-        std::string name = argv[6];
-        std::string ipAddress = argv[7];
+        const std::string name = argv[6];
+        const std::string ipAddress = argv[7];
         sockaddr_in sa;
         if (inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr)) == 0) {
             throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + ipAddress);
         }
-        std::string port = argv[8];
+        const std::string port = argv[8];
         mInterface = TTNetworkInterface(name, ipAddress, port);
     }
 
 
     for (int i = MIN_ARGC; i < argc; ++i) {
-        std::string neighbor = argv[i];
+        const std::string neighbor = argv[i];
         sockaddr_in sa;
         if (inet_pton(AF_INET, neighbor.c_str(), &(sa.sin_addr)) == 0) {
             throw std::runtime_error(std::string("TTEngineSettings: Invalid neighbor IPv4 address=") + neighbor);

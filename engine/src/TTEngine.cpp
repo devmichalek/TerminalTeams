@@ -47,8 +47,16 @@ TTEngine::~TTEngine() {
     LOG_INFO("Successfully destructed!");
 }
 
+void TTEngine::run() {
+    LOG_INFO("Started main loop");
+    while (!stopped()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    LOG_INFO("Stopped main loop");
+}
+
 void TTEngine::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
     if (mServer) {
         mServer->Shutdown();

@@ -63,7 +63,7 @@ void TTChat::run() {
 }
 
 void TTChat::stop() {
-    LOG_INFO("Forced stop...");
+    LOG_WARNING("Forced stop...");
     mStopped.store(true);
 }
 
