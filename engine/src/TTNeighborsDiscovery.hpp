@@ -21,7 +21,7 @@ public:
     TTNeighborsDiscovery& operator=(TTNeighborsDiscovery&&) = default;
     virtual bool handleGreet(const TTGreetMessage& message) = 0;
     virtual bool handleHeartbeat(const TTHeartbeatMessage& message) = 0;
-    virtual std::string getNickname() = 0;
-    virtual std::string getIdentity() = 0;
-    virtual std::string getIpAddressAndPort() = 0;
+    virtual std::string getNickname() const = 0;
+    virtual std::string getIdentity() const = 0;
+    virtual std::string getIpAddressAndPort() const = 0;
 };

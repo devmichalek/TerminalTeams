@@ -4,6 +4,7 @@ project(TerminalTeamsBundle VERSION 1.0)
 add_subdirectory("./chat")
 add_subdirectory("./contacts")
 add_subdirectory("./textbox")
+add_subdirectory("./engine")
 
 set(TT_AUTOTEST_SCRIPTS
     "autotests/tteams-autotests.sh"

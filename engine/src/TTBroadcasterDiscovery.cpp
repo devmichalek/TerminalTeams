@@ -57,14 +57,14 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatMessage& message) 
     return true;
 }
 
-std::string TTBroadcasterDiscovery::getNickname() {
+std::string TTBroadcasterDiscovery::getNickname() const {
     return mContactsHandler.get(0).nickname;
 }
 
-std::string TTBroadcasterDiscovery::getIdentity() {
+std::string TTBroadcasterDiscovery::getIdentity() const {
     return mContactsHandler.get(0).identity;
 }
 
-std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
+std::string TTBroadcasterDiscovery::getIpAddressAndPort() const {
     return mContactsHandler.get(0).ipAddressAndPort;
 }

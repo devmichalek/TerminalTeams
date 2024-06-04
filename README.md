@@ -1,9 +1,9 @@
 ### Usage
-Application runs in Linux Terminal Emulator to:
+Application runs inside Linux Terminal Emulator to:
 - find users on LAN,
 - chat with other people on LAN
 
-The tmux terminal multiplexer is used to create program interface.
+The tmux terminal multiplexer was used to create program interface.
 
 ### Assumptions
 Application was written with the following assumptions:
@@ -46,8 +46,6 @@ Application was tested using:
 - Manual tests - using up to four VMs running together in a virtual network.
 
 ### Todo
-- use std::shared_mutex
-- user + password
 - [[fallthrough]]
 - [[noreturn]]
 - [[likely]]

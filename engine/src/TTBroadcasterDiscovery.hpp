@@ -15,14 +15,22 @@ public:
     TTBroadcasterDiscovery(TTBroadcasterDiscovery&&) = delete;
     TTBroadcasterDiscovery& operator=(const TTBroadcasterDiscovery&) = delete;
     TTBroadcasterDiscovery& operator=(TTBroadcasterDiscovery&&) = delete;
+    // Main loop
     virtual void run();
+    // Stops application
     virtual void stop();
+    // Returns true if application is stopped
     virtual bool stopped() const;
+    // Greet message handler
     virtual bool handleGreet(const TTGreetMessage& message);
+    // Heartbeat message handler
     virtual bool handleHeartbeat(const TTHeartbeatMessage& message);
-    virtual std::string getNickname();
-    virtual std::string getIdentity();
-    virtual std::string getIpAddressAndPort();
+    // Returns root nickname
+    virtual std::string getNickname() const;
+    // Returns root identity
+    virtual std::string getIdentity() const;
+    // Returns root IP address and port
+    virtual std::string getIpAddressAndPort() const;
 private:
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;

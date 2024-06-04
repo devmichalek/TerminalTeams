@@ -13,12 +13,18 @@ public:
     TTBroadcasterChat(TTBroadcasterChat&&) = delete;
     TTBroadcasterChat& operator=(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat& operator=(TTBroadcasterChat&&) = delete;
+    // Main loop
     virtual void run();
+    // Stops application
     virtual void stop();
+    // Returns true if application is stopped
     virtual bool stopped() const;
+    // Tell message handler
     virtual bool handleTell(const TTNarrateMessage& message);
+    // Narrate message handler
     virtual bool handleNarrate(const TTNarrateMessages& messages);
-    virtual std::string getIdentity();
+    // Returns root nickname
+    virtual std::string getIdentity() const;
 private:
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
