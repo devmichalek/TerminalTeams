@@ -37,17 +37,14 @@ void TTTextBox::run() {
         return;
     }
     try {
-        mOutputStream.print("Type #<Contact ID> to switch contact.").endl();
-        mOutputStream.print("Skip # to send a normal message.").endl().endl();
+        mOutputStream.print("Type #help to print a help message").endl();
         while (!stopped()) {
             std::string line;
             std::getline(std::cin, line);
-            if (line.empty()) {
-                LOG_WARNING("Received empty line from input!");
-                break;
+            if (!parse(line)) {
+                LOG_WARNING("Failed to parse input!");
+                continue;
             }
-            LOG_INFO("Received next line from the input");
-            send(line.c_str(), line.c_str() + line.size());
         }
     } catch (...) {
         LOG_ERROR("Caught unknown exception!");
@@ -62,6 +59,107 @@ void TTTextBox::stop() {
 
 bool TTTextBox::stopped() const {
     return mStopped.load();
+}
+
+bool TTTextBox::parse(const std::string& line) {
+    if (line.empty()) {
+        LOG_WARNING("Received empty line from input!");
+        return false;
+    }
+
+    if (line.front() == '#') {
+        std::stringstream input{line.substr(1)};
+        std::string arg;
+        std::vector<std::string> args;
+        while(std::getline(input, arg, ' ')) {
+            args.push_back(arg);
+        }
+        return execute(args);
+    }
+
+    return send(line.c_str(), line.c_str() + line.size());
+}
+
+bool TTTextBox::execute(const std::vector<std::string>& args) {
+    if (args.empty()) {
+        LOG_WARNING("Received empty command from input!");
+        return false;
+    }
+
+    const auto command = args.front();
+    if (command == "help") {
+        if (args.size() > 1) {
+            LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);
+            return false;
+        }
+        mOutputStream.clear();
+        mOutputStream.print("Type #help to print a help message").endl();
+        mOutputStream.print("Type #quit to quit the application").endl();
+        mOutputStream.print("Type #switch <id> to switch contacts").endl();
+        mOutputStream.print("Skip # to send a message to the currently selected contact.").endl();
+        return true;
+    }
+
+    if (command == "quit") {
+        if (args.size() > 1) {
+            LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);
+            return false;
+        }
+        stop();
+        return true;
+    }
+
+    if (command == "switch") {
+        if (args.size() > 2) {
+            LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);
+            return false;
+        }
+        auto identity = args[1];
+        if (!std::all_of(identity.begin(), identity.end(), ::isdigit)) {
+            LOG_WARNING("Contacts switch attempt failed - string has characters other than digits!");
+            return false;
+        }
+
+        if (identity.size() > TTTEXTBOX_DATA_MAX_DIGITS) {
+            LOG_WARNING("Contacts switch attempt failed - too many digits!");
+            return false;
+        }
+
+        size_t id = 0;
+        auto [ptr, ec] = std::from_chars(identity.c_str(), identity.c_str() + identity.size(), id);
+        if (ec != std::errc()) {
+            LOG_ERROR("Failed to convert string to decimal on contacts switch attempt!");
+            return false;
+        }
+        auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
+        queue(std::move(message));
+        mOutputStream.clear();
+        LOG_INFO("Successfully switched contacts!");
+        return true;
+    }
+
+    LOG_WARNING("Command \"{}\" not found!", command);
+    return false;
+}
+
+bool TTTextBox::send(const char* cbegin, const char* cend) {
+    LOG_INFO("Received casual message from the input");
+    LOG_INFO("Splitting string into smaller chunks...");
+    const long numOfMessages = (cend - cbegin) / TTTEXTBOX_DATA_MAX_LENGTH;
+    if (numOfMessages > 0) {
+        for (auto i = numOfMessages; i > 0; --i) {
+            auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE, TTTEXTBOX_DATA_MAX_LENGTH, cbegin);
+            queue(std::move(message));
+            cbegin += TTTEXTBOX_DATA_MAX_LENGTH;
+        }
+    }
+    if (cbegin != cend) {
+        auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE, cend - cbegin, cbegin);
+        queue(std::move(message));
+    }
+    mOutputStream.clear();
+    LOG_INFO("Successfully splitted string into smaller chunks!");
+    return true;
 }
 
 void TTTextBox::main(std::promise<void> promise) {
@@ -112,59 +210,10 @@ void TTTextBox::main(std::promise<void> promise) {
     LOG_INFO("Completed textbox loop");
 }
 
-void TTTextBox::send(const char* cbegin, const char* cend) {
-    if (*cbegin == '#' && (cbegin + 1 < cend)) {
-        LOG_INFO("Converting string to decimal...");
-        if (std::all_of(cbegin + 1, cend, ::isdigit)) {
-            if ((cend - cbegin - 1) <= TTTEXTBOX_DATA_MAX_DIGITS) {
-                {
-                    size_t id = 0;
-                    auto [ptr, ec] = std::from_chars(cbegin + 1, cend, id);
-                    if (ec != std::errc()) {
-                        LOG_ERROR("Failed to convert string to decimal!");
-                        throw std::runtime_error({});
-                    }
-                    std::scoped_lock<std::mutex> lock(mQueueMutex);
-                    mQueuedMessages.push(
-                        std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::CONTACTS_SWITCH,
-                            sizeof(id),
-                            reinterpret_cast<char*>(&id))
-                    );
-                }
-                mQueueCondition.notify_one();
-                mOutputStream.clear();
-                LOG_INFO("Successfully converted string to decimal!");
-                return;
-            }
-        }
+void TTTextBox::queue(std::unique_ptr<TTTextBoxMessage> message) {
+    {
+        std::scoped_lock<std::mutex> lock(mQueueMutex);
+        mQueuedMessages.push(std::move(message));
     }
-    LOG_INFO("Splitting string into smaller chunks...");
-    const long numOfMessages = (cend - cbegin) / TTTEXTBOX_DATA_MAX_LENGTH;
-    if (numOfMessages > 0) {
-        for (auto i = numOfMessages; i > 0; --i) {
-            {
-                std::scoped_lock<std::mutex> lock(mQueueMutex);
-                mQueuedMessages.push(
-                    std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE,
-                        TTTEXTBOX_DATA_MAX_LENGTH,
-                        cbegin)
-                );
-            }
-            mQueueCondition.notify_one();
-            cbegin += TTTEXTBOX_DATA_MAX_LENGTH;
-        }
-    }
-    if (cbegin != cend) {
-        {
-            std::scoped_lock<std::mutex> lock(mQueueMutex);
-            mQueuedMessages.push(
-                std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE,
-                    cend - cbegin,
-                    cbegin)
-            );
-        }
-        mQueueCondition.notify_one();
-    }
-    mOutputStream.clear();
-    LOG_INFO("Successfully splitted string into smaller chunks!");
+    mQueueCondition.notify_one();
 }

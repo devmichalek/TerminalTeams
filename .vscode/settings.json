@@ -80,6 +80,7 @@
         "variant": "cpp",
         "queue": "cpp",
         "charconv": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "ranges": "cpp"
     }
 }

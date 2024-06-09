@@ -21,9 +21,16 @@ public:
     // Returns true if application is stopped
     virtual bool stopped() const;
 private:
+    // Parses input and returns true if there are no suspicions
+    bool parse(const std::string& line);
+    // Executes command
+    bool execute(const std::vector<std::string>& args);
+    // Sends casual message
+    bool send(const char* cbegin, const char* cend);
     // Sends heartbeat periodically and main data
     void main(std::promise<void> promise);
-    void send(const char* cbegin, const char* cend);
+    // Generic queue
+    void queue(std::unique_ptr<TTTextBoxMessage> message);
     // IPC communication
     std::shared_ptr<TTUtilsNamedPipe> mPipe;
     // Output stream

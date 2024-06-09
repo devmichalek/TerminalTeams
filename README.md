@@ -52,3 +52,14 @@ Application was tested using:
 - std::launder
 - std::once_flag
 - safe cleanup
+- unit tests
+    - contacts UT
+    - chat UT
+    - textbox UT
+    - engine UT
+- auto tests
+    - contacts AT
+    - chat AT
+    - textbox AT
+    - engine AT
+- parse function in tttextbox

@@ -88,7 +88,7 @@ bool TTUtilsMessageQueue::receive(char* message, long attempts, long timeoutMs) 
             unsigned int priority = 0;
             auto res = mSyscall->mq_timedreceive(mDescriptor, message, mMessageSize, &priority, &ts);
             if (res != -1) {
-                LOG_ERROR("Successfully received message!");
+                LOG_INFO("Successfully received message!");
                 result = true;
                 break;
             }
@@ -122,7 +122,7 @@ bool TTUtilsMessageQueue::send(const char* message, long attempts, long timeoutM
             unsigned int priority = 0;
             auto res = mSyscall->mq_timedsend(mDescriptor, message, mMessageSize, priority, &ts);
             if (res != -1) {
-                LOG_ERROR("Successfully send message!");
+                LOG_INFO("Successfully send message!");
                 result = true;
                 break;
             }

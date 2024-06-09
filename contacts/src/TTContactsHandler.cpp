@@ -23,6 +23,7 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     mHandlerThread.detach();
     mHeartbeatThread.detach();
     create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + ":" + settings.getPort());
+    select(0);
     LOG_INFO("Successfully constructed!");
 }
 

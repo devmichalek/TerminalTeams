@@ -26,6 +26,7 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
     mHeartbeatThread.detach();
     // Set handler thread
     mHandlerResult = std::async(std::launch::async, std::bind(&TTChatHandler::main, this));
+    create(0);
     LOG_INFO("Successfully constructed!");
 }
 
