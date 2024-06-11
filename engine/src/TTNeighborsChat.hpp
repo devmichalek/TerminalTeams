@@ -23,6 +23,6 @@ public:
     TTNeighborsChat& operator=(TTNeighborsChat&&) = default;
     virtual bool handleTell(const TTNarrateMessage& message) = 0;
     virtual bool handleNarrate(const TTNarrateMessages& messages) = 0;
-    virtual std::string getIdentity() const = 0;
+    virtual const std::string& getIdentity() const = 0;
 };
 

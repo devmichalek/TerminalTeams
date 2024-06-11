@@ -14,8 +14,8 @@ using ::testing::Return;
 class TTContactsTest : public Test {
  protected:
     TTContactsTest() {
-        const int argc = 8;
-        const char* argv[] = {"", "0", "0", "contacts", "nickname", "identity", "192.168.1.0", "183"};
+        const int argc = 4;
+        const char* argv[] = {"", "0", "0", "contacts"};
         mSettingsMock = std::make_shared<TTContactsSettingsMock>(argc, argv);
         mSharedMemMock = std::make_shared<TTUtilsSharedMemMock>();
         mOutputStreamMock = std::make_shared<TTUtilsOutputStreamMock>();

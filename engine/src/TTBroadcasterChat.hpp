@@ -24,7 +24,7 @@ public:
     // Narrate message handler
     virtual bool handleNarrate(const TTNarrateMessages& messages);
     // Returns root nickname
-    virtual std::string getIdentity() const;
+    virtual const std::string& getIdentity() const;
 private:
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;

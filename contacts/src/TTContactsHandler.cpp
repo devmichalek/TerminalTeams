@@ -9,8 +9,8 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mStopped{false},
         mHandlerThread{},
         mHeartbeatThread{},
-        mCurrentContact(std::numeric_limits<size_t>::min()),
-        mPreviousContact(std::numeric_limits<size_t>::min()) {
+        mCurrentContact(std::numeric_limits<size_t>::max()),
+        mPreviousContact(std::numeric_limits<size_t>::max()) {
     LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
         throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
@@ -22,8 +22,6 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     mHeartbeatThread = std::thread{&TTContactsHandler::heartbeat, this};
     mHandlerThread.detach();
     mHeartbeatThread.detach();
-    create(settings.getNickname(), settings.getIdentity(), settings.getIpAddress() + ":" + settings.getPort());
-    select(0);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -60,16 +58,17 @@ bool TTContactsHandler::send(size_t id) {
     }
 
     switch (mContacts[id].status) {
-        case TTContactsStatus::SELECTED_ACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE: return true;
         case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::ACTIVE: return false;
-        case TTContactsStatus::INACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return true;
+        case TTContactsStatus::ACTIVE:
+        case TTContactsStatus::INACTIVE:
+        case TTContactsStatus::UNREAD_MSG_ACTIVE:
+        case TTContactsStatus::UNREAD_MSG_INACTIVE:
+        case TTContactsStatus::PENDING_MSG_INACTIVE:
         default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+            LOG_ERROR("Failed to change contact status from {} on send", size_t(mContacts[id].status));
+            return false;
     }
 
     mContacts[id].sentMessages++;
@@ -88,15 +87,16 @@ bool TTContactsHandler::receive(size_t id) {
 
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_INACTIVE: return false;
-        case TTContactsStatus::INACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE: return true;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return true;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE:
+        case TTContactsStatus::PENDING_MSG_INACTIVE:
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
+        case TTContactsStatus::SELECTED_INACTIVE:
+        case TTContactsStatus::INACTIVE:
         default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+            LOG_ERROR("Failed to change contact status from {} on receive", size_t(mContacts[id].status));
+            return false;
     }
 
     mContacts[id].receivedMessages++;
@@ -114,16 +114,17 @@ bool TTContactsHandler::activate(size_t id) {
     }
 
     switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: return false;
+        case TTContactsStatus::ACTIVE: return true;
         case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE: return true;
         case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
+        case TTContactsStatus::UNREAD_MSG_ACTIVE: return true;
         case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
         case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
         case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
         default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+            LOG_ERROR("Failed to change contact status from {} on activate", size_t(mContacts[id].status));
+            return false;
     }
 
     TTContactsMessage message;
@@ -141,15 +142,16 @@ bool TTContactsHandler::deactivate(size_t id) {
 
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
-        case TTContactsStatus::INACTIVE: return false;
+        case TTContactsStatus::INACTIVE: return true;
         case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_INACTIVE: return true;
         case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::UNREAD_MSG_INACTIVE: return true;
+        case TTContactsStatus::PENDING_MSG_INACTIVE: return true;
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return true;
         default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+            LOG_ERROR("Failed to change contact status from {} on deactivate", size_t(mContacts[id].status));
+            return false;
     }
 
     TTContactsMessage message;
@@ -167,38 +169,44 @@ bool TTContactsHandler::select(size_t id) {
 
     // Unselect
     mPreviousContact = mCurrentContact;
-    switch (mContacts[mPreviousContact].status) {
-        case TTContactsStatus::ACTIVE: return false;
-        case TTContactsStatus::INACTIVE: return false;
-        case TTContactsStatus::SELECTED_ACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return false;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return false;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return false;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-        default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+    if (mPreviousContact != std::numeric_limits<size_t>::max()) {
+        switch (mContacts[mPreviousContact].status) {
+            case TTContactsStatus::SELECTED_ACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::ACTIVE; break;
+            case TTContactsStatus::SELECTED_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::INACTIVE; break;
+            case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
+            case TTContactsStatus::ACTIVE:
+            case TTContactsStatus::INACTIVE:
+            case TTContactsStatus::UNREAD_MSG_ACTIVE:
+            case TTContactsStatus::UNREAD_MSG_INACTIVE:
+            case TTContactsStatus::PENDING_MSG_INACTIVE:
+            default:
+                LOG_ERROR("Failed to change contact status from {} on unselect", size_t(mContacts[mPreviousContact].status));
+                return false;
+        }
+        TTContactsMessage message;
+        message.status = mContacts[mPreviousContact].status;
+        message.id = mPreviousContact;
+        if (!send(message)) {
+            return false;
+        }
     }
-    TTContactsMessage message;
-    message.status = mContacts[mPreviousContact].status;
-    message.id = mPreviousContact;
-    if (!send(message)) {
-        return false;
-    }
+    
     // Select
     mCurrentContact = id;
     switch (mContacts[id].status) {
         case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
         case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: return false;
-        case TTContactsStatus::SELECTED_INACTIVE: return false;
         case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
         case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
         case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return false;
+        case TTContactsStatus::SELECTED_ACTIVE:
+        case TTContactsStatus::SELECTED_INACTIVE:
+        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
         default:
-            throw std::runtime_error("Failed to change contact status, internal error");
+            LOG_ERROR("Failed to change contact status from {} on select", size_t(mContacts[id].status));
+            return false;
     }
+    TTContactsMessage message;
     message.status = mContacts[id].status;
     message.id = id;
     return send(message);
@@ -221,8 +229,8 @@ size_t TTContactsHandler::get(std::string id) const {
 }
 
 size_t TTContactsHandler::current() const {
-    LOG_INFO("Called current");
     std::shared_lock contactsLock(mContactsMutex);
+    LOG_INFO("Called current={}", mCurrentContact);
     return mCurrentContact;
 }
 

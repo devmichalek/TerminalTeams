@@ -4,15 +4,11 @@
 HANDLER_STDIN=handler-stdin
 HANDLER_STDOUT=handler-stdout
 SHARED_MEMORY_NAME=contacts
-NICKNAME=You
-IDENTITY=identity
-IP_ADDRESS=192.168.1.0
-PORT=11111
 APP_HANDLER="./tteams-contacts-handler"
-APP_HANDLER_ARGS=(0 0 "${SHARED_MEMORY_NAME}" "${NICKNAME}" "${IDENTITY}" "${IP_ADDRESS}" "${PORT}")
+APP_HANDLER_ARGS=(0 0 "${SHARED_MEMORY_NAME}")
 APP_HANDLER_CMD="${APP_HANDLER} ${APP_HANDLER_ARGS[@]}"
 APP="./tteams-contacts"
-APP_ARGS=(0 0 "${SHARED_MEMORY_NAME}" "${NICKNAME}" "${IDENTITY}" "${IP_ADDRESS}" "${PORT}")
+APP_ARGS=(0 0 "${SHARED_MEMORY_NAME}")
 APP_CMD="${APP} ${APP_ARGS[@]}"
 mkfifo ${HANDLER_STDIN}
 sleep infinity > ${HANDLER_STDIN} &
@@ -29,12 +25,9 @@ echo "Info: Waiting for data to be set..."
 sleep 3
 
 # Expected output
-EXPECTED_RESULTS_RAW="\033[2J\033[1;1H#0 You 
-\033[2J\033[1;1H#0 You 
-#1 John 
-\033[2J\033[1;1H#0 You 
-#1 John 
-#2 Camille "
+EXPECTED_RESULTS_RAW="\033[2J\033[1;1H#0 John 
+\033[2J\033[1;1H#0 John 
+#1 Camille "
 EXPECTED_RESULTS=$(echo -e "$EXPECTED_RESULTS_RAW")
 ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 

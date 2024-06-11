@@ -35,7 +35,7 @@ bool TTBroadcasterChat::handleNarrate(const TTNarrateMessages& messages) {
     return true;
 }
 
-std::string TTBroadcasterChat::getIdentity() const {
+const std::string& TTBroadcasterChat::getIdentity() const {
     return mContactsHandler.get(0).identity;
 }
 

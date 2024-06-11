@@ -9,8 +9,4 @@ public:
     MOCK_METHOD(size_t, getTerminalWidth, (), (const, override));
     MOCK_METHOD(size_t, getTerminalHeight, (), (const, override));
     MOCK_METHOD(std::shared_ptr<TTUtilsSharedMem>, getSharedMemory, (), (const, override));
-    MOCK_METHOD(std::string, getNickname, (), (const, override));
-    MOCK_METHOD(std::string, getIdentity, (), (const, override));
-    MOCK_METHOD(std::string, getIpAddress, (), (const, override));
-    MOCK_METHOD(std::string, getPort, (), (const, override));
 };

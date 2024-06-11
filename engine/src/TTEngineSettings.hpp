@@ -16,6 +16,8 @@ public:
     virtual const TTContactsSettings& getContactsSettings() const { return *mContactsSettings; }
     virtual const TTChatSettings& getChatSettings() const { return *mChatSettings; }
     virtual const TTTextBoxSettings& getTextBoxSettings() const { return *mTextBoxSettings; }
+    virtual const std::string& getNickname() const { return mNickname; }
+    virtual const std::string& getIdentity() const { return mIdentity; }
     virtual const TTNetworkInterface& getInterface() const { return mInterface; }
     virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
 private:
@@ -24,6 +26,8 @@ private:
     std::unique_ptr<TTChatSettings> mChatSettings;
     std::unique_ptr<TTTextBoxSettings> mTextBoxSettings;
     // Other settings
+    std::string mNickname;
+    std::string mIdentity;
     TTNetworkInterface mInterface;
     std::deque<std::string> mNeighbors;
     static inline constexpr int MIN_ARGC = 9;

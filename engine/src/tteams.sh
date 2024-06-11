@@ -113,6 +113,16 @@ read -p 'Enter your nickname: ' NICKNAME
 read -p 'Enter your passphrase: ' PASSPHRASE
 IDENTITY=$(echo "${PASSPHRASE}" | sha1sum)
 
+if [ -z "${NICKNAME}" ]; then
+    echo "Error: Nickname cannot be an empty string!"
+    exit 1
+fi
+
+if [ -z "${PASSPHRASE}" ]; then
+    echo "Error: Passphrase cannot be an empty string!"
+    exit 1
+fi
+
 echo "Using ${IP_ADDRESS}:${PORT} over ${INTERFACE}..."
 sleep 3
 

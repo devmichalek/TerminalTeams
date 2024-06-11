@@ -64,6 +64,7 @@ bool TTTextBox::stopped() const {
 bool TTTextBox::parse(const std::string& line) {
     if (line.empty()) {
         LOG_WARNING("Received empty line from input!");
+        mOutputStream.clear();
         return false;
     }
 

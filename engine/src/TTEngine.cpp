@@ -14,6 +14,13 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         std::bind(&TTEngine::switcher, this, _1));
     mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
     mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
+    // Create first contacts
+    {
+        const auto i = settings.getInterface();
+        mContacts->create(settings.getNickname(), settings.getIdentity(), i.getIpAddressAndPort());
+        mContacts->select(0);
+        mChat->create(0);
+    }
     // Set server thread
     {
         std::promise<void> serverPromise;

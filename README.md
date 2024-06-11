@@ -63,3 +63,4 @@ Application was tested using:
     - textbox AT
     - engine AT
 - parse function in tttextbox
+- remove IPC files in cpp classes in constructor

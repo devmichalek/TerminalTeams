@@ -16,10 +16,6 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         args.push_back("0");
         args.push_back("0");
         args.push_back(argv[1]);
-        args.push_back(argv[4]);
-        args.push_back(argv[5]);
-        args.push_back(argv[7]);
-        args.push_back(argv[8]);
         mContactsSettings = std::make_unique<TTContactsSettings>(args.size(), args.data());
     }
 
@@ -44,6 +40,11 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
     }
 
     {
+        mNickname = argv[4];
+        mIdentity = argv[5];
+    }
+
+    {
         const std::string name = argv[6];
         const std::string ipAddress = argv[7];
         sockaddr_in sa;
@@ -53,7 +54,6 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         const std::string port = argv[8];
         mInterface = TTNetworkInterface(name, ipAddress, port);
     }
-
 
     for (int i = MIN_ARGC; i < argc; ++i) {
         const std::string neighbor = argv[i];
