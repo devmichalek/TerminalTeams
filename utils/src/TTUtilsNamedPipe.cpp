@@ -31,20 +31,20 @@ bool TTUtilsNamedPipe::alive() const {
 }
 
 bool TTUtilsNamedPipe::create() {
-    LOG_INFO("Creating {}...", mNamedPipePath);
+    LOG_INFO("Creating \"{}\"...", mNamedPipePath);
     if (alive()) {
         LOG_ERROR("Cannot recreate!");
         return false;
     }
     errno = 0;
     if (mSyscall->mkfifo(mNamedPipePath.c_str(), 0666) < 0) {
-        LOG_ERROR("Failed to create named pipe {}, errno={}", mNamedPipePath, errno);
+        LOG_ERROR("Failed to create named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
     }
 
     mNamedPipeDescriptor = mSyscall->open(mNamedPipePath.c_str(), O_RDONLY);
     if (mNamedPipeDescriptor == -1) {
-        LOG_ERROR("Failed to open named pipe {}, errno={}", mNamedPipePath, errno);
+        LOG_ERROR("Failed to open named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
     }
     LOG_INFO("Successfully created!");
@@ -52,7 +52,7 @@ bool TTUtilsNamedPipe::create() {
 }
 
 bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
-    LOG_INFO("Opening {}...", mNamedPipePath);
+    LOG_INFO("Opening \"{}\"...", mNamedPipePath);
     if (alive()) {
         LOG_ERROR("Cannot reopen!");
         return false;
@@ -68,7 +68,7 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     }
 
     if (mNamedPipeDescriptor == -1) {
-        LOG_ERROR("Failed to open named pipe {}, errno={}", path, errno);
+        LOG_ERROR("Failed to open named pipe \"{}\", errno={}", path, errno);
         return false;
     }
     LOG_INFO("Successfully opened!");

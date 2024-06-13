@@ -30,7 +30,7 @@ TTUtilsSharedMem::~TTUtilsSharedMem() {
 }
 
 bool TTUtilsSharedMem::create() {
-    LOG_INFO("Creating {}, {} and {}...", mSharedMemoryName, mDataProducedSemName, mDataConsumedSemName);
+    LOG_INFO("Creating \"{}\", \"{}\" and \"{}\"...", mSharedMemoryName, mDataProducedSemName, mDataConsumedSemName);
     if (alive()) {
         LOG_ERROR("Cannot recreate!");
         return false;
@@ -39,7 +39,7 @@ bool TTUtilsSharedMem::create() {
     errno = 0;
     const int fd = mSyscall->shm_open(mSharedMemoryName.c_str(), O_CREAT | O_EXCL | O_RDWR, S_IRUSR | S_IWUSR);
     if (fd < 0) {
-        LOG_ERROR("Failed to create shared object {}, errno={}", mSharedMemoryName, errno);
+        LOG_ERROR("Failed to create shared object \"{}\", errno={}", mSharedMemoryName, errno);
         return false;
     }
     mSharedMemoryCreated = true;
@@ -58,14 +58,14 @@ bool TTUtilsSharedMem::create() {
 
     errno = 0;
     if ((mDataProducedSemaphore = mSyscall->sem_open(mDataProducedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-        LOG_ERROR("Failed to create data produced semaphore {}, errno={}", mDataProducedSemName, errno);
+        LOG_ERROR("Failed to create data produced semaphore \"{}\", errno={}", mDataProducedSemName, errno);
         return false;
     }
     mDataProducedSemCreated = true;
 
     errno = 0;
     if ((mDataConsumedSemaphore = mSyscall->sem_open(mDataConsumedSemName.c_str(), O_CREAT, 0644, 0)) == SEM_FAILED) {
-        LOG_ERROR("Failed to create data consumed semaphore {}, errno={}", mDataConsumedSemName, errno);
+        LOG_ERROR("Failed to create data consumed semaphore \"{}\", errno={}", mDataConsumedSemName, errno);
         return false;
     }
     mDataConsumedSemCreated = true;
@@ -76,7 +76,7 @@ bool TTUtilsSharedMem::create() {
 }
 
 bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
-    LOG_INFO("Opening {}, {} and {}...", mSharedMemoryName, mDataProducedSemName, mDataConsumedSemName);
+    LOG_INFO("Opening \"{}\", \"{}\" and \"{}\"...", mSharedMemoryName, mDataProducedSemName, mDataConsumedSemName);
     if (alive()) {
         LOG_ERROR("Cannot reopen!");
         return false;
@@ -111,18 +111,18 @@ bool TTUtilsSharedMem::open(long attempts, long timeoutMs) {
     }
 
     if (!mDataProducedSemaphore) {
-        LOG_ERROR("Failed to open data produced semaphore {}, errno={}", mDataProducedSemName, dataProducedSemErrno);
+        LOG_ERROR("Failed to open data produced semaphore \"{}\", errno={}", mDataProducedSemName, dataProducedSemErrno);
         return false;
     }
 
     if (!mDataConsumedSemaphore) {
-        LOG_ERROR("Failed to open data consumed semaphore {}, errno={}", mDataConsumedSemName, dataConsumedSemErrno);
+        LOG_ERROR("Failed to open data consumed semaphore \"{}\", errno={}", mDataConsumedSemName, dataConsumedSemErrno);
         return false;
     }
 
     errno = 0;
     if (fileDescriptor < 0) {
-        LOG_ERROR("Failed to open shared object {}, errno={}", mSharedMemoryName, sharedMemErrno);
+        LOG_ERROR("Failed to open shared object \"{}\", errno={}", mSharedMemoryName, sharedMemErrno);
         return false;
     }
 

@@ -88,6 +88,7 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
     }
 
     const auto command = args.front();
+    LOG_INFO("Executing \"{}\" command", command);
     if (command == "help") {
         if (args.size() > 1) {
             LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);

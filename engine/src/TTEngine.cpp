@@ -86,7 +86,13 @@ void TTEngine::stop() {
 }
 
 bool TTEngine::stopped() const {
-    return mStopped.load();
+    bool result = mStopped.load();
+    result |= (mContacts && mContacts->stopped());
+    result |= (mChat && mChat->stopped());
+    result |= (mTextBox && mTextBox->stopped());
+    result |= (mBroadcasterChat && mBroadcasterChat->stopped());
+    result |= (mBroadcasterDiscovery && mBroadcasterDiscovery->stopped());
+    return result;
 }
 
 void TTEngine::server(std::promise<void> promise) {
