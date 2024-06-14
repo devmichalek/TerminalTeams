@@ -32,6 +32,7 @@ public:
     // Returns root IP address and port
     virtual std::string getIpAddressAndPort() const;
 private:
+
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTNetworkInterface mInterface;

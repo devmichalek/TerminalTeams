@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if ! [ -z "$(pgrep -u "${USER}" tteams)" ]; then
+    echo "Error: Another instance of Terminal Teams is running!"
+    echo "Info: Please close all processes related with Terminal Teams"
+    exit 1
+fi
+
 TT_DEFAULT_TERMINAL=${TT_DEFAULT_TERMINAL:-'gnome-terminal'}
 if ! which ${TT_DEFAULT_TERMINAL} &> /dev/null; then
     echo "Error: Failed to open another terminal emulator!"

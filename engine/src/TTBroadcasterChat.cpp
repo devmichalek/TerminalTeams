@@ -7,7 +7,7 @@ TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatH
 }
 
 TTBroadcasterChat::~TTBroadcasterChat() {
-
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTBroadcasterChat::run() {

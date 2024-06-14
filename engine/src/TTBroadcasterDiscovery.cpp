@@ -9,7 +9,7 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
 }
 
 TTBroadcasterDiscovery::~TTBroadcasterDiscovery() {
-
+    LOG_INFO("Successfully destructed!");
 }
 
 void TTBroadcasterDiscovery::run() {
