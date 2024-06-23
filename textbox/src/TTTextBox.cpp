@@ -83,6 +83,7 @@ bool TTTextBox::parse(const std::string& line) {
 
 bool TTTextBox::execute(const std::vector<std::string>& args) {
     if (args.empty()) {
+        mOutputStream.clear();
         LOG_WARNING("Received empty command from input!");
         return false;
     }

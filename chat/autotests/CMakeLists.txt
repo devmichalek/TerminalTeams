@@ -15,6 +15,7 @@ get_filename_component(TT_CHAT_DIRECTORY "../src" ABSOLUTE)
 set(TT_CHAT_HANDLER_TEST_SCRIPTS
   "tteams-chat-autotests.sh"
   "tteams-chat-autotests-happy-path.sh"
+  "tteams-chat-autotests-verdict.sh"
 )
 set(TT_CHAT_HANDLER_DST "autotests")
 

@@ -15,6 +15,7 @@ get_filename_component(TT_CONTACTS_DIRECTORY "../src" ABSOLUTE)
 set(TT_CONTACTS_HANDLER_TEST_SCRIPTS
   "tteams-contacts-autotests.sh"
   "tteams-contacts-autotests-happy-path.sh"
+  "tteams-contacts-autotests-verdict.sh"
 )
 set(TT_CONTACTS_DST "autotests")
 

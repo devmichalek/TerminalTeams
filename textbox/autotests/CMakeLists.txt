@@ -15,6 +15,7 @@ get_filename_component(TT_TEXTBOX_DIRECTORY "../src" ABSOLUTE)
 set(TT_TEXTBOX_HANDLER_TEST_SCRIPTS
   "tteams-textbox-autotests.sh"
   "tteams-textbox-autotests-happy-path.sh"
+  "tteams-textbox-autotests-verdict.sh"
 )
 set(TT_TEXTBOX_HANDLER_DST "autotests")
 

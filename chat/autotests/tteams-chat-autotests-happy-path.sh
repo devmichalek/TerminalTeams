@@ -59,47 +59,9 @@ Hi Freddie, good and you?
 EXPECTED_RESULTS=$(echo -e "$EXPECTED_RESULTS_RAW")
 ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 
-# Test cleanup
+# Test teardown
 kill $HANDLER_STDIN_PID
 echo "Info: Waiting for application to stop..."
 sleep 6
 echo "Info: Application shall be stopped now"
-
-# Test verdict
-EXIT_STATUS=0
-APP_PID=$(pgrep -f "${APP_CMD}" | head -n 1)
-if [[ "${APP_PID}" ]]; then
-    echo "Error: Application is still running! Killing pid=$APP_PID..."
-    kill -9 $APP_PID
-    EXIT_STATUS=1
-fi
-APP_HANDLER_PID=$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)
-if [[ "${APP_HANDLER_PID}" ]]; then
-    echo "Error: Application handler is still running! Killing pid=$APP_HANDLER_PID..."
-    kill -9 $APP_HANDLER_PID
-    EXIT_STATUS=1
-fi
-MSG_QUEUE_PATH="/dev/mqueue/${MSG_QUEUE_NAME}"
-if [ -f "${MSG_QUEUE_PATH}" ]; then
-    echo "Error: File ${MSG_QUEUE_PATH} exists! Removing this file..."
-    rm -f "${MSG_QUEUE_PATH}"
-    EXIT_STATUS=1
-fi
-MSG_QUEUE_REVERSED_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-reversed"
-if [ -f "${MSG_QUEUE_REVERSED_PATH}" ]; then
-    echo "Error: File ${MSG_QUEUE_REVERSED_PATH} exists! Removing this file..."
-    rm -f "${MSG_QUEUE_PATH}"
-    EXIT_STATUS=1
-fi
-if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
-    echo "Error: Actual results are different than expected!"
-    printf "%s" "$ACTUAL_RESULTS" > actual_results.txt
-    printf "%s" "$EXPECTED_RESULTS" > expected_results.txt
-    EXIT_STATUS=1
-fi
-if [[ $EXIT_STATUS -eq 0 ]]; then
-    echo "Success: Autotest \"happy path\" passed!"
-    rm -f "${HANDLER_STDIN}"
-    rm -f "${HANDLER_STDOUT}"
-fi
-exit $EXIT_STATUS
+source tteams-chat-autotests-verdict.sh
