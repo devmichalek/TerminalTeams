@@ -22,7 +22,7 @@ public:
     TTContactsHandler(TTContactsHandler&&) = delete;
     TTContactsHandler& operator=(const TTContactsHandler&) = delete;
     TTContactsHandler& operator=(TTContactsHandler&&) = delete;
-    virtual bool create(std::string nickname, std::string identity, std::string ipAddressAndPort);
+    virtual bool create(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort);
     virtual bool send(size_t id);
     virtual bool receive(size_t id);
     virtual bool activate(size_t id);

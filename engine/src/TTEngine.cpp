@@ -14,7 +14,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         std::bind(&TTEngine::switcher, this, _1));
     mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
     mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
-    // Create first contacts
+    // Create first contact
     {
         const auto i = settings.getInterface();
         mContacts->create(settings.getNickname(), settings.getIdentity(), i.getIpAddressAndPort());
@@ -128,7 +128,7 @@ void TTEngine::chat(std::promise<void> promise) {
 
 void TTEngine::discovery(std::promise<void> promise) {
     LOG_INFO("Started discovery loop");
-    mBroadcasterDiscovery->run();
+    mBroadcasterDiscovery->run(1);
     stop();
     promise.set_value();
     LOG_INFO("Completed discovery loop");
@@ -137,7 +137,7 @@ void TTEngine::discovery(std::promise<void> promise) {
 void TTEngine::mailbox(std::string message) {
     LOG_INFO("Received callback - message sent");
     if (mChat) {
-        std::scoped_lock<std::mutex> lock(mMailboxMutex);
+        std::scoped_lock lock(mMailboxMutex);
         const auto now = std::chrono::system_clock::now();
         bool result = mChat->send(mContacts->current(), message, now);
         result &= mContacts->send(mContacts->current());
@@ -152,7 +152,7 @@ void TTEngine::switcher(size_t message) {
     LOG_INFO("Received callback - contacts switch");
     if (mContacts) {
         if (message < mContacts->size()) {
-            std::scoped_lock<std::mutex> lock(mSwitcherMutex);
+            std::scoped_lock lock(mSwitcherMutex);
             bool result = mContacts->select(message);
             result &= mChat->clear(message);
             if (!result) {

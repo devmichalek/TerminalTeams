@@ -36,7 +36,7 @@ TTContactsHandler::~TTContactsHandler() {
     LOG_INFO("Successfully destructed!");
 }
 
-bool TTContactsHandler::create(std::string nickname, std::string identity, std::string ipAddressAndPort) {
+bool TTContactsHandler::create(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort) {
     LOG_INFO("Called create nickname={}, identity={}, ipAddressAndPort={}", nickname, identity, ipAddressAndPort);
     std::scoped_lock contactsLock(mContactsMutex);
     TTContactsMessage message;

@@ -3,10 +3,12 @@
 
 TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler) :
         mStopped{false}, mContactsHandler(contactsHandler), mChatHandler(chatHandler) {
-
+    LOG_INFO("Constructing...");
+    LOG_INFO("Successfully constructed!");
 }
 
 TTBroadcasterChat::~TTBroadcasterChat() {
+    LOG_INFO("Destructing...");
     LOG_INFO("Successfully destructed!");
 }
 

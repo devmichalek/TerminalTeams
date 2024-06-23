@@ -1,6 +1,5 @@
 #pragma once
 #include <chrono>
-#include <atomic>
 
 class TTTimestamp {
 public:
@@ -12,15 +11,18 @@ public:
     TTTimestamp& operator=(const TTTimestamp&) = delete;
     TTTimestamp& operator=(TTTimestamp&&) = delete;
     bool expired() const {
+        return remaining() >= mThreshold;
+    }
+    std::chrono::milliseconds remaining() const {
         const auto end = std::chrono::steady_clock::now();
-        const auto difference = std::chrono::duration_cast<std::chrono::milliseconds>(mTimestamp.load() - end);
-        return difference >= mThreshold.load();
+        const auto difference = std::chrono::duration_cast<std::chrono::milliseconds>(mTimestamp - end);
+        return difference;
     }
     void kick() {
         mTimestamp = std::chrono::steady_clock::now();
     }
 private:
-    std::atomic<std::chrono::milliseconds> mThreshold;
-    std::atomic<std::chrono::time_point<std::chrono::steady_clock>> mTimestamp;
+    std::chrono::milliseconds mThreshold;
+    std::chrono::time_point<std::chrono::steady_clock> mTimestamp;
 };
 

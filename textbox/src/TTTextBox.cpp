@@ -214,7 +214,7 @@ void TTTextBox::main(std::promise<void> promise) {
 
 void TTTextBox::queue(std::unique_ptr<TTTextBoxMessage> message) {
     {
-        std::scoped_lock<std::mutex> lock(mQueueMutex);
+        std::scoped_lock lock(mQueueMutex);
         mQueuedMessages.push(std::move(message));
     }
     mQueueCondition.notify_one();

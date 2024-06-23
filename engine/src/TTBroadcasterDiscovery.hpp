@@ -1,9 +1,17 @@
 #pragma once
+#include <grpcpp/grpcpp.h>
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
 #include "TTNeighborsDiscovery.hpp"
 #include "TTTimestamp.hpp"
+#include "TerminalTeams.grpc.pb.h"
+
+using tt::NeighborsDiscovery;
+using tt::GreetRequest;
+using tt::GreetReply;
+using tt::HeartbeatRequest;
+using tt::HeartbeatReply;
 
 class TTBroadcasterDiscovery : public TTNeighborsDiscovery {
 public:
@@ -16,7 +24,7 @@ public:
     TTBroadcasterDiscovery& operator=(const TTBroadcasterDiscovery&) = delete;
     TTBroadcasterDiscovery& operator=(TTBroadcasterDiscovery&&) = delete;
     // Main loop
-    virtual void run();
+    virtual void run(const size_t neighborOffset);
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
@@ -26,21 +34,26 @@ public:
     // Heartbeat message handler
     virtual bool handleHeartbeat(const TTHeartbeatMessage& message);
     // Returns root nickname
-    virtual std::string getNickname() const;
+    virtual const std::string& getNickname() const;
     // Returns root identity
-    virtual std::string getIdentity() const;
+    virtual const std::string& getIdentity() const;
     // Returns root IP address and port
-    virtual std::string getIpAddressAndPort() const;
+    virtual const std::string& getIpAddressAndPort() const;
 private:
-
+    std::unique_ptr<NeighborsDiscovery::Stub> createStub(const std::string& ipAddressAndPort);
+    TTGreetMessage sendGreet(NeighborsDiscovery::Stub* stub);
+    TTGreetMessage sendGreet(const std::string& ipAddressAndPort);
+    TTHeartbeatMessage sendHeartbeat(const std::string& ipAddressAndPort);
+    TTHeartbeatMessage sendHeartbeat(NeighborsDiscovery::Stub* stub);
+    bool addNeighbor(const TTGreetMessage& message);
+    size_t getNeighborsCount() const;
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTNetworkInterface mInterface;
-    std::deque<std::string> mNeighbors;
     std::deque<TTTimestamp> mTimestamps;
     std::deque<size_t> mTimestampTrials;
-    static inline std::chrono::milliseconds SLOW_START_THRESHOLD{5000};
-    static inline std::chrono::milliseconds FAST_RECOVERY_THRESHOLD{1000};
-    static inline size_t SLOW_START_TRIALS{6};
-    static inline size_t FAST_RECOVERY_TRIALS{3};
+    std::deque<std::unique_ptr<NeighborsDiscovery::Stub>> mStubs;
+    mutable std::shared_mutex mNeighborMutex;
+    static inline std::chrono::milliseconds TIMESTAMP_TIMEOUT{3000};
+    static inline size_t TIMESTAMP_TRIALS{5};
 };

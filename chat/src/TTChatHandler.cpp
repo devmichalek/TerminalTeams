@@ -164,7 +164,7 @@ bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimesta
     }
 
     {
-        std::scoped_lock<std::mutex> lock(mQueueMutex);
+        std::scoped_lock lock(mQueueMutex);
         for (auto & it : messages) {
             mQueuedMessages.push(std::move(it));
         }
