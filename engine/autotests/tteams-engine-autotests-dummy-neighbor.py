@@ -35,6 +35,7 @@
 import argparse
 import logging
 import grpc
+import concurrent
 import signal
 import threading
 import TerminalTeams_pb2
@@ -44,14 +45,14 @@ logger = logging.getLogger(__name__)
 
 def scenario_1_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 1.1...")
-    server_shutdown_event = threading.Event
-    def stop_server():
+    server_shutdown_event = threading.Event()
+    def stop_server(signum, frame):
         server_shutdown_event.set()
     class Servicer(TerminalTeams_pb2_grpc.NeighborsDiscovery):
         def Heartbeat(self, request, context):
             return TerminalTeams_pb2.HeartbeatReply(identity="dummy")
     signal.signal(signal.SIGTERM, stop_server)
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
+    server = grpc.server(concurrent.futures.ThreadPoolExecutor(max_workers=1))
     TerminalTeams_pb2_grpc.add_NeighborsDiscoveryServicer_to_server(Servicer(), server)
     server.add_insecure_port(src_ip_address + ":" + src_port)
     server.start()
@@ -63,13 +64,13 @@ def scenario_1_2(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 1.2...")
     heartbeat_counter = 0
     heartbeat_limit = 10
-    server_shutdown_event = threading.Event
-    def stop_server():
+    server_shutdown_event = threading.Event()
+    def stop_server(signum, frame):
         server_shutdown_event.set()
     def count_heartbeat():
         heartbeat_counter += 1
         if heartbeat_counter >= heartbeat_limit:
-            stop_server()
+            stop_server(0, 0)
     class Servicer(TerminalTeams_pb2_grpc.NeighborsDiscovery):
         def Heartbeat(self, request, context):
             count_heartbeat()
@@ -157,7 +158,7 @@ scenarios = {
     '7.2': scenario_7_2,
     '7.3': scenario_7_3,
     '8.1': scenario_8_1,
-    '8.2': scenario_8_2,
+    '8.2': scenario_8_2
 }
 
 if __name__ == "__main__":
@@ -170,5 +171,5 @@ if __name__ == "__main__":
     parser.add_argument("--scenario", dest="scenario", help="Scenario (behavior) of the dummy host", required=True)
     args = parser.parse_args()
     if not args.scenario in scenarios:
-        logger.error("Non-existing scenario was provided!")
-    scenarios[arg.scenario](args.src-ip-address, args.src_port, args.dst_ip_address, args.dst_port)
+        logger.error("Non-existing scenario " + args.scenario + " was provided!")
+    scenarios[args.scenario](args.src_ip_address, args.src_port, args.dst_ip_address, args.dst_port)
