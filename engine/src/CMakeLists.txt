@@ -11,7 +11,8 @@ set(EXT_GRPC_REFLECTION_LIB "grpc++_reflection")
 set(EXT_GRPC_LIB "grpc++")
 set(EXT_PROTOBUF_LIB "libprotobuf")
 set(TT_GRPC_LIB "tteams-grpc")
-set(TT_ENGINE_EXE "tteams-engine")
+set(TT_ENGINE_EXE "tteams-engine-exe")
+set(TT_ENGINE_LIB "tteams-engine")
 set(TT_DIAGNOSTICS_LIB "tteams-diagnostics")
 set(TT_UTILS_LIB "tteams-utils")
 set(TT_CHAT_LIB "tteams-chat")
@@ -109,6 +110,7 @@ add_executable(${TT_ENGINE_EXE}
   "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceDiscovery.cpp"
 )
 target_include_directories(${TT_ENGINE_EXE} PUBLIC "${PROJECT_BINARY_DIR}")
+set_target_properties(${TT_ENGINE_EXE} PROPERTIES OUTPUT_NAME ${TT_ENGINE_LIB})
 target_link_libraries(${TT_ENGINE_EXE}
   ${TT_GRPC_LIB}
   ${EXT_ABSL_FLAGS_LIB}

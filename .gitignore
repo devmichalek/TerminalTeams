@@ -6,3 +6,5 @@ install
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/c_cpp_properties.json
+venv
+__pycache__
