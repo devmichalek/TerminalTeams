@@ -13,16 +13,16 @@ if [[ "${APP_HANDLER_PID}" ]]; then
     kill -9 $APP_HANDLER_PID
     EXIT_STATUS=1
 fi
-MSG_QUEUE_PATH="/dev/mqueue/${MSG_QUEUE_NAME}"
-if [ -f "${MSG_QUEUE_PATH}" ]; then
-    echo "Error: File ${MSG_QUEUE_PATH} exists! Removing this file..."
-    rm -f "${MSG_QUEUE_PATH}"
+MSG_QUEUE_PRIMARY_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-primary"
+if [ -f "${MSG_QUEUE_PRIMARY_PATH}" ]; then
+    echo "Error: File ${MSG_QUEUE_PRIMARY_PATH} exists! Removing this file..."
+    rm -f "${MSG_QUEUE_PRIMARY_PATH}"
     EXIT_STATUS=1
 fi
-MSG_QUEUE_REVERSED_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-reversed"
-if [ -f "${MSG_QUEUE_REVERSED_PATH}" ]; then
-    echo "Error: File ${MSG_QUEUE_REVERSED_PATH} exists! Removing this file..."
-    rm -f "${MSG_QUEUE_PATH}"
+MSG_QUEUE_SECONDARY_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-secondary"
+if [ -f "${MSG_QUEUE_SECONDARY_PATH}" ]; then
+    echo "Error: File ${MSG_QUEUE_SECONDARY_PATH} exists! Removing this file..."
+    rm -f "${MSG_QUEUE_SECONDARY_PATH}"
     EXIT_STATUS=1
 fi
 if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
