@@ -61,7 +61,7 @@ bool TTBroadcasterDiscovery::stopped() const {
 
 bool TTBroadcasterDiscovery::handleGreet(const TTGreetMessage& message) {
     decltype(auto) id = mContactsHandler.get(message.identity);
-    if (id == std::numeric_limits<size_t>::max()) {
+    if (id == std::nullopt) {
         LOG_INFO("Handling greet, new contact id={}", message.identity);
         if (!addNeighbor(message)) {
             LOG_ERROR("Handling greet, failed to create contact id={}", message.identity);
@@ -78,7 +78,7 @@ bool TTBroadcasterDiscovery::handleGreet(const TTGreetMessage& message) {
 
 bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatMessage& message) {
     decltype(auto) id = mContactsHandler.get(message.identity);
-    if (id == std::numeric_limits<size_t>::max()) {
+    if (id == std::nullopt) {
         LOG_INFO("Handling heartbeat, ignoring not existing contact id={}", message.identity);
         return false;
     }
@@ -87,15 +87,27 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatMessage& message) 
 }
 
 const std::string& TTBroadcasterDiscovery::getNickname() const {
-    return mContactsHandler.get(0).nickname;
+    decltype(auto) opt = mContactsHandler.get(0);
+    if (opt == std::nullopt) {
+        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get nickname!");
+    }
+    return opt->nickname;
 }
 
 const std::string& TTBroadcasterDiscovery::getIdentity() const {
-    return mContactsHandler.get(0).identity;
+    decltype(auto) opt = mContactsHandler.get(0);
+    if (opt == std::nullopt) {
+        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get identity!");
+    }
+    return opt->identity;
 }
 
 const std::string& TTBroadcasterDiscovery::getIpAddressAndPort() const {
-    return mContactsHandler.get(0).ipAddressAndPort;
+    decltype(auto) opt = mContactsHandler.get(0);
+    if (opt == std::nullopt) {
+        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get IP address and port!");
+    }
+    return opt->ipAddressAndPort;
 }
 
 std::unique_ptr<NeighborsDiscovery::Stub> TTBroadcasterDiscovery::createStub(const std::string& ipAddressAndPort) {

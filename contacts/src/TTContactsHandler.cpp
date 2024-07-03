@@ -212,20 +212,23 @@ bool TTContactsHandler::select(size_t id) {
     return send(message);
 }
 
-const TTContactsEntry& TTContactsHandler::get(size_t id) const {
+std::optional<TTContactsEntry> TTContactsHandler::get(size_t id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
-    return mContacts[id];
+    if (id >= mContacts.size()) {
+        return std::nullopt;
+    }
+    return {mContacts[id]};
 }
 
-size_t TTContactsHandler::get(std::string id) const {
+std::optional<size_t> TTContactsHandler::get(std::string id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
     decltype(auto) result = mIdentityMap.find(id);
     if (result == mIdentityMap.end()) {
-        return std::numeric_limits<size_t>::max();
+        return std::nullopt;
     }
-    return result->second;
+    return {result->second};
 }
 
 size_t TTContactsHandler::current() const {

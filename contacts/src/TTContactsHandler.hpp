@@ -11,6 +11,7 @@
 #include <condition_variable>
 #include <memory>
 #include <unordered_map>
+#include <optional>
 
 // Class ment to be embedded into other higher abstract class.
 // Allows to control TTContacts process concurrently.
@@ -28,8 +29,8 @@ public:
     virtual bool activate(size_t id);
     virtual bool deactivate(size_t id);
     virtual bool select(size_t id);
-    virtual const TTContactsEntry& get(size_t id) const;
-    virtual size_t get(std::string id) const;
+    virtual std::optional<TTContactsEntry> get(size_t id) const;
+    virtual std::optional<size_t> get(std::string id) const;
     virtual size_t current() const;
     virtual size_t size() const;
     virtual void stop();

@@ -38,6 +38,10 @@ bool TTBroadcasterChat::handleNarrate(const TTNarrateMessages& messages) {
 }
 
 const std::string& TTBroadcasterChat::getIdentity() const {
-    return mContactsHandler.get(0).identity;
+    decltype(auto) opt = mContactsHandler.get(0);
+    if (opt == std::nullopt) {
+        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get identity!");
+    }
+    return opt->identity;
 }
 
