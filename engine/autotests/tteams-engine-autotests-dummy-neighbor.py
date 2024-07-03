@@ -39,6 +39,7 @@ def scenario_1_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 1.1...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     class Servicer(TerminalTeams_pb2_grpc.NeighborsDiscovery):
         def Heartbeat(self, request, context):
@@ -59,8 +60,11 @@ def scenario_1_2(src_ip_address, src_port, dst_ip_address, dst_port):
     heartbeat_limit = 10
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     def count_heartbeat():
+        nonlocal heartbeat_counter
+        nonlocal heartbeat_limit
         heartbeat_counter += 1
         if heartbeat_counter >= heartbeat_limit:
             stop_server(0, 0)
@@ -82,6 +86,7 @@ def scenario_2_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 2.1...")
     client_shutdown_event = threading.Event()
     def stop_client(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     signal.signal(signal.SIGTERM, stop_client)
     with grpc.insecure_channel(dst_ip_address + ":" + dst_port) as channel:
@@ -100,9 +105,10 @@ def scenario_3_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 3.1...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     class Servicer(TerminalTeams_pb2_grpc.NeighborsDiscovery):
-        def Heartbeat(self, request, context):
+        def Greet(self, request, context):
             logging.info("Sending dummy GreetReply...")
             return TerminalTeams_pb2.GreetReply(nickname="nickname", identity="identity", ipAddressAndPort=src_ip_address + ":" + src_port)
     signal.signal(signal.SIGTERM, stop_server)
@@ -120,8 +126,11 @@ def scenario_4_1(src_ip_address, src_port, dst_ip_address, dst_port):
     greet_counter = 0
     greet_limit = 5
     def stop_client(signum, frame):
-        server_shutdown_event.set()
+        nonlocal client_shutdown_event
+        client_shutdown_event.set()
     def count_greet():
+        nonlocal greet_counter
+        nonlocal greet_limit
         greet_counter += 1
         if greet_counter >= greet_limit:
             stop_client(0, 0)
@@ -131,7 +140,7 @@ def scenario_4_1(src_ip_address, src_port, dst_ip_address, dst_port):
         while not client_shutdown_event.is_set():
             try:
                 logging.info("Sending dummy GreetRequest...")
-                stub.Heartbeat(TerminalTeams_pb2.GreetRequest(nickname="nickname", identity="identity", ipAddressAndPort=src_ip_address + ":" + src_port))
+                stub.Greet(TerminalTeams_pb2.GreetRequest(nickname="nickname", identity="identity", ipAddressAndPort=src_ip_address + ":" + src_port))
             except Exception:
                 logging.error("Failed to send dummy GreetRequest!")
                 pass
@@ -143,6 +152,7 @@ def scenario_5_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 5.1...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     class Servicer(TerminalTeams_pb2_grpc.NeighborsChat):
         def Tell(self, request, context):
@@ -161,6 +171,7 @@ def scenario_5_2(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 5.2...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     sequence_numbers = {}
     class Servicer(TerminalTeams_pb2_grpc.NeighborsChat):
@@ -185,8 +196,11 @@ def scenario_6_1(src_ip_address, src_port, dst_ip_address, dst_port):
     tell_counter = 0
     tell_limit = 5
     def stop_client(signum, frame):
-        server_shutdown_event.set()
+        nonlocal client_shutdown_event
+        client_shutdown_event.set()
     def count_tell():
+        nonlocal tell_counter
+        nonlocal tell_limit
         tell_counter += 1
         if tell_counter >= tell_limit:
             stop_client(0, 0)
@@ -208,6 +222,7 @@ def scenario_7_1(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 7.1...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     class Servicer(TerminalTeams_pb2_grpc.NeighborsChat):
         def Narrate(self, request_iterator, context):
@@ -226,6 +241,7 @@ def scenario_7_2(src_ip_address, src_port, dst_ip_address, dst_port):
     logging.info("Running scenario 7.2...")
     server_shutdown_event = threading.Event()
     def stop_server(signum, frame):
+        nonlocal server_shutdown_event
         server_shutdown_event.set()
     sequence_numbers = {}
     class Servicer(TerminalTeams_pb2_grpc.NeighborsChat):
@@ -244,11 +260,12 @@ def scenario_7_2(src_ip_address, src_port, dst_ip_address, dst_port):
     server_shutdown_event.wait()
     server.stop(3).wait()
 
-# def scenario_8_1(src_ip_address, src_port, dst_ip_address, dst_port):
-#     logging.info("Running scenario 8.1...")
+def scenario_8_1(src_ip_address, src_port, dst_ip_address, dst_port):
+    logging.info("Running scenario 8.1...")
 #     client_shutdown_event = threading.Event()
 #     def stop_client(signum, frame):
-#         server_shutdown_event.set()
+#         nonlocal client_shutdown_event
+#         client_shutdown_event.set()
 #     signal.signal(signal.SIGTERM, stop_client)
 #     with grpc.insecure_channel(dst_ip_address + ":" + dst_port) as channel:
 #         stub = TerminalTeams_pb2_grpc.NeighborsChatStub(channel)
