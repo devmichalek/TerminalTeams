@@ -1,5 +1,4 @@
 #include "TTEngine.hpp"
-#include "TTDiagnosticsTracer.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <signal.h>
 
@@ -15,12 +14,7 @@ void signalInterruptHandler(int) {
 }
 
 int main(int argc, char** argv) {
-    DT_INIT(DT_UNIQUE_PATH("tteams-engine").c_str());
-    DT_META_PROCESS_NAME("tteams-engine");
-    DT_META_THREAD_NAME("main");
     try {
-        // Initialize
-        DT_BEGIN("main", "initialization");
         // Signal handling
         struct sigaction signalAction;
         memset(&signalAction, 0, sizeof(signalAction));
@@ -32,9 +26,7 @@ int main(int argc, char** argv) {
         // Run main app
         TTEngineSettings settings(argc, argv);
         application = std::make_unique<TTEngine>(settings);
-        DT_END("main", "initialization");
         // Run main app
-        DT_BEGIN("main", "run");
         try {
             if (!application->stopped()) {
                 application->run();
@@ -45,14 +37,11 @@ int main(int argc, char** argv) {
             LOG_ERROR("Exception captured: {}", exp.what());
             throw;
         }
-        DT_END("main", "run");
     } catch (const std::exception& exp) {
         LOG_ERROR("Exception captured: {}", exp.what());
     }
     application.reset();
     LOG_INFO("Successfully flushed all logs");
-    DT_FLUSH();
-    DT_SHUTDOWN();
     return 0;
 }
 
