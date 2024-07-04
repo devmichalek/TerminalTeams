@@ -263,6 +263,8 @@ void TTChatHandler::main() {
                 }
             }
         } catch (...) {
+            TTChatMessage goodbye(TTChatMessageType::GOODBYE, std::chrono::system_clock::now(), 0, nullptr);
+            mPrimaryMessageQueue->send(reinterpret_cast<char*>(&goodbye));
             LOG_ERROR("Caught unknown exception at primary loop!");
         }
     }

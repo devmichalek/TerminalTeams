@@ -112,6 +112,11 @@ void TTChat::handle(const TTChatMessage& message) {
             break;
         case TTChatMessageType::HEARTBEAT:
             LOG_INFO("Received heartbeat message");
+            break;
+        case TTChatMessageType::GOODBYE:
+            LOG_INFO("Received goodbye message");
+            stop();
+            break;
         default:
             break;
     }

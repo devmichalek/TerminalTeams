@@ -6,7 +6,8 @@ enum class TTChatMessageType : unsigned int {
     CLEAR = 0,
     SEND,
     RECEIVE,
-    HEARTBEAT
+    HEARTBEAT,
+    GOODBYE
 };
 
 using TTChatTimestamp = std::chrono::time_point<std::chrono::system_clock>;
