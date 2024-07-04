@@ -297,6 +297,9 @@ void TTContactsHandler::main() {
 
                 if (stopped()) {
                     exit = true;
+                    TTContactsMessage message;
+                    message.status = TTContactsStatus::GOODBYE;
+                    mSharedMem->send(reinterpret_cast<void*>(&message));
                     break; // Forced exit
                 }
 
@@ -309,6 +312,9 @@ void TTContactsHandler::main() {
             for (auto &message : messages) {
                 if (stopped()) {
                     exit = true;
+                    TTContactsMessage message;
+                    message.status = TTContactsStatus::GOODBYE;
+                    mSharedMem->send(reinterpret_cast<void*>(&message));
                     break; // Forced exit
                 }
                 if (!mSharedMem->send(reinterpret_cast<void*>(message.get()))) {

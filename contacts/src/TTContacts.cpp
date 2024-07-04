@@ -48,6 +48,10 @@ bool TTContacts::handle(const TTContactsMessage& message) {
     if (message.status == TTContactsStatus::HEARTBEAT) {
         LOG_INFO("Received heartbeat message");
         return false;
+    } else if (message.status == TTContactsStatus::GOODBYE) {
+        LOG_INFO("Received goodbye message");
+        stop();
+        return false;
     } else {
         if (message.status == TTContactsStatus::ACTIVE && message.id >= mContacts.size()) {
             std::string nickname(message.data, message.data + message.dataLength);
