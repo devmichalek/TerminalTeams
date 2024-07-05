@@ -86,7 +86,7 @@ if ! [ -z "${IP_ADDRESS}" ]; then
 fi
 
 if [ -z "${INTERFACE}" ]; then
-    NEIGHBORS=$(ip neigh)
+    NEIGHBORS=$(ip -4 neigh)
     if [ ${#NEIGHBORS[@]} -lt 1 ]; then
         echo "Error: No neighbors have been found!"
         echo "Info: Please specify interface you want to use using -i option"

@@ -1,5 +1,6 @@
 #pragma once
 #include <grpcpp/grpcpp.h>
+#include <optional>
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
@@ -34,17 +35,17 @@ public:
     // Heartbeat message handler
     virtual bool handleHeartbeat(const TTHeartbeatMessage& message);
     // Returns root nickname
-    virtual const std::string& getNickname() const;
+    virtual std::string getNickname() const;
     // Returns root identity
-    virtual const std::string& getIdentity() const;
+    virtual std::string getIdentity() const;
     // Returns root IP address and port
-    virtual const std::string& getIpAddressAndPort() const;
+    virtual std::string getIpAddressAndPort() const;
 private:
     std::unique_ptr<NeighborsDiscovery::Stub> createStub(const std::string& ipAddressAndPort);
-    TTGreetMessage sendGreet(NeighborsDiscovery::Stub* stub);
-    TTGreetMessage sendGreet(const std::string& ipAddressAndPort);
-    TTHeartbeatMessage sendHeartbeat(const std::string& ipAddressAndPort);
-    TTHeartbeatMessage sendHeartbeat(NeighborsDiscovery::Stub* stub);
+    std::optional<TTGreetMessage> sendGreet(std::unique_ptr<NeighborsDiscovery::Stub>& stub);
+    std::optional<TTGreetMessage> sendGreet(const std::string& ipAddressAndPort);
+    std::optional<TTHeartbeatMessage> sendHeartbeat(std::unique_ptr<NeighborsDiscovery::Stub>& stub);
+    std::optional<TTHeartbeatMessage> sendHeartbeat(const std::string& ipAddressAndPort);
     bool addNeighbor(const TTGreetMessage& message);
     size_t getNeighborsCount() const;
     std::atomic<bool> mStopped;

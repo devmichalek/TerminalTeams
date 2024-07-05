@@ -238,6 +238,7 @@ size_t TTContactsHandler::current() const {
 }
 
 size_t TTContactsHandler::size() const {
+    std::shared_lock contactsLock(mContactsMutex);
     return mContacts.size();
 }
 

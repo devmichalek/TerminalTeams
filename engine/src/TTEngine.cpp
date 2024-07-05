@@ -12,30 +12,30 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
     mTextBox = std::make_unique<TTTextBoxHandler>(settings.getTextBoxSettings(),
         std::bind(&TTEngine::mailbox, this, _1),
         std::bind(&TTEngine::switcher, this, _1));
-    mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
-    mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
-    // Create first contact
+    LOG_INFO("Creating first contact and broadcasters...");
     {
         const auto i = settings.getInterface();
         mContacts->create(settings.getNickname(), settings.getIdentity(), i.getIpAddressAndPort());
         mContacts->select(0);
         mChat->create(0);
+        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
+        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
     }
-    // Set server thread
+    LOG_INFO("Setting server thread...");
     {
         std::promise<void> serverPromise;
         mBlockers.push_back(serverPromise.get_future());
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
         mThreads.back().detach();
     }
-    // Set broadcaster chat thread
+    LOG_INFO("Setting broadcaster chat thread...");
     {
         std::promise<void> broadcasterPromise;
         mBlockers.push_back(broadcasterPromise.get_future());
         mThreads.push_back(std::thread(&TTEngine::chat, this, std::move(broadcasterPromise)));
         mThreads.back().detach();
     }
-    // Set broadcaster discovery thread
+    LOG_INFO("Setting broadcaster discovery thread...");
     {
         std::promise<void> broadcasterPromise;
         mBlockers.push_back(broadcasterPromise.get_future());
@@ -101,7 +101,7 @@ void TTEngine::server(std::promise<void> promise) {
     grpc::EnableDefaultHealthCheckService(true);
     grpc::reflection::InitProtoReflectionServerBuilderPlugin();
     grpc::ServerBuilder builder;
-    LOG_INFO("Listening on the given address without any authentication mechanism...");
+    LOG_INFO("Listening on {} without any authentication mechanism...", mBroadcasterDiscovery->getIpAddressAndPort());
     builder.AddListeningPort(mBroadcasterDiscovery->getIpAddressAndPort(), grpc::InsecureServerCredentials());
     LOG_INFO("Registering synchronous services...");
     TTNeighborsServiceChat neighborsServiceChat(*mBroadcasterChat);

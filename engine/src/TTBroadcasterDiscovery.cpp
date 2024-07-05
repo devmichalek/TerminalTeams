@@ -8,13 +8,16 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
     LOG_INFO("Constructing...");
     for (const auto& neighbor : neighbors) {
         auto greetResult = sendGreet(neighbor);
-        addNeighbor(greetResult);
+        if (greetResult) {
+            addNeighbor(*greetResult);
+        }
     }
     LOG_INFO("Successfully constructed!");
 }
 
 TTBroadcasterDiscovery::~TTBroadcasterDiscovery() {
     LOG_INFO("Destructing...");
+    stop();
     LOG_INFO("Successfully destructed!");
 }
 
@@ -26,7 +29,8 @@ void TTBroadcasterDiscovery::run(const size_t neighborOffset) {
         for (size_t i = 0; i < count; ++i) {
             if (mTimestampTrials[i]) {
                 if (mTimestamps[i].expired()) {
-                    if (!sendHeartbeat(mStubs[i].get()).identity.empty()) {
+                    const auto res = sendHeartbeat(mStubs[i]);
+                    if (res && !res->identity.empty()) {
                         mTimestampTrials[i] = TIMESTAMP_TRIALS;
                         if (!mContactsHandler.activate(i + neighborOffset)) {
                             stop();
@@ -86,73 +90,99 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatMessage& message) 
     return true;
 }
 
-const std::string& TTBroadcasterDiscovery::getNickname() const {
-    decltype(auto) opt = mContactsHandler.get(0);
+std::string TTBroadcasterDiscovery::getNickname() const {
+    auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
         throw std::runtime_error("TTBroadcasterDiscovery: Failed to get nickname!");
+        return {};
     }
     return opt->nickname;
 }
 
-const std::string& TTBroadcasterDiscovery::getIdentity() const {
-    decltype(auto) opt = mContactsHandler.get(0);
+std::string TTBroadcasterDiscovery::getIdentity() const {
+    auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
         throw std::runtime_error("TTBroadcasterDiscovery: Failed to get identity!");
+        return {};
     }
     return opt->identity;
 }
 
-const std::string& TTBroadcasterDiscovery::getIpAddressAndPort() const {
-    decltype(auto) opt = mContactsHandler.get(0);
+std::string TTBroadcasterDiscovery::getIpAddressAndPort() const {
+    auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
         throw std::runtime_error("TTBroadcasterDiscovery: Failed to get IP address and port!");
+        return {};
     }
     return opt->ipAddressAndPort;
 }
 
 std::unique_ptr<NeighborsDiscovery::Stub> TTBroadcasterDiscovery::createStub(const std::string& ipAddressAndPort) {
-    auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
-    return NeighborsDiscovery::NewStub(channel);
-}
-
-TTGreetMessage TTBroadcasterDiscovery::sendGreet(NeighborsDiscovery::Stub* stub) {
-    GreetRequest request;
-    request.set_nickname(getNickname());
-    request.set_identity(getIdentity());
-    request.set_ipaddressandport(getIpAddressAndPort());
-    GreetReply reply;
-    grpc::ClientContext context;
-    grpc::Status status = stub->Greet(&context, request, &reply);
-    TTGreetMessage result;
-    if (status.ok()) {
-      result.nickname = reply.nickname();
-      result.identity = reply.identity();
-      result.ipAddressAndPort = reply.ipaddressandport();
+    try {
+        auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
+        return NeighborsDiscovery::NewStub(channel);
+    } catch (...) {
+        LOG_WARNING("Failed to create stub to {}!", ipAddressAndPort);
+        return {};
     }
-    return result;
 }
 
-TTGreetMessage TTBroadcasterDiscovery::sendGreet(const std::string& ipAddressAndPort) {
-    auto stub = createStub(ipAddressAndPort);
-    return sendGreet(stub.get());
-}
-
-TTHeartbeatMessage TTBroadcasterDiscovery::sendHeartbeat(NeighborsDiscovery::Stub* stub) {
-    HeartbeatRequest request;
-    request.set_identity(getIdentity());
-    HeartbeatReply reply;
-    grpc::ClientContext context;
-    grpc::Status status = stub->Heartbeat(&context, request, &reply);
-    TTHeartbeatMessage result;
-    if (status.ok()) {
-      result.identity = reply.identity();
+std::optional<TTGreetMessage> TTBroadcasterDiscovery::sendGreet(std::unique_ptr<NeighborsDiscovery::Stub>& stub) {
+    try {
+        GreetRequest request;
+        request.set_nickname(getNickname());
+        request.set_identity(getIdentity());
+        request.set_ipaddressandport(getIpAddressAndPort());
+        GreetReply reply;
+        grpc::ClientContext context;
+        grpc::Status status = stub->Greet(&context, request, &reply);
+        TTGreetMessage result;
+        if (status.ok()) {
+            result.nickname = reply.nickname();
+            result.identity = reply.identity();
+            result.ipAddressAndPort = reply.ipaddressandport();
+        }
+        return result;
+    } catch (...) {
+        LOG_ERROR("Exception occurred while sending greet!");
+        return {};
     }
-    return result;
 }
 
-TTHeartbeatMessage TTBroadcasterDiscovery::sendHeartbeat(const std::string& ipAddressAndPort) {
+std::optional<TTGreetMessage> TTBroadcasterDiscovery::sendGreet(const std::string& ipAddressAndPort) {
+    LOG_INFO("Sending greet to the {}", ipAddressAndPort);
     auto stub = createStub(ipAddressAndPort);
-    return sendHeartbeat(stub.get());
+    if (!stub) {
+        return {};
+    }
+    return sendGreet(stub);
+}
+
+std::optional<TTHeartbeatMessage> TTBroadcasterDiscovery::sendHeartbeat(std::unique_ptr<NeighborsDiscovery::Stub>& stub) {
+    try {
+        HeartbeatRequest request;
+        request.set_identity(getIdentity());
+        HeartbeatReply reply;
+        grpc::ClientContext context;
+        grpc::Status status = stub->Heartbeat(&context, request, &reply);
+        TTHeartbeatMessage result;
+        if (status.ok()) {
+            result.identity = reply.identity();
+        }
+        return result;
+    } catch (...) {
+        LOG_ERROR("Exception occurred while sending greet!");
+        return {};
+    }
+}
+
+std::optional<TTHeartbeatMessage> TTBroadcasterDiscovery::sendHeartbeat(const std::string& ipAddressAndPort) {
+    LOG_INFO("Sending heartbeat to the {}", ipAddressAndPort);
+    auto stub = createStub(ipAddressAndPort);
+    if (!stub) {
+        return {};
+    }
+    return sendHeartbeat(stub);
 }
 
 bool TTBroadcasterDiscovery::addNeighbor(const TTGreetMessage& message) {
@@ -160,6 +190,7 @@ bool TTBroadcasterDiscovery::addNeighbor(const TTGreetMessage& message) {
         return false;
     }
 
+    LOG_INFO("Adding neighbor...");
     {
         std::scoped_lock neighborLock(mNeighborMutex);
         if (mContactsHandler.create(message.nickname, message.identity, message.ipAddressAndPort)) {

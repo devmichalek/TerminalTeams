@@ -9,6 +9,7 @@ TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatH
 
 TTBroadcasterChat::~TTBroadcasterChat() {
     LOG_INFO("Destructing...");
+    stop();
     LOG_INFO("Successfully destructed!");
 }
 
@@ -30,15 +31,17 @@ bool TTBroadcasterChat::stopped() const {
 }
 
 bool TTBroadcasterChat::handleTell(const TTNarrateMessage& message) {
+    LOG_INFO("Handling tell...");
     return true;
 }
 
 bool TTBroadcasterChat::handleNarrate(const TTNarrateMessages& messages) {
+    LOG_INFO("Handling narrate...");
     return true;
 }
 
-const std::string& TTBroadcasterChat::getIdentity() const {
-    decltype(auto) opt = mContactsHandler.get(0);
+std::string TTBroadcasterChat::getIdentity() const {
+    auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
         throw std::runtime_error("TTBroadcasterDiscovery: Failed to get identity!");
     }
