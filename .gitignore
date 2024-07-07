@@ -8,3 +8,4 @@ install
 !.vscode/c_cpp_properties.json
 venv
 __pycache__
+*_pb2*.*
