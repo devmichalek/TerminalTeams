@@ -40,13 +40,12 @@ bool TTContactsHandler::create(const std::string& nickname, const std::string& i
     LOG_INFO("Called create nickname={}, identity={}, ipAddressAndPort={}", nickname, identity, ipAddressAndPort);
     std::scoped_lock contactsLock(mContactsMutex);
     TTContactsMessage message;
-    message.status = TTContactsStatus::ACTIVE;
-    message.id = mContacts.size();
-    message.dataLength = nickname.size();
-    memset(&message.data[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
-    memcpy(&message.data[0], nickname.c_str(), message.dataLength);
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(TTContactsState::ACTIVE);
+    message.setIdentity(mContacts.size());
+    message.setNickname(nickname);
     mContacts.emplace_back(nickname, identity, ipAddressAndPort);
-    mIdentityMap[identity] = message.id;
+    mIdentityMap[identity] = message.getIdentity();
     return send(message);
 }
 
@@ -57,24 +56,25 @@ bool TTContactsHandler::send(size_t id) {
         return false;
     }
 
-    switch (mContacts[id].status) {
-        case TTContactsStatus::SELECTED_ACTIVE: return true;
-        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return true;
-        case TTContactsStatus::ACTIVE:
-        case TTContactsStatus::INACTIVE:
-        case TTContactsStatus::UNREAD_MSG_ACTIVE:
-        case TTContactsStatus::UNREAD_MSG_INACTIVE:
-        case TTContactsStatus::PENDING_MSG_INACTIVE:
+    switch (mContacts[id].state) {
+        case TTContactsState::SELECTED_ACTIVE: return true;
+        case TTContactsState::SELECTED_INACTIVE: mContacts[id].state = TTContactsState::PENDING_MSG_INACTIVE; break;
+        case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: return true;
+        case TTContactsState::ACTIVE:
+        case TTContactsState::INACTIVE:
+        case TTContactsState::UNREAD_MSG_ACTIVE:
+        case TTContactsState::UNREAD_MSG_INACTIVE:
+        case TTContactsState::PENDING_MSG_INACTIVE:
         default:
-            LOG_ERROR("Failed to change contact status from {} on send", size_t(mContacts[id].status));
+            LOG_ERROR("Failed to change contact state from {} on send", size_t(mContacts[id].state));
             return false;
     }
 
     mContacts[id].sentMessages++;
     TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(mContacts[id].state);
+    message.setIdentity(id);
     return send(message);
 }
 
@@ -85,24 +85,25 @@ bool TTContactsHandler::receive(size_t id) {
         return false;
     }
 
-    switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: return true;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return true;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE:
-        case TTContactsStatus::PENDING_MSG_INACTIVE:
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
-        case TTContactsStatus::SELECTED_INACTIVE:
-        case TTContactsStatus::INACTIVE:
+    switch (mContacts[id].state) {
+        case TTContactsState::ACTIVE: mContacts[id].state = TTContactsState::UNREAD_MSG_ACTIVE; break;
+        case TTContactsState::SELECTED_ACTIVE: return true;
+        case TTContactsState::UNREAD_MSG_ACTIVE: return true;
+        case TTContactsState::UNREAD_MSG_INACTIVE:
+        case TTContactsState::PENDING_MSG_INACTIVE:
+        case TTContactsState::SELECTED_PENDING_MSG_INACTIVE:
+        case TTContactsState::SELECTED_INACTIVE:
+        case TTContactsState::INACTIVE:
         default:
-            LOG_ERROR("Failed to change contact status from {} on receive", size_t(mContacts[id].status));
+            LOG_ERROR("Failed to change contact state from {} on receive", size_t(mContacts[id].state));
             return false;
     }
 
     mContacts[id].receivedMessages++;
     TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(mContacts[id].state);
+    message.setIdentity(id);
     return send(message);
 }
 
@@ -113,23 +114,24 @@ bool TTContactsHandler::activate(size_t id) {
         return false;
     }
 
-    switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: return true;
-        case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE: return true;
-        case TTContactsStatus::SELECTED_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: return true;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_ACTIVE; break;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::ACTIVE; break;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
+    switch (mContacts[id].state) {
+        case TTContactsState::ACTIVE: return true;
+        case TTContactsState::INACTIVE: mContacts[id].state = TTContactsState::ACTIVE; break;
+        case TTContactsState::SELECTED_ACTIVE: return true;
+        case TTContactsState::SELECTED_INACTIVE: mContacts[id].state = TTContactsState::SELECTED_ACTIVE; break;
+        case TTContactsState::UNREAD_MSG_ACTIVE: return true;
+        case TTContactsState::UNREAD_MSG_INACTIVE: mContacts[id].state = TTContactsState::UNREAD_MSG_ACTIVE; break;
+        case TTContactsState::PENDING_MSG_INACTIVE: mContacts[id].state = TTContactsState::ACTIVE; break;
+        case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: mContacts[id].state = TTContactsState::SELECTED_ACTIVE; break;
         default:
-            LOG_ERROR("Failed to change contact status from {} on activate", size_t(mContacts[id].status));
+            LOG_ERROR("Failed to change contact state from {} on activate", size_t(mContacts[id].state));
             return false;
     }
 
     TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(mContacts[id].state);
+    message.setIdentity(id);
     return send(message);
 }
 
@@ -140,23 +142,24 @@ bool TTContactsHandler::deactivate(size_t id) {
         return false;
     }
 
-    switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::INACTIVE; break;
-        case TTContactsStatus::INACTIVE: return true;
-        case TTContactsStatus::SELECTED_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::SELECTED_INACTIVE: return true;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::UNREAD_MSG_INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: return true;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: return true;
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: return true;
+    switch (mContacts[id].state) {
+        case TTContactsState::ACTIVE: mContacts[id].state = TTContactsState::INACTIVE; break;
+        case TTContactsState::INACTIVE: return true;
+        case TTContactsState::SELECTED_ACTIVE: mContacts[id].state = TTContactsState::SELECTED_INACTIVE; break;
+        case TTContactsState::SELECTED_INACTIVE: return true;
+        case TTContactsState::UNREAD_MSG_ACTIVE: mContacts[id].state = TTContactsState::UNREAD_MSG_INACTIVE; break;
+        case TTContactsState::UNREAD_MSG_INACTIVE: return true;
+        case TTContactsState::PENDING_MSG_INACTIVE: return true;
+        case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: return true;
         default:
-            LOG_ERROR("Failed to change contact status from {} on deactivate", size_t(mContacts[id].status));
+            LOG_ERROR("Failed to change contact state from {} on deactivate", size_t(mContacts[id].state));
             return false;
     }
 
     TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(mContacts[id].state);
+    message.setIdentity(id);
     return send(message);
 }
 
@@ -170,22 +173,23 @@ bool TTContactsHandler::select(size_t id) {
     // Unselect
     mPreviousContact = mCurrentContact;
     if (mPreviousContact != std::numeric_limits<size_t>::max()) {
-        switch (mContacts[mPreviousContact].status) {
-            case TTContactsStatus::SELECTED_ACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::ACTIVE; break;
-            case TTContactsStatus::SELECTED_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::INACTIVE; break;
-            case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].status = TTContactsStatus::PENDING_MSG_INACTIVE; break;
-            case TTContactsStatus::ACTIVE:
-            case TTContactsStatus::INACTIVE:
-            case TTContactsStatus::UNREAD_MSG_ACTIVE:
-            case TTContactsStatus::UNREAD_MSG_INACTIVE:
-            case TTContactsStatus::PENDING_MSG_INACTIVE:
+        switch (mContacts[mPreviousContact].state) {
+            case TTContactsState::SELECTED_ACTIVE: mContacts[mPreviousContact].state = TTContactsState::ACTIVE; break;
+            case TTContactsState::SELECTED_INACTIVE: mContacts[mPreviousContact].state = TTContactsState::INACTIVE; break;
+            case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].state = TTContactsState::PENDING_MSG_INACTIVE; break;
+            case TTContactsState::ACTIVE:
+            case TTContactsState::INACTIVE:
+            case TTContactsState::UNREAD_MSG_ACTIVE:
+            case TTContactsState::UNREAD_MSG_INACTIVE:
+            case TTContactsState::PENDING_MSG_INACTIVE:
             default:
-                LOG_ERROR("Failed to change contact status from {} on unselect", size_t(mContacts[mPreviousContact].status));
+                LOG_ERROR("Failed to change contact state from {} on unselect", size_t(mContacts[mPreviousContact].state));
                 return false;
         }
         TTContactsMessage message;
-        message.status = mContacts[mPreviousContact].status;
-        message.id = mPreviousContact;
+        message.setStatus(TTContactsStatus::STATE);
+        message.setState(mContacts[mPreviousContact].state);
+        message.setIdentity(mPreviousContact);
         if (!send(message)) {
             return false;
         }
@@ -193,22 +197,23 @@ bool TTContactsHandler::select(size_t id) {
     
     // Select
     mCurrentContact = id;
-    switch (mContacts[id].status) {
-        case TTContactsStatus::ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
-        case TTContactsStatus::INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_ACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_ACTIVE; break;
-        case TTContactsStatus::UNREAD_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_INACTIVE; break;
-        case TTContactsStatus::PENDING_MSG_INACTIVE: mContacts[id].status = TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE; break;
-        case TTContactsStatus::SELECTED_ACTIVE:
-        case TTContactsStatus::SELECTED_INACTIVE:
-        case TTContactsStatus::SELECTED_PENDING_MSG_INACTIVE:
+    switch (mContacts[id].state) {
+        case TTContactsState::ACTIVE: mContacts[id].state = TTContactsState::SELECTED_ACTIVE; break;
+        case TTContactsState::INACTIVE: mContacts[id].state = TTContactsState::SELECTED_INACTIVE; break;
+        case TTContactsState::UNREAD_MSG_ACTIVE: mContacts[id].state = TTContactsState::SELECTED_ACTIVE; break;
+        case TTContactsState::UNREAD_MSG_INACTIVE: mContacts[id].state = TTContactsState::SELECTED_INACTIVE; break;
+        case TTContactsState::PENDING_MSG_INACTIVE: mContacts[id].state = TTContactsState::SELECTED_PENDING_MSG_INACTIVE; break;
+        case TTContactsState::SELECTED_ACTIVE:
+        case TTContactsState::SELECTED_INACTIVE:
+        case TTContactsState::SELECTED_PENDING_MSG_INACTIVE:
         default:
-            LOG_ERROR("Failed to change contact status from {} on select", size_t(mContacts[id].status));
+            LOG_ERROR("Failed to change contact state from {} on select", size_t(mContacts[id].state));
             return false;
     }
     TTContactsMessage message;
-    message.status = mContacts[id].status;
-    message.id = id;
+    message.setStatus(TTContactsStatus::STATE);
+    message.setState(mContacts[id].state);
+    message.setIdentity(id);
     return send(message);
 }
 
@@ -269,7 +274,7 @@ void TTContactsHandler::heartbeat() {
     try {
         while (!stopped()) {
             TTContactsMessage message;
-            message.status = TTContactsStatus::HEARTBEAT;
+            message.setStatus(TTContactsStatus::HEARTBEAT);
             if (!send(message)) {
                 break;
             }
@@ -299,7 +304,7 @@ void TTContactsHandler::main() {
                 if (stopped()) {
                     exit = true;
                     TTContactsMessage message;
-                    message.status = TTContactsStatus::GOODBYE;
+                    message.setStatus(TTContactsStatus::GOODBYE);
                     mSharedMem->send(reinterpret_cast<void*>(&message));
                     break; // Forced exit
                 }
@@ -314,7 +319,7 @@ void TTContactsHandler::main() {
                 if (stopped()) {
                     exit = true;
                     TTContactsMessage message;
-                    message.status = TTContactsStatus::GOODBYE;
+                    message.setStatus(TTContactsStatus::GOODBYE);
                     mSharedMem->send(reinterpret_cast<void*>(&message));
                     break; // Forced exit
                 }
@@ -335,6 +340,6 @@ void TTContactsHandler::main() {
 bool TTContactsHandler::establish() {
     LOG_INFO("Establishing connection...");
     TTContactsMessage message;
-    message.status = TTContactsStatus::HEARTBEAT;
+    message.setStatus(TTContactsStatus::HEARTBEAT);
     return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
 }

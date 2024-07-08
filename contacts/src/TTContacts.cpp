@@ -45,26 +45,29 @@ size_t TTContacts::size() const {
 }
 
 bool TTContacts::handle(const TTContactsMessage& message) {
-    if (message.status == TTContactsStatus::HEARTBEAT) {
-        LOG_INFO("Received heartbeat message");
-        return false;
-    } else if (message.status == TTContactsStatus::GOODBYE) {
-        LOG_INFO("Received goodbye message");
-        stop();
-        return false;
-    } else {
-        if (message.status == TTContactsStatus::ACTIVE && message.id >= mContacts.size()) {
-            std::string nickname(message.data, message.data + message.dataLength);
-            auto newContact = std::make_tuple(message.id, nickname, message.status);
-            mContacts.push_back(newContact);
-            LOG_INFO("Received new contact message id={}, nickname={}, status={}", message.id, nickname, (size_t)message.status);
-        } else {
-            auto& contact = mContacts[message.id];
-            std::get<2>(contact) = message.status;
-            LOG_INFO("Received update contact message id={}, status={}", message.id, (size_t)message.status);
-        }
+    switch (message.getStatus()) {
+        case TTContactsStatus::STATE:
+            if (message.getState() == TTContactsState::ACTIVE && message.getIdentity() >= mContacts.size()) {
+                mContacts.push_back({message.getIdentity(), message.getNickname(), message.getState()});
+                LOG_INFO("Received new contact message id={}, nickname={}, state={}", message.getIdentity(), message.getNickname(), (size_t)message.getState());
+            } else {
+                auto& contact = mContacts[message.getIdentity()];
+                std::get<2>(contact) = message.getState();
+                LOG_INFO("Received update contact message id={}, state={}", message.getIdentity(), (size_t)message.getState());
+            }
+            return true;
+        case TTContactsStatus::HEARTBEAT:
+            LOG_INFO("Received heartbeat message");
+            return false;
+        case TTContactsStatus::GOODBYE:
+            LOG_INFO("Received goodbye message");
+            stop();
+            return false;
+        default:
+            LOG_INFO("Received unknown message");
+            stop();
+            return false;
     }
-    return true;
 }
 
 void TTContacts::refresh() {

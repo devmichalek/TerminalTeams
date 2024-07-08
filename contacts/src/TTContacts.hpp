@@ -41,5 +41,5 @@ private:
     size_t mTerminalWidth;
     size_t mTerminalHeight;
     // Contacts data
-    std::vector<std::tuple<size_t, std::string, TTContactsStatus>> mContacts;
+    std::vector<std::tuple<size_t, std::string, TTContactsState>> mContacts;
 };

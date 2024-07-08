@@ -1,5 +1,5 @@
 #pragma once
-#include "TTContactsStatus.hpp"
+#include "TTContactsState.hpp"
 #include <string>
 
 // Dictionary entry
@@ -9,11 +9,11 @@ struct TTContactsEntry final {
     std::string ipAddressAndPort;
     size_t sentMessages;
     size_t receivedMessages;
-    TTContactsStatus status;
+    TTContactsState state;
     TTContactsEntry(std::string nickname, std::string identity, std::string ipAddressAndPort) :
         nickname(nickname), identity(identity),
         ipAddressAndPort(ipAddressAndPort), sentMessages(0), receivedMessages(0),
-        status(TTContactsStatus::ACTIVE) {}
+        state(TTContactsState::ACTIVE) {}
     ~TTContactsEntry() = default;
     TTContactsEntry(const TTContactsEntry&) = default;
     TTContactsEntry(TTContactsEntry&&) = default;
