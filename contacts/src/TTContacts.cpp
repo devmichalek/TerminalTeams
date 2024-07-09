@@ -40,19 +40,14 @@ bool TTContacts::stopped() const {
     return mStopped.load();
 }
 
-size_t TTContacts::size() const {
-    return mContacts.size();
-}
-
 bool TTContacts::handle(const TTContactsMessage& message) {
     switch (message.getStatus()) {
         case TTContactsStatus::STATE:
-            if (message.getState() == TTContactsState::ACTIVE && message.getIdentity() >= mContacts.size()) {
-                mContacts.push_back({message.getIdentity(), message.getNickname(), message.getState()});
+            if (message.getState() == TTContactsState::ACTIVE && message.getIdentity() >= mEntries.size()) {
+                mEntries.emplace_back(message.getIdentity(), message.getState(), message.getNickname());
                 LOG_INFO("Received new contact message id={}, nickname={}, state={}", message.getIdentity(), message.getNickname(), (size_t)message.getState());
             } else {
-                auto& contact = mContacts[message.getIdentity()];
-                std::get<2>(contact) = message.getState();
+                mEntries[message.getIdentity()].state = message.getState();
                 LOG_INFO("Received update contact message id={}, state={}", message.getIdentity(), (size_t)message.getState());
             }
             return true;
@@ -71,13 +66,13 @@ bool TTContacts::handle(const TTContactsMessage& message) {
 }
 
 void TTContacts::refresh() {
-    LOG_INFO("Started refreshing window, number of contacts={}", size());
+    LOG_INFO("Started refreshing window, number of entries={}", mEntries.size());
     mOutputStream.clear();
     const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
-    for (auto &contact : mContacts) {
-        mOutputStream.print("#").print(std::to_string(std::get<0>(contact)));
-        mOutputStream.print(" ").print(std::get<1>(contact));
-        mOutputStream.print(" ").print(statuses[static_cast<size_t>(std::get<2>(contact))]);
+    for (auto &entry : mEntries) {
+        mOutputStream.print("#").print(std::to_string(entry.identity));
+        mOutputStream.print(" ").print(entry.nickname);
+        mOutputStream.print(" ").print(statuses[static_cast<size_t>(entry.state)]);
         mOutputStream.endl();
     }
 }

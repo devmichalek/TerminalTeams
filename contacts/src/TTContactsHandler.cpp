@@ -217,7 +217,7 @@ bool TTContactsHandler::select(size_t id) {
     return send(message);
 }
 
-std::optional<TTContactsEntry> TTContactsHandler::get(size_t id) const {
+std::optional<TTContactsHandlerEntry> TTContactsHandler::get(size_t id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
     if (id >= mContacts.size()) {

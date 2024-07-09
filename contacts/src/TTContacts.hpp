@@ -1,5 +1,6 @@
 #pragma once
 #include "TTContactsSettings.hpp"
+#include "TTContactsEntry.hpp"
 #include "TTUtilsSharedMem.hpp"
 #include "TTContactsMessage.hpp"
 #include "TTUtilsOutputStream.hpp"
@@ -24,8 +25,6 @@ public:
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
-    // Returns number of contacts
-    virtual size_t size() const;
 private:
     // Handles new message, return true if refresh is needed
     bool handle(const TTContactsMessage& message);
@@ -41,5 +40,5 @@ private:
     size_t mTerminalWidth;
     size_t mTerminalHeight;
     // Contacts data
-    std::vector<std::tuple<size_t, std::string, TTContactsState>> mContacts;
+    std::vector<TTContactsEntry> mEntries;
 };
