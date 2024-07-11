@@ -1,0 +1,32 @@
+@startuml
+
+ACTIVE : Active contact, no unread/pending\nmessages, not selected
+INACTIVE : Inactive contact, no unread/pending\nmessages, not selected
+SELECTED_ACTIVE : Active contact, no unread/pending\nmessages, selected
+SELECTED_INACTIVE : Inactive contact, no unread/pending\nmessages, selected
+UNREAD_MSG_ACTIVE : Active contact, unread messages,\nno pending messages, not selected
+UNREAD_MSG_INACTIVE : Inactive contact, unread messages,\nno pending messages, not selected
+PENDING_MSG_INACTIVE : Inactive contact, no unread messages,\npending messages, not selected
+SELECTED_PENDING_MSG_INACTIVE : Inactive contact, no unread messages,\npending messages, selected
+
+[*] --> ACTIVE
+ACTIVE --> INACTIVE
+ACTIVE --> SELECTED_ACTIVE
+ACTIVE --> UNREAD_MSG_ACTIVE
+INACTIVE --> ACTIVE
+INACTIVE --> SELECTED_INACTIVE
+SELECTED_ACTIVE --> SELECTED_INACTIVE
+SELECTED_ACTIVE --> ACTIVE
+SELECTED_INACTIVE --> PENDING_MSG_INACTIVE
+SELECTED_INACTIVE --> SELECTED_ACTIVE
+SELECTED_INACTIVE --> INACTIVE
+UNREAD_MSG_ACTIVE --> UNREAD_MSG_INACTIVE
+UNREAD_MSG_ACTIVE --> SELECTED_ACTIVE
+UNREAD_MSG_INACTIVE --> UNREAD_MSG_ACTIVE
+UNREAD_MSG_INACTIVE --> SELECTED_INACTIVE
+PENDING_MSG_INACTIVE --> ACTIVE
+PENDING_MSG_INACTIVE --> SELECTED_PENDING_MSG_INACTIVE
+SELECTED_PENDING_MSG_INACTIVE --> SELECTED_ACTIVE
+SELECTED_PENDING_MSG_INACTIVE --> PENDING_MSG_INACTIVE
+
+@enduml

@@ -1,0 +1,39 @@
+@startuml
+
+package TTContactsBundle <<Rectangle>> {
+  class TTContacts
+  struct TTContactsMessage
+  struct TTContactsEntry
+  class TTContactsSettings
+  enum TTContactsStatus
+  enum TTContactsState
+}
+
+package TTDiagnosticsBundle <<Rectangle>> {
+  class TTDiagnosticsLogger
+}
+
+package TTUtilsBundle <<Rectangle>> {
+  class TTUtilsOutputStream
+  class TTUtilsSyscall
+  class TTUtilsSharedMem
+}
+
+TTContacts o-- TTUtilsOutputStream
+TTContacts o-- TTUtilsSharedMem
+TTContacts o-- TTContactsStatus
+TTContacts *-- TTContactsEntry
+TTContacts <.. TTDiagnosticsLogger
+TTContacts <.. TTContactsSettings
+TTContacts <.. TTContactsMessage
+TTContactsSettings <.. TTUtilsSyscall
+TTContactsSettings <.. TTUtilsSharedMem
+TTContactsSettings <.. TTUtilsOutputStream
+TTContactsSettings <.. TTContactsMessage
+TTContactsMessage o-- TTContactsStatus
+TTContactsMessage o-- TTContactsState
+TTUtilsSharedMem o-- TTUtilsSyscall
+TTUtilsSharedMem <.. TTDiagnosticsLogger
+TTContactsEntry o-- TTContactsState
+
+@enduml

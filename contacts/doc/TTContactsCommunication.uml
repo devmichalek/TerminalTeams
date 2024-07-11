@@ -1,0 +1,125 @@
+@startuml
+!pragma teoz true
+
+== Initialization ==
+note left of TTContactsHandler
+Only one attempt will be made
+to create and open shared memory
+end note
+TTContactsHandler -> TTUtilsSharedMem : create and open
+activate TTContactsHandler #FFBBBB
+note right of TTContacts
+Up to five attempts will be
+made to open shared memory
+end note
+{first_open} TTContacts -> TTUtilsSharedMem : open
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : failure
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+{second_open} TTContacts -> TTUtilsSharedMem : open
+{first_open} <-> {second_open} : 1000 ms
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+note right of TTContacts
+Up to three attempts are
+made to receive any message
+after last successful receive
+end note
+{first_receive} TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : failure
+note left of TTContactsHandler
+Attempt to send one heartbeat message
+to check if connection can be established
+end note
+TTContactsHandler -> TTUtilsSharedMem : send(heartbeat)
+activate TTContactsHandler #FFBBBB
+{second_receive} TTContacts -> TTUtilsSharedMem : receive
+{first_receive} <-> {second_receive} : 1000 ms
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+
+== Communication ==
+TTContactsHandler -> TTContactsHandler : start heartbeat thread
+activate TTContactsHandler #005500
+deactivate TTContactsHandler
+TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : failure
+TTContactsHandler -> TTContactsHandler : start main thread
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+deactivate TTContactsHandler
+TTUtilsSharedMem -> TTContacts : failure
+
+TTContactsHandler -> TTContactsHandler : queue(heartbeat)
+activate TTContactsHandler #005500
+deactivate TTContactsHandler
+TTContactsHandler -> TTUtilsSharedMem : send(heartbeat)
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+
+note left of TTContactsHandler
+Each external call is async
+end note
+[o-> TTContactsHandler : create contact
+activate TTContactsHandler #FFBBBB
+TTContactsHandler -> TTContactsHandler : queue(create contact)
+deactivate TTContactsHandler
+[o-> TTContactsHandler : activate contact
+activate TTContactsHandler #FFBBBB
+TTContactsHandler -> TTContactsHandler : queue(activate contact)
+deactivate TTContactsHandler
+note left of TTContactsHandler
+Up to three attempts are
+made to send any message
+after last successful send
+end note
+TTContactsHandler -> TTUtilsSharedMem : send(create contact)
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTContactsHandler -> TTContactsHandler : queue(heartbeat)
+activate TTContactsHandler #005500
+deactivate TTContactsHandler
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTContacts -> TTContacts : create contact
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+TTContactsHandler -> TTUtilsSharedMem : send(activate contact)
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTContacts -> TTContacts : activate contact
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+[o-> TTContactsHandler : stop
+TTContactsHandler -> TTUtilsSharedMem : send(heartbeat)
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTUtilsSharedMem -> TTContactsHandler : success
+deactivate TTContactsHandler
+TTContactsHandler -> TTUtilsSharedMem : send(goodbye)
+activate TTContactsHandler #gold
+TTContacts -> TTUtilsSharedMem : receive
+activate TTContacts #FFBBBB
+TTUtilsSharedMem -> TTContacts : success
+deactivate TTContacts
+TTUtilsSharedMem -> TTContactsHandler : success
+TTContacts -> TTContacts : stop
+deactivate TTContactsHandler
+
+@enduml
