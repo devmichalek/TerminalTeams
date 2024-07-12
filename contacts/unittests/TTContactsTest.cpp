@@ -14,9 +14,7 @@ using ::testing::Return;
 class TTContactsTest : public Test {
  protected:
     TTContactsTest() {
-        const int argc = 4;
-        const char* argv[] = {"", "0", "0", "contacts"};
-        mSettingsMock = std::make_shared<TTContactsSettingsMock>(argc, argv);
+        mSettingsMock = std::make_shared<TTContactsSettingsMock>();
         mSharedMemMock = std::make_shared<TTUtilsSharedMemMock>();
         mOutputStreamMock = std::make_shared<TTUtilsOutputStreamMock>();
     }
@@ -52,5 +50,3 @@ TEST_F(TTContactsTest, SharedMemoryInitFailed) {
         .WillOnce(Return(false));
     EXPECT_THROW(createContacts(), std::runtime_error);
 }
-
-

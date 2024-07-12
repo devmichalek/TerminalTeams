@@ -13,7 +13,7 @@
 
 class TTContacts {
 public:
-    explicit TTContacts(const TTContactsSettings& settings, const TTUtilsOutputStream& outputStream);
+    explicit TTContacts(TTContactsSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
     TTContacts(TTContacts&&) = delete;
@@ -25,13 +25,15 @@ public:
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
+protected:
+    TTContacts() = default;
 private:
     // Handles new message, return true if refresh is needed
     bool handle(const TTContactsMessage& message);
     // Refreshes window
     void refresh();
     // Output stream
-    const TTUtilsOutputStream& mOutputStream;
+    TTUtilsOutputStream& mOutputStream;
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication

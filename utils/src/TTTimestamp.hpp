@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 
-class TTTimestamp {
+class TTTimestamp final {
 public:
     explicit TTTimestamp(std::chrono::milliseconds threshold) :
             mThreshold{threshold}, mTimestamp{std::chrono::steady_clock::now()} {}

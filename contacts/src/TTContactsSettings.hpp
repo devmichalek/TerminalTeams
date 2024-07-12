@@ -12,7 +12,8 @@ public:
     virtual size_t getTerminalWidth() const { return mWidth; }
     virtual size_t getTerminalHeight() const { return mHeight; }
     virtual std::shared_ptr<TTUtilsSharedMem> getSharedMemory() const;
-    
+protected:
+    TTContactsSettings() = default;
 private:
     size_t mWidth;
     size_t mHeight;

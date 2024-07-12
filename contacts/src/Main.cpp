@@ -27,8 +27,8 @@ int main(int argc, char** argv) {
         sigaction(SIGSTOP, &signalAction, nullptr);
         LOG_INFO("Signal handling initialized");
         // Set contacts
-        const TTContactsSettings settings(argc, argv);
-        const TTUtilsOutputStream outputStream;
+        TTContactsSettings settings(argc, argv);
+        TTUtilsOutputStream outputStream;
         application = std::make_unique<TTContacts>(settings, outputStream);
         LOG_INFO("Contacts initialized");
         // Run main app

@@ -17,7 +17,7 @@
 // Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
-    explicit TTContactsHandler(const TTContactsSettings& settings);
+    explicit TTContactsHandler(TTContactsSettings& settings);
     virtual ~TTContactsHandler();
     TTContactsHandler(const TTContactsHandler&) = delete;
     TTContactsHandler(TTContactsHandler&&) = delete;
@@ -35,6 +35,8 @@ public:
     virtual size_t size() const;
     virtual void stop();
     virtual bool stopped() const;
+protected:
+    TTContactsHandler() = default;
 private:
     // Send generic method
     bool send(const TTContactsMessage& message);

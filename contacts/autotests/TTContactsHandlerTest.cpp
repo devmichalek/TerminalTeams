@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         sigaction(SIGSTOP, &signalAction, nullptr);
         LOG_INFO("Signal handling initialized");
         // Run main app
-        const TTContactsSettings settings(argc, argv);
+        TTContactsSettings settings(argc, argv);
         TTContactsHandler handler(settings);
         LOG_INFO("Contacts handler initialized");
         while (!quitHandle.load()) {

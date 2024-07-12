@@ -11,27 +11,27 @@ public:
     TTUtilsOutputStream& operator=(const TTUtilsOutputStream&) = default;
     TTUtilsOutputStream& operator=(TTUtilsOutputStream&&) = default;
 
-    virtual const TTUtilsOutputStream& print(const char* cmessage) const {
+    virtual TTUtilsOutputStream& print(const char* cmessage) {
         std::cout << cmessage;
         return *this;
     }
 
-    virtual const TTUtilsOutputStream& print(std::string message) const {
+    virtual TTUtilsOutputStream& print(std::string message) {
         std::cout << message;
         return *this;
     }
 
-    virtual const TTUtilsOutputStream& endl() const {
+    virtual TTUtilsOutputStream& endl() {
         std::cout << std::endl;
         return *this;
     }
 
-    virtual const TTUtilsOutputStream& flush() const {
+    virtual TTUtilsOutputStream& flush() {
         std::cout << std::flush;
         return *this;
     }
 
-    virtual const TTUtilsOutputStream& clear() const {
+    virtual TTUtilsOutputStream& clear() {
         print("\033[2J\033[1;1H").flush();
         return *this;
     }

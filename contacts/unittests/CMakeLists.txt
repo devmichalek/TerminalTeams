@@ -8,9 +8,12 @@ set(TT_CONTACTS_LIB "tteams-contacts")
 set(TT_CONTACTS_HANDLER_LIB "tteams-contacts-handler")
 set(TT_CONTACTS_UT "tteams-contacts-unittests")
 get_filename_component(TT_CONTACTS_TESTED_DIRECTORY "../src" ABSOLUTE)
+get_filename_component(TT_CONTACTS_MOCKS_DIRECTORY "../mocks" ABSOLUTE)
+get_filename_component(TT_UTILS_MOCKS_DIRECTORY "../../utils/mocks" ABSOLUTE)
 get_filename_component(TT_CONTACTS_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 set(TT_CONTACTS_UNIT_TESTS
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/Main.cpp"
+  "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsHandlerTest.cpp"
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsSettingsTest.cpp"
   "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}/TTContactsTest.cpp"
 )
@@ -38,6 +41,8 @@ add_executable(${TT_CONTACTS_UT}
   "${TT_CONTACTS_UNIT_TESTS}"
 )
 target_include_directories(${TT_CONTACTS_UT} PRIVATE "${TT_CONTACTS_TESTED_DIRECTORY}")
+target_include_directories(${TT_CONTACTS_UT} PUBLIC "${TT_CONTACTS_MOCKS_DIRECTORY}")
+target_include_directories(${TT_CONTACTS_UT} PUBLIC "${TT_UTILS_MOCKS_DIRECTORY}")
 target_include_directories(${TT_CONTACTS_UT} PUBLIC "${TT_CONTACTS_UNIT_TESTS_DIRECTORY}")
 target_link_libraries(${TT_CONTACTS_UT}
   ${TT_CONTACTS_LIB}
