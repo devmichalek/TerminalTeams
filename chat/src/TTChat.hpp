@@ -39,5 +39,5 @@ private:
     size_t mSideWidth;
     std::string mBlankLine;
     // Output stream
-    const TTUtilsOutputStream& mOutputStream;
+    TTUtilsOutputStream& mOutputStream;
 };

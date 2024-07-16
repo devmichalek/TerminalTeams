@@ -4,9 +4,37 @@
 
 class TTUtilsOutputStreamMock : public TTUtilsOutputStream {
 public:
-    MOCK_METHOD(TTUtilsOutputStream&, print, (const char*), (override));
-    MOCK_METHOD(TTUtilsOutputStream&, print, (std::string), (override));
-    MOCK_METHOD(TTUtilsOutputStream&, endl, (), (override));
-    MOCK_METHOD(TTUtilsOutputStream&, flush, (), (override));
-    MOCK_METHOD(TTUtilsOutputStream&, clear, (), (override));
+    TTUtilsOutputStreamMock() = default;
+    virtual ~TTUtilsOutputStreamMock() {}
+    TTUtilsOutputStreamMock(const TTUtilsOutputStreamMock&) = default;
+    TTUtilsOutputStreamMock(TTUtilsOutputStreamMock&&) = default;
+    TTUtilsOutputStreamMock& operator=(const TTUtilsOutputStreamMock&) = default;
+    TTUtilsOutputStreamMock& operator=(TTUtilsOutputStreamMock&&) = default;
+
+    virtual TTUtilsOutputStream& print(const char* cmessage) {
+        mOutput.back().append(cmessage);
+        return *this;
+    }
+
+    virtual TTUtilsOutputStream& print(const std::string& message) {
+        mOutput.back().append(message);
+        return *this;
+    }
+
+    virtual TTUtilsOutputStream& endl() {
+        mOutput.back().append("\n");
+        return *this;
+    }
+
+    virtual TTUtilsOutputStream& flush() {
+        mOutput.back().append("\r");
+        return *this;
+    }
+
+    virtual TTUtilsOutputStream& clear() {
+        mOutput.push_back("");
+        return *this;
+    }
+
+    std::vector<std::string> mOutput;
 };

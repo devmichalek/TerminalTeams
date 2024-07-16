@@ -34,7 +34,7 @@ private:
     // IPC communication
     std::shared_ptr<TTUtilsNamedPipe> mPipe;
     // Output stream
-    const TTUtilsOutputStream& mOutputStream;
+    TTUtilsOutputStream& mOutputStream;
     // Thread concurrent message communication
     std::queue<std::unique_ptr<TTTextBoxMessage>> mQueuedMessages;
     std::mutex mQueueMutex;

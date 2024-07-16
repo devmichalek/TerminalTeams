@@ -24,10 +24,11 @@ void TTContacts::run() {
             LOG_WARNING("Failed to receive message!");
             break;
         }
-        if (handle(newMessage)) {
-            refresh();
+        if (!handle(newMessage)) {
+            break;
         }
     }
+    stop();
     LOG_INFO("Completed contacts loop");
 }
 
@@ -50,29 +51,34 @@ bool TTContacts::handle(const TTContactsMessage& message) {
                 mEntries[message.getIdentity()].state = message.getState();
                 LOG_INFO("Received update contact message id={}, state={}", message.getIdentity(), (size_t)message.getState());
             }
-            return true;
+            return refresh();
         case TTContactsStatus::HEARTBEAT:
             LOG_INFO("Received heartbeat message");
-            return false;
+            return true;
         case TTContactsStatus::GOODBYE:
             LOG_INFO("Received goodbye message");
-            stop();
             return false;
         default:
-            LOG_INFO("Received unknown message");
-            stop();
+            LOG_ERROR("Received unknown message");
             return false;
     }
 }
 
-void TTContacts::refresh() {
+bool TTContacts::refresh() {
     LOG_INFO("Started refreshing window, number of entries={}", mEntries.size());
-    mOutputStream.clear();
-    const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
-    for (auto &entry : mEntries) {
-        mOutputStream.print("#").print(std::to_string(entry.identity));
-        mOutputStream.print(" ").print(entry.nickname);
-        mOutputStream.print(" ").print(statuses[static_cast<size_t>(entry.state)]);
-        mOutputStream.endl();
+    try {
+        mOutputStream.clear();
+        const std::array<std::string, 8> statuses = { "", "?", "<", "<?", "@", "@?", "!?", "<!?" };
+        for (auto &entry : mEntries) {
+            mOutputStream.print("#").print(std::to_string(entry.identity));
+            mOutputStream.print(" ").print(entry.nickname);
+            mOutputStream.print(" ").print(statuses[static_cast<size_t>(entry.state)]);
+            mOutputStream.endl();
+        }
+        return true;
+    }
+    catch (...) {
+        LOG_ERROR("Failed to refresh window!");
+        return false;
     }
 }

@@ -16,7 +16,7 @@ public:
         return *this;
     }
 
-    virtual TTUtilsOutputStream& print(std::string message) {
+    virtual TTUtilsOutputStream& print(const std::string& message) {
         std::cout << message;
         return *this;
     }

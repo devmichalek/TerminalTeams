@@ -12,4 +12,17 @@ class TTContactsHandlerTest : public Test {
     ~TTContactsHandlerTest() {
 
     }
+
+    // void create() {
+    //     mContacts = std::make_unique<TTContacts>(*mSettingsMock, *mOutputStreamMock);
+    // }
+
+    //std::shared_ptr<TTContactsSettingsMock> mSettingsMock;
 };
+
+// TEST_F(TTContactsHandlerTest, SharedMemoryInitFailed) {
+//     EXPECT_CALL(*mSharedMemMock, open)
+//         .Times(1)
+//         .WillOnce(Return(false));
+//     EXPECT_THROW(create(), std::runtime_error);
+// }

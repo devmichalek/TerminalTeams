@@ -31,7 +31,7 @@ private:
     // Handles new message, return true if refresh is needed
     bool handle(const TTContactsMessage& message);
     // Refreshes window
-    void refresh();
+    bool refresh();
     // Output stream
     TTUtilsOutputStream& mOutputStream;
     // IPC shared memory communication
