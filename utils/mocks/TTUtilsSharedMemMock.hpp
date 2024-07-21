@@ -9,5 +9,5 @@ public:
     MOCK_METHOD(bool, receive, (void* memory, long attempts, long timeoutMs), (override));
     MOCK_METHOD(bool, send, (const void* memory, long attempts, long timeoutMs), (override));
     MOCK_METHOD(bool, alive, (), (const, override));
-    MOCK_METHOD(void, destroy, (), (override));
+    MOCK_METHOD(bool, destroy, (), (override));
 };

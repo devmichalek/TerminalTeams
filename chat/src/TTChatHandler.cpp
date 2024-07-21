@@ -32,7 +32,6 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
 TTChatHandler::~TTChatHandler() {
     LOG_INFO("Destructing...");
     stop();
-    mQueueCondition.notify_one();
     mHeartbeatResult.wait();
     mHandlerResult.wait();
     LOG_INFO("Successfully destructed!");
@@ -134,6 +133,7 @@ const TTChatEntries& TTChatHandler::get(size_t id) {
 void TTChatHandler::stop() {
     LOG_WARNING("Forced stop...");
     mStopped.store(true);
+    mQueueCondition.notify_one();
 }
 
 bool TTChatHandler::stopped() const {

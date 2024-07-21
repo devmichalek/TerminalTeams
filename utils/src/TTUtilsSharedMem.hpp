@@ -21,7 +21,7 @@ public:
     virtual bool receive(void* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool send(const void* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool alive() const;
-    virtual void destroy();
+    virtual bool destroy();
 protected:
     TTUtilsSharedMem() = default;
 private:

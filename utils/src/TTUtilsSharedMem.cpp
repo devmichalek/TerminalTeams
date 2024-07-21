@@ -223,17 +223,31 @@ bool TTUtilsSharedMem::alive() const {
     return mAlive;
 }
 
-void TTUtilsSharedMem::destroy() {
+bool TTUtilsSharedMem::destroy() {
+    bool result = true;
     if (mSharedMemoryCreated) {
-        mSyscall->shm_unlink(mSharedMemoryName.c_str());
         mSharedMemoryCreated = false;
+        const auto code = mSyscall->shm_unlink(mSharedMemoryName.c_str());
+        result &= (code == 0);
+        if (code != 0) {
+            LOG_ERROR("Failed to unlink shared memory! Error code: {}", code);
+        }
     }
     if (mDataConsumedSemCreated) {
-        mSyscall->sem_unlink(mDataConsumedSemName.c_str());
         mDataConsumedSemCreated = false;
+        const auto code = mSyscall->sem_unlink(mDataConsumedSemName.c_str());
+        result &= (code == 0);
+        if (code != 0) {
+            LOG_ERROR("Failed to unlink semaphore! Error code: {}", code);
+        }
     }
     if (mDataProducedSemCreated) {
-        mSyscall->sem_unlink(mDataProducedSemName.c_str());
         mDataProducedSemCreated = false;
+        const auto code = mSyscall->sem_unlink(mDataProducedSemName.c_str());
+        result &= (code == 0);
+        if (code != 0) {
+            LOG_ERROR("Failed to unlink semaphore! Error code: {}", code);
+        }
     }
+    return result;
 }

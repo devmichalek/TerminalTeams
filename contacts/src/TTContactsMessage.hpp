@@ -34,3 +34,19 @@ private:
     unsigned int mDataLength;
     char mData[TTCONTACTS_DATA_MAX_LENGTH];
 };
+
+inline bool operator==(const TTContactsMessage& lhs, const TTContactsMessage& rhs) {
+    if (lhs.getStatus() != rhs.getStatus()) {
+        return false;
+    }
+    switch (lhs.getStatus()) {
+        case TTContactsStatus::STATE:
+            return memcmp(&lhs, &rhs, sizeof(TTContactsMessage)) == 0;
+        case TTContactsStatus::HEARTBEAT:
+            return true;
+        case TTContactsStatus::GOODBYE:
+            return true;
+        default:
+            return false;
+    }
+}

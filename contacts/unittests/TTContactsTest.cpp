@@ -66,7 +66,7 @@ protected:
     TTContactsMessage CreateMessage(TTContactsStatus status,
                                     TTContactsState state = TTContactsState::ACTIVE,
                                     size_t identity = 0,
-                                    std::string nickname = "") {
+                                    std::string nickname = "") const {
         TTContactsMessage result;
         result.setStatus(status);
         result.setState(state);

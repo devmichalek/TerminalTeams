@@ -12,7 +12,7 @@
 using TTChatEntry = std::tuple<TTChatMessageType, std::string, TTChatTimestamp>;
 using TTChatEntries = std::deque<TTChatEntry>;
 
-// Class ment to be embedded into other higher abstract class.
+// Class meant to be embedded into other higher abstract class.
 // Allows to control TTChat process concurrently.
 class TTChatHandler {
 public:

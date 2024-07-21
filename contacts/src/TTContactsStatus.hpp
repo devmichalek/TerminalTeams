@@ -1,8 +1,8 @@
 #pragma once
 #include <cstring>
 
-enum class TTContactsStatus : size_t {
-    STATE,
-    HEARTBEAT,
-    GOODBYE
+enum class TTContactsStatus : int {
+    STATE = 0,
+    HEARTBEAT = 1,
+    GOODBYE = 2
 };

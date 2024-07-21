@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <optional>
 
-// Class ment to be embedded into other higher abstract class.
+// Class meant to be embedded into other higher abstract class.
 // Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
@@ -46,6 +46,8 @@ private:
     void main();
     // Establish connection with the other process
     bool establish();
+    // Sends last bit of information - goodbye message
+    void goodbye();
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication
@@ -55,7 +57,7 @@ private:
     std::condition_variable mQueueCondition;
     std::thread mHandlerThread;
     std::mutex mHandlerQuitMutex;
-    // Thread concurrent Heartbeat
+    // Thread concurrent heartbeat
     std::thread mHeartbeatThread;
     std::mutex mHeartbeatQuitMutex;
     // Contacts storage

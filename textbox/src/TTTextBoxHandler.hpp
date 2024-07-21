@@ -9,7 +9,7 @@
 using TTTextBoxCallbackMessageSent = std::function<void(std::string)>;
 using TTTextBoxCallbackContactSwitch = std::function<void(size_t)>;
 
-// Class ment to be embedded into other higher abstract class.
+// Class meant to be embedded into other higher abstract class.
 // Allows to control TTTextBox process concurrently.
 class TTTextBoxHandler {
 public:

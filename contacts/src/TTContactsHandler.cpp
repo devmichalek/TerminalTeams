@@ -28,7 +28,6 @@ TTContactsHandler::TTContactsHandler(TTContactsSettings& settings) :
 TTContactsHandler::~TTContactsHandler() {
     LOG_INFO("Destructing...");
     stop();
-    mQueueCondition.notify_one();
     // Wait until main thread is destroyed
     std::scoped_lock handlerQuitLock(mHandlerQuitMutex);
     // Wait until heartbeat thread is destroyed
@@ -250,6 +249,7 @@ size_t TTContactsHandler::size() const {
 void TTContactsHandler::stop() {
     LOG_WARNING("Forced stop...");
     mStopped.store(true);
+    mQueueCondition.notify_one();
 }
 
 bool TTContactsHandler::stopped() const {
@@ -303,9 +303,7 @@ void TTContactsHandler::main() {
 
                 if (stopped()) {
                     exit = true;
-                    TTContactsMessage message;
-                    message.setStatus(TTContactsStatus::GOODBYE);
-                    mSharedMem->send(reinterpret_cast<void*>(&message));
+                    goodbye();
                     break; // Forced exit
                 }
 
@@ -318,9 +316,7 @@ void TTContactsHandler::main() {
             for (auto &message : messages) {
                 if (stopped()) {
                     exit = true;
-                    TTContactsMessage message;
-                    message.setStatus(TTContactsStatus::GOODBYE);
-                    mSharedMem->send(reinterpret_cast<void*>(&message));
+                    goodbye();
                     break; // Forced exit
                 }
                 if (!mSharedMem->send(reinterpret_cast<void*>(message.get()))) {
@@ -342,4 +338,11 @@ bool TTContactsHandler::establish() {
     TTContactsMessage message;
     message.setStatus(TTContactsStatus::HEARTBEAT);
     return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
+}
+
+void TTContactsHandler::goodbye() {
+    LOG_WARNING("Sending goodbye message...");
+    TTContactsMessage message;
+    message.setStatus(TTContactsStatus::GOODBYE);
+    mSharedMem->send(reinterpret_cast<void*>(&message));
 }
