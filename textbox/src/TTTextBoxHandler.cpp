@@ -69,8 +69,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                     case TTTextBoxStatus::MESSAGE:
                     {
                         LOG_INFO("Received message");
-                        std::string msg(message.data, message.dataLength);
-                        mCallbackMessageSent(std::move(msg));
+                        mCallbackMessageSent({message.data, message.dataLength});
                         break;
                     }
                     case TTTextBoxStatus::UNDEFINED:

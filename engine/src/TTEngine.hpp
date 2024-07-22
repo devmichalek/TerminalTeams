@@ -28,7 +28,7 @@ private:
     void chat(std::promise<void> promise);
     void discovery(std::promise<void> promise);
     // Callback functions
-    void mailbox(std::string message);
+    void mailbox(const std::string& message);
     void switcher(size_t message);
     // Handlers, IPC communication
     std::unique_ptr<TTContactsHandler> mContacts;

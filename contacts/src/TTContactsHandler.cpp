@@ -9,8 +9,8 @@ TTContactsHandler::TTContactsHandler(TTContactsSettings& settings) :
         mStopped{false},
         mHandlerThread{},
         mHeartbeatThread{},
-        mCurrentContact(std::numeric_limits<size_t>::max()),
-        mPreviousContact(std::numeric_limits<size_t>::max()) {
+        mCurrentContact(std::nullopt),
+        mPreviousContact(std::nullopt) {
     LOG_INFO("Constructing...");
     if (!mSharedMem->create()) {
         throw std::runtime_error("TTContactsHandler: Failed to create shared memory!");
@@ -171,24 +171,25 @@ bool TTContactsHandler::select(size_t id) {
 
     // Unselect
     mPreviousContact = mCurrentContact;
-    if (mPreviousContact != std::numeric_limits<size_t>::max()) {
-        switch (mContacts[mPreviousContact].state) {
-            case TTContactsState::SELECTED_ACTIVE: mContacts[mPreviousContact].state = TTContactsState::ACTIVE; break;
-            case TTContactsState::SELECTED_INACTIVE: mContacts[mPreviousContact].state = TTContactsState::INACTIVE; break;
-            case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: mContacts[mPreviousContact].state = TTContactsState::PENDING_MSG_INACTIVE; break;
+    if (mPreviousContact != std::nullopt) {
+        const auto previousContactValue = mPreviousContact.value();
+        switch (mContacts[previousContactValue].state) {
+            case TTContactsState::SELECTED_ACTIVE: mContacts[previousContactValue].state = TTContactsState::ACTIVE; break;
+            case TTContactsState::SELECTED_INACTIVE: mContacts[previousContactValue].state = TTContactsState::INACTIVE; break;
+            case TTContactsState::SELECTED_PENDING_MSG_INACTIVE: mContacts[previousContactValue].state = TTContactsState::PENDING_MSG_INACTIVE; break;
             case TTContactsState::ACTIVE:
             case TTContactsState::INACTIVE:
             case TTContactsState::UNREAD_MSG_ACTIVE:
             case TTContactsState::UNREAD_MSG_INACTIVE:
             case TTContactsState::PENDING_MSG_INACTIVE:
             default:
-                LOG_ERROR("Failed to change contact state from {} on unselect", size_t(mContacts[mPreviousContact].state));
+                LOG_ERROR("Failed to change contact state from {} on unselect", size_t(mContacts[previousContactValue].state));
                 return false;
         }
         TTContactsMessage message;
         message.setStatus(TTContactsStatus::STATE);
-        message.setState(mContacts[mPreviousContact].state);
-        message.setIdentity(mPreviousContact);
+        message.setState(mContacts[previousContactValue].state);
+        message.setIdentity(previousContactValue);
         if (!send(message)) {
             return false;
         }
@@ -225,7 +226,7 @@ std::optional<TTContactsHandlerEntry> TTContactsHandler::get(size_t id) const {
     return {mContacts[id]};
 }
 
-std::optional<size_t> TTContactsHandler::get(std::string id) const {
+std::optional<size_t> TTContactsHandler::get(const std::string& id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
     decltype(auto) result = mIdentityMap.find(id);
@@ -235,9 +236,9 @@ std::optional<size_t> TTContactsHandler::get(std::string id) const {
     return {result->second};
 }
 
-size_t TTContactsHandler::current() const {
+std::optional<size_t> TTContactsHandler::current() const {
     std::shared_lock contactsLock(mContactsMutex);
-    LOG_INFO("Called current={}", mCurrentContact);
+    LOG_INFO("Called current");
     return mCurrentContact;
 }
 

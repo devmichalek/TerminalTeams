@@ -6,7 +6,7 @@
 #include "TTUtilsNamedPipe.hpp"
 #include "TTTextBoxSettings.hpp"
 
-using TTTextBoxCallbackMessageSent = std::function<void(std::string)>;
+using TTTextBoxCallbackMessageSent = std::function<void(const std::string&)>;
 using TTTextBoxCallbackContactSwitch = std::function<void(size_t)>;
 
 // Class meant to be embedded into other higher abstract class.

@@ -30,8 +30,8 @@ public:
     virtual bool deactivate(size_t id);
     virtual bool select(size_t id);
     virtual std::optional<TTContactsHandlerEntry> get(size_t id) const;
-    virtual std::optional<size_t> get(std::string id) const;
-    virtual size_t current() const;
+    virtual std::optional<size_t> get(const std::string& id) const;
+    virtual std::optional<size_t> current() const;
     virtual size_t size() const;
     virtual void stop();
     virtual bool stopped() const;
@@ -62,8 +62,8 @@ private:
     std::mutex mHeartbeatQuitMutex;
     // Contacts storage
     mutable std::shared_mutex mContactsMutex;
-    size_t mCurrentContact;
-    size_t mPreviousContact;
+    std::optional<size_t> mCurrentContact;
+    std::optional<size_t> mPreviousContact;
     std::deque<TTContactsHandlerEntry> mContacts;
     std::unordered_map<std::string, size_t> mIdentityMap;
 };

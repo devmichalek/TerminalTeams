@@ -134,16 +134,22 @@ void TTEngine::discovery(std::promise<void> promise) {
     LOG_INFO("Completed discovery loop");
 }
 
-void TTEngine::mailbox(std::string message) {
+void TTEngine::mailbox(const std::string& message) {
     LOG_INFO("Received callback - message sent");
     if (mChat) {
         std::scoped_lock lock(mMailboxMutex);
-        const auto now = std::chrono::system_clock::now();
-        bool result = mChat->send(mContacts->current(), message, now);
-        result &= mContacts->send(mContacts->current());
-        if (!result) {
-            LOG_ERROR("Received callback - failed to sent message!");
+        const auto current = mContacts->current();
+        if (!current) {
+            LOG_ERROR("Received callback - failed to get current contact!");
             stop();
+        } else {
+            const auto now = std::chrono::system_clock::now();
+            bool result = mChat->send(current.value(), message, now);
+            result &= mContacts->send(current.value());
+            if (!result) {
+                LOG_ERROR("Received callback - failed to sent message!");
+                stop();
+            }
         }
     }
 }
