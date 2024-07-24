@@ -25,6 +25,7 @@ inline std::ostream& operator<<(std::ostream& os, const TTContactsHandlerEntry& 
     os << "{";
     os << "nickname: " << rhs.nickname << ", ";
     os << "identity: " << rhs.identity << ", ";
+    os << "state: " << rhs.state << ", ";
     os << "IP address and port: " << rhs.ipAddressAndPort << ", ";
     os << "sent messages: " << rhs.sentMessages << ", ";
     os << "received messages: " << rhs.receivedMessages;

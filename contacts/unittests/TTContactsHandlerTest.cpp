@@ -181,11 +181,24 @@ TEST_F(TTContactsHandlerTest, SuccessSelectionMachineState) {
     CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 0, "A");
     CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 1, "B");
     CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::INACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_INACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::INACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_PENDING_MSG_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::PENDING_MSG_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_PENDING_MSG_INACTIVE, 0, "A");
     CreateMessage(TTContactsStatus::GOODBYE);
     // Expected entries
-    CreateEntry("A", "0feca842", "192.168.1.15", TTContactsState::SELECTED_ACTIVE, 0, 0);
-    CreateEntry("B", "09dda800", "192.168.1.16", TTContactsState::ACTIVE, 0, 0);
-    CreateEntry("C", "000ca777", "192.168.1.17", TTContactsState::ACTIVE, 0, 0);
+    CreateEntry("A", "0feca842", "192.168.1.15", TTContactsState::SELECTED_PENDING_MSG_INACTIVE, 1, 1);
+    CreateEntry("B", "09dda800", "192.168.1.16", TTContactsState::INACTIVE, 0, 0);
+    CreateEntry("C", "000ca777", "192.168.1.17", TTContactsState::ACTIVE, 0, 1);
     // Expected calls
     EXPECT_CALL(*mSharedMemMock, create)
         .Times(1)
@@ -203,6 +216,19 @@ TEST_F(TTContactsHandlerTest, SuccessSelectionMachineState) {
     EXPECT_TRUE(mContactsHandler->select(0));
     EXPECT_TRUE(mContactsHandler->create(mExpectedEntries[1].nickname, mExpectedEntries[1].identity, mExpectedEntries[1].ipAddressAndPort));
     EXPECT_TRUE(mContactsHandler->create(mExpectedEntries[2].nickname, mExpectedEntries[2].identity, mExpectedEntries[2].ipAddressAndPort));
+    // ACTIVE -> INACTIVE, SELECTED_ACTIVE -> ACTIVE, INACTIVE -> SELECTED_INACTIVE, ACTIVE -> UNREAD_MSG_ACTIVE, SELECTED_INACTIVE -> INACTIVE, UNREAD_MSG_ACTIVE -> SELECTED_ACTIVE
+    EXPECT_TRUE(mContactsHandler->deactivate(1));
+    EXPECT_TRUE(mContactsHandler->select(1));
+    EXPECT_TRUE(mContactsHandler->receive(2));
+    EXPECT_TRUE(mContactsHandler->select(2));
+    // ACTIVE -> UNREAD_MSG_ACTIVE, UNREAD_MSG_ACTIVE -> UNREAD_MSG_INACTIVE, SELECTED_ACTIVE -> ACTIVE, UNREAD_MSG_INACTIVE -> SELECTED_INACTIVE
+    EXPECT_TRUE(mContactsHandler->receive(0));
+    EXPECT_TRUE(mContactsHandler->deactivate(0));
+    EXPECT_TRUE(mContactsHandler->select(0));
+    // SELECTED_INACTIVE -> SELECTED_PENDING_MSG_INACTIVE, SELECTED_PENDING_MSG_INACTIVE -> PENDING_MSG_INACTIVE, PENDING_MSG_INACTIVE -> SELECTED_PENDING_MSG_INACTIVE
+    EXPECT_TRUE(mContactsHandler->send(0));
+    EXPECT_TRUE(mContactsHandler->select(0));
+
     std::this_thread::sleep_for(std::chrono::milliseconds{TTCONTACTS_HEARTBEAT_TIMEOUT_MS});
     EXPECT_TRUE(StopHandler());
     // Expected data
@@ -292,9 +318,95 @@ TEST_F(TTContactsHandlerTest, SuccessSendAndReceiveMachineState) {
     EXPECT_EQ(mContactsHandler->size(), mExpectedEntries.size());
 }
 
-// TEST_F(TTContactsHandlerTest, SuccessActiveInactiveMachineState) {
-    
-// }
+TEST_F(TTContactsHandlerTest, SuccessActiveInactiveMachineState) {
+    // Expected messages
+    CreateMessage(TTContactsStatus::HEARTBEAT);
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::INACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 1, "B");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_INACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::UNREAD_MSG_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_PENDING_MSG_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::PENDING_MSG_INACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::ACTIVE, 0, "A");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_INACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_PENDING_MSG_INACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::STATE, TTContactsState::SELECTED_ACTIVE, 2, "C");
+    CreateMessage(TTContactsStatus::GOODBYE);
+    // Expected entries
+    CreateEntry("A", "0feca842", "192.168.1.15", TTContactsState::ACTIVE, 1, 0);
+    CreateEntry("B", "09dda800", "192.168.1.16", TTContactsState::ACTIVE, 0, 0);
+    CreateEntry("C", "000ca777", "192.168.1.17", TTContactsState::SELECTED_ACTIVE, 1, 1);
+    // Expected calls
+    EXPECT_CALL(*mSharedMemMock, create)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSharedMemMock, send)
+        .Times(AtLeast(mExpectedMessages.size()))
+        .WillRepeatedly(std::bind(&TTContactsHandlerTest::RetrieveSentMessageTrue, this, _1, _2, _3));
+    EXPECT_CALL(*mSharedMemMock, destroy)
+        .Times(1)
+        .WillOnce(Return(true));
+    // Flow
+    EXPECT_TRUE(StartHandler(std::chrono::milliseconds{TTCONTACTS_HEARTBEAT_TIMEOUT_MS}));
+    // -> ACTIVE, ACTIVE -> SELECTED_ACTIVE, -> ACTIVE, -> ACTIVE
+    EXPECT_TRUE(mContactsHandler->create(mExpectedEntries[0].nickname, mExpectedEntries[0].identity, mExpectedEntries[0].ipAddressAndPort));
+    EXPECT_TRUE(mContactsHandler->select(0));
+    EXPECT_TRUE(mContactsHandler->create(mExpectedEntries[1].nickname, mExpectedEntries[1].identity, mExpectedEntries[1].ipAddressAndPort));
+    EXPECT_TRUE(mContactsHandler->create(mExpectedEntries[2].nickname, mExpectedEntries[2].identity, mExpectedEntries[2].ipAddressAndPort));
+    // ACTIVE -> OK, ACTIVE -> INACTIVE, INACTIVE -> OK, INACTIVE -> ACTIVE
+    EXPECT_TRUE(mContactsHandler->activate(1));
+    EXPECT_TRUE(mContactsHandler->deactivate(1));
+    EXPECT_TRUE(mContactsHandler->deactivate(1));
+    EXPECT_TRUE(mContactsHandler->activate(1));
+    // SELECTED_ACTIVE -> OK, SELECTED_ACTIVE -> SELECTED_INACTIVE, SELECTED_INACTIVE -> OK, SELECTED_INACTIVE -> SELECTED_ACTIVE
+    EXPECT_TRUE(mContactsHandler->activate(0));
+    EXPECT_TRUE(mContactsHandler->deactivate(0));
+    EXPECT_TRUE(mContactsHandler->deactivate(0));
+    EXPECT_TRUE(mContactsHandler->activate(0));
+    // ACTIVE -> UNREAD_MSG_ACTIVE, UNREAD_MSG_ACTIVE -> OK, UNREAD_MSG_ACTIVE -> UNREAD_MSG_INACTIVE, UNREAD_MSG_INACTIVE -> OK, UNREAD_MSG_INACTIVE -> UNREAD_MSG_ACTIVE
+    EXPECT_TRUE(mContactsHandler->receive(2));
+    EXPECT_TRUE(mContactsHandler->activate(2));
+    EXPECT_TRUE(mContactsHandler->deactivate(2));
+    EXPECT_TRUE(mContactsHandler->deactivate(2));
+    EXPECT_TRUE(mContactsHandler->activate(2));
+    // SELECTED_ACTIVE -> SELECTED_INACTIVE, SELECTED_INACTIVE -> SELECTED_PENDING_MSG_INACTIVE, SELECTED_PENDING_MSG_INACTIVE -> PENDING_MSG_INACTIVE, UNREAD_MSG_ACTIVE -> SELECTED_ACTIVE
+    EXPECT_TRUE(mContactsHandler->deactivate(0));
+    EXPECT_TRUE(mContactsHandler->send(0));
+    EXPECT_TRUE(mContactsHandler->select(2));
+    // PENDING_MSG_INACTIVE -> OK, PENDING_MSG_INACTIVE -> ACTIVE, SELECTED_ACTIVE -> SELECTED_INACTIVE, SELECTED_INACTIVE -> SELECTED_PENDING_MSG_INACTIVE
+    EXPECT_TRUE(mContactsHandler->deactivate(0));
+    EXPECT_TRUE(mContactsHandler->activate(0));
+    EXPECT_TRUE(mContactsHandler->deactivate(2));
+    EXPECT_TRUE(mContactsHandler->send(2));
+    // SELECTED_PENDING_MSG_INACTIVE -> OK, SELECTED_PENDING_MSG_INACTIVE -> SELECTED_ACTIVE
+    EXPECT_TRUE(mContactsHandler->deactivate(2));
+    EXPECT_TRUE(mContactsHandler->activate(2));
+    std::this_thread::sleep_for(std::chrono::milliseconds{TTCONTACTS_HEARTBEAT_TIMEOUT_MS});
+    EXPECT_TRUE(StopHandler());
+    // Expected data
+    EXPECT_GT(mSentMessages.size(), mExpectedMessages.size());
+    EXPECT_TRUE(IsFirstEqualTo(mSentMessages, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo(mSentMessages, mExpectedMessages.back()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end() - 1}));
+    for (size_t i = 0; i < mExpectedEntries.size(); ++i) {
+        ASSERT_NE(mContactsHandler->get(i), std::nullopt);
+        EXPECT_EQ(mContactsHandler->get(i).value(), mExpectedEntries[i]);
+        ASSERT_NE(mContactsHandler->get(mExpectedEntries[i].identity), std::nullopt);
+        EXPECT_EQ(mContactsHandler->get(mExpectedEntries[i].identity).value(), i);
+    }
+    ASSERT_NE(mContactsHandler->current(), std::nullopt);
+    EXPECT_EQ(mContactsHandler->current().value(), 2);
+    EXPECT_EQ(mContactsHandler->size(), mExpectedEntries.size());
+}
 
 // TEST_F(TTContactsHandlerTest, SuccessMixMachineState) {
     
