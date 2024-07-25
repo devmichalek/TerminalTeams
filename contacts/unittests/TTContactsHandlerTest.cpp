@@ -482,21 +482,3 @@ TEST_F(TTContactsHandlerTest, UnhappyPathSendAndReceiveMachineState) {
     EXPECT_EQ(mContactsHandler->current().value(), 0);
     EXPECT_EQ(mContactsHandler->size(), mExpectedEntries.size());
 }
-
-// TEST_F(TTContactsHandlerTest, SelectionStressTest) {
-    // Multiple threads selects one contact
-// }
-
-// TEST_F(TTContactsHandlerTest, SendReceiveStressTest) {
-    // Multiple threads selects one contact
-// }
-
-// TEST_F(TTContactsHandlerTest, ActiveInactiveStressTest) {
-    // Multiple threads selects one contact
-// }
-
-// Idea for successfull concurrency
-// One thread is setting states correctly but other is not
-// Example
-// T1: Sets active<->inactive
-// T1: Sets whatever state id > max

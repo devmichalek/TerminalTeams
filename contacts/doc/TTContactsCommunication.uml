@@ -1,6 +1,10 @@
 @startuml
 !pragma teoz true
 
+participant "TTContactsHandler\n(TTUtilsSharedMem)" as TTContactsHandler
+participant "Shared Memory\n(System)" as TTUtilsSharedMem
+participant "TTContacts\n(TTUtilsSharedMem)" as TTContacts
+
 == Initialization ==
 note left of TTContactsHandler
 Only one attempt will be made
@@ -121,5 +125,4 @@ deactivate TTContacts
 TTUtilsSharedMem -> TTContactsHandler : success
 TTContacts -> TTContacts : stop
 deactivate TTContactsHandler
-
 @enduml
