@@ -6,10 +6,13 @@
 #include "TTTextBoxMessage.hpp"
 #include "TTUtilsNamedPipe.hpp"
 #include "TTUtilsOutputStream.hpp"
+#include "TTUtilsInputStream.hpp"
 
 class TTTextBox {
 public:
-    explicit TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStream& outputStream);
+    explicit TTTextBox(TTTextBoxSettings& settings,
+        TTUtilsOutputStream& outputStream,
+        TTUtilsInputStream& inputStream);
     virtual ~TTTextBox();
     TTTextBox(const TTTextBox&) = delete;
     TTTextBox(TTTextBox&&) = delete;
@@ -20,6 +23,8 @@ public:
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
+protected:
+    TTTextBox() = default;
 private:
     // Parses input and returns true if there are no suspicions
     bool parse(const std::string& line);
@@ -33,8 +38,9 @@ private:
     void queue(std::unique_ptr<TTTextBoxMessage> message);
     // IPC communication
     std::shared_ptr<TTUtilsNamedPipe> mPipe;
-    // Output stream
+    // Output/input stream
     TTUtilsOutputStream& mOutputStream;
+    TTUtilsInputStream& mInputStream;
     // Thread concurrent message communication
     std::queue<std::unique_ptr<TTTextBoxMessage>> mQueuedMessages;
     std::mutex mQueueMutex;
@@ -43,4 +49,3 @@ private:
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
 };
-

@@ -23,6 +23,8 @@ public:
     TTTextBoxHandler& operator=(TTTextBoxHandler&&) = delete;
     virtual void stop();
     virtual bool stopped() const;
+protected:
+    TTTextBoxHandler() = default;
 private:
     void main(std::promise<void> promise);
     // IPC communication

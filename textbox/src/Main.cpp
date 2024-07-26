@@ -26,8 +26,9 @@ int main(int argc, char** argv) {
         LOG_INFO("Signal handling initialized");
         // Run application
         TTTextBoxSettings settings(argc, argv);
-        const TTUtilsOutputStream outputStream;
-        application = std::make_unique<TTTextBox>(settings, outputStream);
+        TTUtilsOutputStream outputStream;
+        TTUtilsInputStream inputStream;
+        application = std::make_unique<TTTextBox>(settings, outputStream, inputStream);
         LOG_INFO("Textbox initialized");
         try {
             if (!application->stopped()) {

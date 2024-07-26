@@ -5,9 +5,12 @@
 #include <fcntl.h>
 #include <charconv>
 
-TTTextBox::TTTextBox(const TTTextBoxSettings& settings, const TTUtilsOutputStream& outputStream) :
+TTTextBox::TTTextBox(TTTextBoxSettings& settings,
+    TTUtilsOutputStream& outputStream,
+    TTUtilsInputStream& inputStream) :
         mPipe(settings.getNamedPipe()),
         mOutputStream(outputStream),
+        mInputStream(inputStream),
         mStopped{false} {
     LOG_INFO("Constructing...");
     // Open pipe
@@ -40,7 +43,7 @@ void TTTextBox::run() {
         mOutputStream.print("Type #help to print a help message").endl();
         while (!stopped()) {
             std::string line;
-            std::getline(std::cin, line);
+            mInputStream.readline(line);
             if (!parse(line)) {
                 LOG_WARNING("Failed to parse input!");
                 continue;
