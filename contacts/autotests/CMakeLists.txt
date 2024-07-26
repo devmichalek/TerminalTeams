@@ -14,7 +14,11 @@ get_filename_component(TT_CONTACTS_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
 get_filename_component(TT_CONTACTS_DIRECTORY "../src" ABSOLUTE)
 set(TT_CONTACTS_HANDLER_TEST_SCRIPTS
   "tteams-contacts-autotests.sh"
-  "tteams-contacts-autotests-happy-path.sh"
+  "tteams-contacts-autotests-happy-path-active-inactive.sh"
+  "tteams-contacts-autotests-happy-path-selection.sh"
+  "tteams-contacts-autotests-happy-path-send-receive.sh"
+  "tteams-contacts-autotests-unhappy-path-non-existing.sh"
+  "tteams-contacts-autotests-unhappy-path-send-receive.sh"
   "tteams-contacts-autotests-verdict.sh"
 )
 set(TT_CONTACTS_DST "autotests")

@@ -46,28 +46,25 @@ int main(int argc, char** argv) {
                 tokens.push_back(line);
             }
 
-            bool status = false;
             if (tokens.size() == 2) {
                 const std::string& command = tokens[0];
                 if (command == "create") {
-                    status = handler.create(tokens[1], "", "");
+                    handler.create(tokens[1], "", "");
                 } else {
                     auto id = std::stoi(tokens[1]);
                     if (command == "send") {
-                        status = handler.send(id);
+                        handler.send(id);
                     } else if (command == "receive") {
-                        status = handler.receive(id);
+                        handler.receive(id);
                     } else if (command == "activate") {
-                        status = handler.activate(id);
+                        handler.activate(id);
                     } else if (command == "deactivate") {
-                        status = handler.deactivate(id);
+                        handler.deactivate(id);
                     } else if (command == "select") {
-                        status = handler.select(id);
+                        handler.select(id);
                     }
                 }
-            }
-
-            if (!status) {
+            } else {
                 break;
             }
         }

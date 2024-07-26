@@ -26,7 +26,7 @@ if [[ "$ACTUAL_RESULTS" != "$EXPECTED_RESULTS" ]]; then
     EXIT_STATUS=1
 fi
 if [[ $EXIT_STATUS -eq 0 ]]; then
-    echo "Success: Autotest \"happy path\" passed!"
+    echo "Success: Autotest passed!"
     rm -f "${HANDLER_STDIN}"
     rm -f "${HANDLER_STDOUT}"
     rm -f "${APP_STDOUT}"

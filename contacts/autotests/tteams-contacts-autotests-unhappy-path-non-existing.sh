@@ -20,7 +20,9 @@ ${APP_CMD} &> "${HANDLER_STDOUT}" &
 echo "Info: Waiting for synchronization..."
 sleep 5
 echo "create John" > "${HANDLER_STDIN}"
+echo "select 1" > "${HANDLER_STDIN}"
 echo "create Camille" > "${HANDLER_STDIN}"
+echo "select 2" > "${HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."
 sleep 3
 
@@ -34,6 +36,6 @@ ACTUAL_RESULTS=$(<"${HANDLER_STDOUT}")
 # Test teardown
 kill $HANDLER_STDIN_PID
 echo "Info: Waiting for application to stop..."
-sleep 6
+sleep 2
 echo "Info: Application shall be stopped now"
 source tteams-contacts-autotests-verdict.sh
