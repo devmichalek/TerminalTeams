@@ -37,7 +37,6 @@ private:
     // Generic queue
     void queue(std::unique_ptr<TTTextBoxMessage> message);
     // Literals
-    inline const static long SEND_TIMEOUT_MS = 500;
     inline const static long QUEUED_MSG_TIMEOUT_MS = 500;
     // IPC communication
     std::shared_ptr<TTUtilsNamedPipe> mPipe;

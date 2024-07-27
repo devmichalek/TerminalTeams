@@ -11,11 +11,6 @@ public:
     TTUtilsOutputStream& operator=(const TTUtilsOutputStream&) = default;
     TTUtilsOutputStream& operator=(TTUtilsOutputStream&&) = default;
 
-    virtual TTUtilsOutputStream& print(const char* cmessage) {
-        std::cout << cmessage;
-        return *this;
-    }
-
     virtual TTUtilsOutputStream& print(const std::string& message) {
         std::cout << message;
         return *this;

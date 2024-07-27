@@ -54,14 +54,23 @@ protected:
     }
 
     bool IsFirstEqualTo(const std::span<TTContactsMessage>& lhs, const TTContactsMessage& rhs) const {
+        if (lhs.empty()) {
+            return false;
+        }
         return lhs.front() == rhs;
     }
 
     bool IsLastEqualTo(const std::span<TTContactsMessage>& lhs, const TTContactsMessage& rhs) const {
+        if (lhs.empty()) {
+            return false;
+        }
         return lhs.back() == rhs;
     }
 
     bool IsEachEqualTo(const std::span<TTContactsMessage>& lhs, const TTContactsMessage& rhs) const {
+        if (lhs.empty()) {
+            return false;
+        }
         if (std::adjacent_find(lhs.begin(), lhs.end(), std::not_equal_to<>()) == lhs.end()) {
             return lhs.front() == rhs;
         }
@@ -69,6 +78,9 @@ protected:
     }
 
     bool IsAtLeastOneEqualTo(const std::span<TTContactsMessage>& lhs, const TTContactsMessage& rhs) const {
+        if (lhs.empty()) {
+            return false;
+        }
         return std::find(lhs.begin(), lhs.end(), rhs) != lhs.end();
     }
 

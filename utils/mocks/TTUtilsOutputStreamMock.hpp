@@ -11,11 +11,6 @@ public:
     TTUtilsOutputStreamMock& operator=(const TTUtilsOutputStreamMock&) = default;
     TTUtilsOutputStreamMock& operator=(TTUtilsOutputStreamMock&&) = default;
 
-    virtual TTUtilsOutputStream& print(const char* cmessage) {
-        mOutput.back().append(cmessage);
-        return *this;
-    }
-
     virtual TTUtilsOutputStream& print(const std::string& message) {
         mOutput.back().append(message);
         return *this;

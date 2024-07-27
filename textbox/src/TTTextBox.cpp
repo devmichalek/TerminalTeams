@@ -36,21 +36,22 @@ TTTextBox::~TTTextBox() {
 
 void TTTextBox::run() {
     if (!mPipe->alive()) {
-        LOG_ERROR("Failed to run, pipe is not open!");
-        return;
-    }
-    try {
-        mOutputStream.print("Type #help to print a help message").endl();
-        while (!stopped()) {
-            std::string line;
-            mInputStream.readline(line);
-            if (!parse(line)) {
-                LOG_WARNING("Failed to parse input!");
-                continue;
+        LOG_ERROR("Failed to run, pipe is not alive!");
+    } else {
+        try {
+            mOutputStream.clear();
+            mOutputStream.print("Type #help to print a help message").endl();
+            while (!stopped()) {
+                std::string line;
+                mInputStream.readline(line);
+                if (!parse(line)) {
+                    LOG_WARNING("Failed to parse input!");
+                    continue;
+                }
             }
+        } catch (...) {
+            LOG_ERROR("Caught unknown exception!");
         }
-    } catch (...) {
-        LOG_ERROR("Caught unknown exception!");
     }
     stop();
 }
@@ -65,9 +66,9 @@ bool TTTextBox::stopped() const {
 }
 
 bool TTTextBox::parse(const std::string& line) {
+    mOutputStream.clear();
     if (line.empty()) {
         LOG_WARNING("Received empty line from input!");
-        mOutputStream.clear();
         return false;
     }
 
@@ -86,7 +87,6 @@ bool TTTextBox::parse(const std::string& line) {
 
 bool TTTextBox::execute(const std::vector<std::string>& args) {
     if (args.empty()) {
-        mOutputStream.clear();
         LOG_WARNING("Received empty command from input!");
         return false;
     }
@@ -98,7 +98,6 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
             LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);
             return false;
         }
-        mOutputStream.clear();
         mOutputStream.print("Type #help to print a help message").endl();
         mOutputStream.print("Type #quit to quit the application").endl();
         mOutputStream.print("Type #switch <id> to switch contacts").endl();
@@ -139,7 +138,6 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
         }
         auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
         queue(std::move(message));
-        mOutputStream.clear();
         LOG_INFO("Successfully switched contacts!");
         return true;
     }
@@ -163,14 +161,15 @@ bool TTTextBox::send(const char* cbegin, const char* cend) {
         auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE, cend - cbegin, cbegin);
         queue(std::move(message));
     }
-    mOutputStream.clear();
     LOG_INFO("Successfully splitted string into smaller chunks!");
     return true;
 }
 
 void TTTextBox::main(std::promise<void> promise) {
     LOG_INFO("Started textbox loop");
-    if (mPipe->alive()) {
+    if (!mPipe->alive()) {
+        LOG_ERROR("Failed to run, pipe is not alive!");
+    } else {
         try {
             while (!stopped()) {
                 LOG_INFO("Filling the list of messages...");
@@ -205,7 +204,6 @@ void TTTextBox::main(std::promise<void> promise) {
                     }
                 }
                 LOG_INFO("Successfully sent all messages!");
-                std::this_thread::sleep_for(std::chrono::milliseconds(TTTextBox::SEND_TIMEOUT_MS));
             }
         } catch (...) {
             LOG_ERROR("Caught unknown exception at textbox loop!");
