@@ -1,5 +1,6 @@
 #pragma once
 #include <gmock/gmock.h>
+#include <list>
 #include "TTUtilsInputStream.hpp"
 
 class TTUtilsInputStreamMock : public TTUtilsInputStream {

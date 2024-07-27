@@ -27,6 +27,9 @@ protected:
     TTTextBoxHandler() = default;
 private:
     void main(std::promise<void> promise);
+    // Literals
+    inline const static long RECEIVE_TIMEOUT_MS = 500;
+    inline const static long RECEIVE_TRY_COUNT = 3;
     // IPC communication
     std::shared_ptr<TTUtilsNamedPipe> mPipe;
     // Callbacks

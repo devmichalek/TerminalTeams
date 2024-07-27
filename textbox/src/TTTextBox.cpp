@@ -126,7 +126,7 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
             return false;
         }
 
-        if (identity.size() > TTTEXTBOX_DATA_MAX_DIGITS) {
+        if (identity.size() > TTTextBoxMessage::DATA_MAX_DIGITS) {
             LOG_WARNING("Contacts switch attempt failed - too many digits!");
             return false;
         }
@@ -151,12 +151,12 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
 bool TTTextBox::send(const char* cbegin, const char* cend) {
     LOG_INFO("Received casual message from the input");
     LOG_INFO("Splitting string into smaller chunks...");
-    const long numOfMessages = (cend - cbegin) / TTTEXTBOX_DATA_MAX_LENGTH;
+    const long numOfMessages = (cend - cbegin) / TTTextBoxMessage::DATA_MAX_LENGTH;
     if (numOfMessages > 0) {
         for (auto i = numOfMessages; i > 0; --i) {
-            auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE, TTTEXTBOX_DATA_MAX_LENGTH, cbegin);
+            auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::MESSAGE, TTTextBoxMessage::DATA_MAX_LENGTH, cbegin);
             queue(std::move(message));
-            cbegin += TTTEXTBOX_DATA_MAX_LENGTH;
+            cbegin += TTTextBoxMessage::DATA_MAX_LENGTH;
         }
     }
     if (cbegin != cend) {
@@ -177,7 +177,7 @@ void TTTextBox::main(std::promise<void> promise) {
                 std::list<std::unique_ptr<TTTextBoxMessage>> messages;
                 {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
-                    auto waitTimeMs = std::chrono::milliseconds(TTTEXTBOX_QUEUED_MSG_TIMEOUT_MS);
+                    auto waitTimeMs = std::chrono::milliseconds(TTTextBox::QUEUED_MSG_TIMEOUT_MS);
                     mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
                         return !mQueuedMessages.empty();
                     });
@@ -205,7 +205,7 @@ void TTTextBox::main(std::promise<void> promise) {
                     }
                 }
                 LOG_INFO("Successfully sent all messages!");
-                std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_SEND_TIMEOUT_MS));
+                std::this_thread::sleep_for(std::chrono::milliseconds(TTTextBox::SEND_TIMEOUT_MS));
             }
         } catch (...) {
             LOG_ERROR("Caught unknown exception at textbox loop!");

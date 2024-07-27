@@ -8,7 +8,7 @@ TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
     std::shared_ptr<TTUtilsSyscall> syscall) :
         mNamedPipePath(path),
         mMessageSize(messageSize), 
-        mNamedPipeDescriptor(-1),
+        mNamedPipeDescriptor(std::nullopt),
         mSyscall(std::move(syscall)) {
     LOG_INFO("Successfully constructed!");
 }
@@ -16,8 +16,8 @@ TTUtilsNamedPipe::TTUtilsNamedPipe(const std::string& path,
 TTUtilsNamedPipe::~TTUtilsNamedPipe() {
     LOG_INFO("Destructing...");
     if (alive()) {
-        mSyscall->close(mNamedPipeDescriptor);
-        mNamedPipeDescriptor = -1;
+        mSyscall->close(mNamedPipeDescriptor.value());
+        mNamedPipeDescriptor.reset();
     }
     if (!mNamedPipePath.empty()) {
         mSyscall->unlink(mNamedPipePath.c_str());
@@ -27,7 +27,7 @@ TTUtilsNamedPipe::~TTUtilsNamedPipe() {
 }
 
 bool TTUtilsNamedPipe::alive() const {
-    return mNamedPipeDescriptor != -1;
+    return mNamedPipeDescriptor != std::nullopt;
 }
 
 bool TTUtilsNamedPipe::create() {
@@ -41,12 +41,13 @@ bool TTUtilsNamedPipe::create() {
         LOG_ERROR("Failed to create named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
     }
-
-    mNamedPipeDescriptor = mSyscall->open(mNamedPipePath.c_str(), O_RDONLY);
-    if (mNamedPipeDescriptor == -1) {
+    int descriptor = -1;
+    descriptor = mSyscall->open(mNamedPipePath.c_str(), O_RDONLY);
+    if (descriptor == -1) {
         LOG_ERROR("Failed to open named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
     }
+    mNamedPipeDescriptor = descriptor;
     LOG_INFO("Successfully created!");
     return true;
 }
@@ -60,24 +61,26 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     const auto path = mNamedPipePath;
     mNamedPipePath.clear();
     errno = 0;
+    int descriptor = -1;
     for (auto attempt = attempts; attempt > 0; --attempt) {
-        if ((mNamedPipeDescriptor = mSyscall->open(path.c_str(), O_WRONLY)) != -1) {
+        if ((descriptor = mSyscall->open(path.c_str(), O_WRONLY)) != -1) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
     }
 
-    if (mNamedPipeDescriptor == -1) {
+    if (descriptor == -1) {
         LOG_ERROR("Failed to open named pipe \"{}\", errno={}", path, errno);
         return false;
     }
+    mNamedPipeDescriptor = descriptor;
     LOG_INFO("Successfully opened!");
     return true;
 }
 
 bool TTUtilsNamedPipe::receive(char* message) {
     errno = 0;
-    if (mSyscall->read(mNamedPipeDescriptor, message, mMessageSize) < 0) {
+    if (mSyscall->read(mNamedPipeDescriptor.value(), message, mMessageSize) < 0) {
         LOG_ERROR("Hard failure while receiving message, errno={}", errno);
         return false;
     }
@@ -87,7 +90,7 @@ bool TTUtilsNamedPipe::receive(char* message) {
 
 bool TTUtilsNamedPipe::send(const char* message) {
     errno = 0;
-    if (mSyscall->write(mNamedPipeDescriptor, message, mMessageSize) < 0) {
+    if (mSyscall->write(mNamedPipeDescriptor.value(), message, mMessageSize) < 0) {
         LOG_ERROR("Hard failure while sending message, errno={}", errno);
         return false;
     }

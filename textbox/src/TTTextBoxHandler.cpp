@@ -44,13 +44,13 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
     LOG_INFO("Started textbox handler loop");
     if (mPipe->alive()) {
         try {
-            for (auto i = TTTEXTBOX_RECEIVE_TRY_COUNT; i >= 0; --i) {
+            for (auto i = TTTextBoxHandler::RECEIVE_TRY_COUNT; i >= 0; --i) {
                 if (stopped()) {
                     break;
                 }
                 TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);
                 if (!mPipe->receive(reinterpret_cast<char*>(&message))) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(TTTEXTBOX_RECEIVE_TIMEOUT_MS));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(TTTextBoxHandler::RECEIVE_TIMEOUT_MS));
                     continue;
                 }
 
@@ -77,7 +77,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                         LOG_ERROR("Received undefined message!");
                         throw std::runtime_error({});
                 }
-                i = TTTEXTBOX_RECEIVE_TRY_COUNT + 1;
+                i = TTTextBoxHandler::RECEIVE_TRY_COUNT + 1;
             }
         } catch (...) {
             // ...

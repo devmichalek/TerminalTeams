@@ -2,6 +2,7 @@
 #include "TTUtilsSyscall.hpp"
 #include <string>
 #include <memory>
+#include <optional>
 
 class TTUtilsNamedPipe {
 public:
@@ -18,12 +19,12 @@ public:
     virtual bool open(long attempts = 3, long timeoutMs = 500);
     virtual bool receive(char* message);
     virtual bool send(const char* message);
- protected:
+protected:
     TTUtilsNamedPipe() = default;
 private:
     // IPC shared memory communication
     std::string mNamedPipePath;
     long mMessageSize;
-    int mNamedPipeDescriptor;
+    std::optional<int> mNamedPipeDescriptor;
     std::shared_ptr<TTUtilsSyscall> mSyscall;
 };

@@ -12,11 +12,8 @@
 using ::testing::Test;
 using ::testing::Return;
 using ::testing::DoAll;
-using ::testing::SetArgReferee;
 using ::testing::InSequence;
 using ::testing::_;
-using ::testing::Matcher;
-using ::testing::ByRef;
 
 class TTContactsTest : public Test {
 protected:
