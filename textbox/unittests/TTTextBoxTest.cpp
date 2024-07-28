@@ -108,6 +108,10 @@ protected:
         mExpectedMessages.emplace_back(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
     }
 
+    void AddExpectedMessage(const std::string& msg) {
+        mExpectedMessages.emplace_back(TTTextBoxStatus::MESSAGE, msg.size(), msg.c_str());
+    }
+
     void StartApplication() {
         mTextBox->run();
         mApplicationCv.notify_one();
@@ -189,6 +193,33 @@ TEST_F(TTTextBoxTest, SuccessEmptyInput) {
     };
     EXPECT_EQ(actual, expected);
     EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+}
+
+TEST_F(TTTextBoxTest, FailedEmptyInput) {
+    // Expected messages
+    const size_t expectedMinNumOfMessages = 1;
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(expectedMinNumOfMessages))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageFalse, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    std::this_thread::sleep_for(std::chrono::milliseconds{600 * expectedMinNumOfMessages});
+    EXPECT_TRUE(mTextBox->stopped());
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
 }
 
 TEST_F(TTTextBoxTest, SuccessEmptyCommand) {
@@ -405,26 +436,230 @@ TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
     EXPECT_TRUE(IsAtLeastOneEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
-// TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
+TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    mInputStreamMock->input("#switch 1 blahblah");
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mTextBox->stop();
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+}
 
-// }
+TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    mInputStreamMock->input("#switch blahblah");
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mTextBox->stop();
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+}
 
-// TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
+TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    mInputStreamMock->input("#switch 11111");
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mTextBox->stop();
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+}
 
-// }
+TEST_F(TTTextBoxTest, SuccessSmallMessage) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    const std::string oneCharMsg = "a";
+    const std::string customMsg = "Some custom message  with  spaces and   tab";
+    const std::string upToLimitMsg(TTTextBoxMessage::DATA_MAX_LENGTH, 'x');
+    AddExpectedMessage(oneCharMsg);
+    AddExpectedMessage(customMsg);
+    AddExpectedMessage(upToLimitMsg);
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mInputStreamMock->input(oneCharMsg);
+    mInputStreamMock->input(customMsg);
+    mInputStreamMock->input(upToLimitMsg);
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    mTextBox->stop();
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        "",
+        "",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+}
 
-// TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
+TEST_F(TTTextBoxTest, SuccessBigMessage) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    const std::string bigMessage1(TTTextBoxMessage::DATA_MAX_LENGTH * 2, 'y');
+    const std::string bigMessageChunk1(TTTextBoxMessage::DATA_MAX_LENGTH, 'y');
+    const std::string bigMessage2(TTTextBoxMessage::DATA_MAX_LENGTH * 10, 'z');
+    const std::string bigMessageChunk2(TTTextBoxMessage::DATA_MAX_LENGTH, 'z');
+    const std::string bigMessage3(TTTextBoxMessage::DATA_MAX_LENGTH * 1.5, 'm');
+    const std::string bigMessageChunk3a(TTTextBoxMessage::DATA_MAX_LENGTH, 'm');
+    const std::string bigMessageChunk3b(TTTextBoxMessage::DATA_MAX_LENGTH / 2, 'm');
+    AddExpectedMessage(bigMessageChunk1);
+    AddExpectedMessage(bigMessageChunk1);
+    AddExpectedMessage(bigMessageChunk2);
+    AddExpectedMessage(bigMessageChunk2);
+    AddExpectedMessage(bigMessageChunk2);
+    AddExpectedMessage(bigMessageChunk2);
+    AddExpectedMessage(bigMessageChunk2);
+    AddExpectedMessage(bigMessageChunk3a);
+    AddExpectedMessage(bigMessageChunk3b);
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    mInputStreamMock->input(bigMessage1);
+    mInputStreamMock->input(bigMessage2);
+    mInputStreamMock->input(bigMessage3);
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mTextBox->stop();
+    mInputStreamMock->input("");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+        "",
+        "",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+}
 
-// }
-
-// TEST_F(TTTextBoxTest, SuccessOneMessage) {
-
-// }
-
-// TEST_F(TTTextBoxTest, SuccessFragmenetedMessage) {
-
-// }
-
-// TEST_F(TTTextBoxTest, SuccessMixOfMessagsAndCommands) {
-
-// }
+TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
+    // Expected messages
+    AddExpectedHeartbeatMessage();
+    AddExpectedContactsSwitchMessage(1);
+    const std::string customMsg = "Hello world";
+    AddExpectedMessage(customMsg);
+    // Expected flow
+    EXPECT_CALL(*mNamedPipeMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, alive)
+        .Times(2)
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mNamedPipeMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
+    RestartApplication(std::chrono::milliseconds{500});
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
+    mInputStreamMock->input("#help");
+    mInputStreamMock->input("#switch 1");
+    mInputStreamMock->input(customMsg);
+    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    mInputStreamMock->input("#quit");
+    // Verify
+    VerifyApplicationTimeout();
+    const auto& actual = mOutputStreamMock->mOutput;
+    const auto& expected = std::vector<std::string>{
+        "Type #help to print a help message\n",
+            "Type #help to print a help message\n" // no comma on purpose
+            "Type #quit to quit the application\n" // no comma on purpose
+            "Type #switch <id> to switch contacts\n" // no comma on purpose
+            "Skip # to send a message to the currently selected contact.\n",
+        "",
+        "",
+        ""
+    };
+    EXPECT_EQ(actual, expected);
+    EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+}
