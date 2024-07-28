@@ -42,9 +42,11 @@ bool TTTextBoxHandler::stopped() const {
 
 void TTTextBoxHandler::main(std::promise<void> promise) {
     LOG_INFO("Started textbox handler loop");
-    if (mPipe->alive()) {
+    if (!mPipe->alive()) {
+        LOG_ERROR("Failed to run, pipe is not alive!");
+    } else {
         try {
-            for (auto i = TTTextBoxHandler::RECEIVE_TRY_COUNT; i >= 0; --i) {
+            for (auto i = TTTextBoxHandler::RECEIVE_TRY_COUNT; i > 0; --i) {
                 if (stopped()) {
                     break;
                 }
@@ -53,7 +55,6 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(TTTextBoxHandler::RECEIVE_TIMEOUT_MS));
                     continue;
                 }
-
                 switch (message.status) {
                     case TTTextBoxStatus::HEARTBEAT:
                         LOG_INFO("Received heartbeat message");
@@ -80,7 +81,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                 i = TTTextBoxHandler::RECEIVE_TRY_COUNT + 1;
             }
         } catch (...) {
-            // ...
+            LOG_ERROR("Caught unknown exception!");
         }
     }
     stop();
