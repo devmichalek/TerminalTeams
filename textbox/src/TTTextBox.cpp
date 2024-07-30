@@ -59,6 +59,7 @@ void TTTextBox::run() {
 void TTTextBox::stop() {
     LOG_WARNING("Forced stop...");
     mStopped.store(true);
+    mQueueCondition.notify_one();
 }
 
 bool TTTextBox::stopped() const {
@@ -178,7 +179,7 @@ void TTTextBox::main(std::promise<void> promise) {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
                     auto waitTimeMs = std::chrono::milliseconds(TTTextBox::QUEUED_MSG_TIMEOUT_MS);
                     mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
-                        return !mQueuedMessages.empty();
+                        return !mQueuedMessages.empty() || stopped();
                     });
                     if (!mQueuedMessages.empty()) {
                         size_t counter = 0;
@@ -198,6 +199,9 @@ void TTTextBox::main(std::promise<void> promise) {
                 }
                 LOG_INFO("Sending all messages...");
                 for (auto &message : messages) {
+                    if (stopped()) {
+                        break;
+                    }
                     if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
                         LOG_ERROR("Failed to send message!");
                         throw std::runtime_error({});
@@ -208,6 +212,7 @@ void TTTextBox::main(std::promise<void> promise) {
         } catch (...) {
             LOG_ERROR("Caught unknown exception at textbox loop!");
         }
+        goodbye();
     }
     stop();
     promise.set_value();
@@ -220,4 +225,10 @@ void TTTextBox::queue(std::unique_ptr<TTTextBoxMessage> message) {
         mQueuedMessages.push(std::move(message));
     }
     mQueueCondition.notify_one();
+}
+
+void TTTextBox::goodbye() {
+    LOG_WARNING("Sending goodbye message...");
+    TTTextBoxMessage message(TTTextBoxStatus::GOODBYE, 0, nullptr);
+    mPipe->send(reinterpret_cast<char*>(&message));
 }

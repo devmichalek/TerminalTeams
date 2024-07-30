@@ -73,6 +73,9 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                         mCallbackMessageSent({message.data, message.dataLength});
                         break;
                     }
+                    case TTTextBoxStatus::GOODBYE:
+                        LOG_WARNING("Received goodbye message");
+                        throw std::runtime_error({});
                     case TTTextBoxStatus::UNDEFINED:
                     default:
                         LOG_ERROR("Received undefined message!");

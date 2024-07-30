@@ -104,6 +104,10 @@ protected:
         mExpectedMessages.emplace_back(TTTextBoxStatus::HEARTBEAT, 0, nullptr);
     }
 
+    void AddExpectedGoodbyeMessage() {
+        mExpectedMessages.emplace_back(TTTextBoxStatus::GOODBYE, 0, nullptr);
+    }
+
     void AddExpectedContactsSwitchMessage(size_t id) {
         mExpectedMessages.emplace_back(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
     }
@@ -169,6 +173,7 @@ TEST_F(TTTextBoxTest, FailedToRunNamedPipeIsNotAlive) {
 TEST_F(TTTextBoxTest, SuccessEmptyInput) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     const size_t expectedMinNumOfMessages = 3;
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
@@ -184,6 +189,7 @@ TEST_F(TTTextBoxTest, SuccessEmptyInput) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600 * expectedMinNumOfMessages});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -192,7 +198,8 @@ TEST_F(TTTextBoxTest, SuccessEmptyInput) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, FailedEmptyInput) {
@@ -212,6 +219,7 @@ TEST_F(TTTextBoxTest, FailedEmptyInput) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600 * expectedMinNumOfMessages});
     EXPECT_TRUE(mTextBox->stopped());
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -225,6 +233,7 @@ TEST_F(TTTextBoxTest, FailedEmptyInput) {
 TEST_F(TTTextBoxTest, SuccessEmptyCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -240,6 +249,7 @@ TEST_F(TTTextBoxTest, SuccessEmptyCommand) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -249,12 +259,14 @@ TEST_F(TTTextBoxTest, SuccessEmptyCommand) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, SuccessNonExistingCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -270,6 +282,7 @@ TEST_F(TTTextBoxTest, SuccessNonExistingCommand) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -279,12 +292,14 @@ TEST_F(TTTextBoxTest, SuccessNonExistingCommand) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, SuccessHelpCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -300,6 +315,7 @@ TEST_F(TTTextBoxTest, SuccessHelpCommand) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -312,12 +328,14 @@ TEST_F(TTTextBoxTest, SuccessHelpCommand) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, FailureHelpCommandTooManyArguments) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -333,6 +351,7 @@ TEST_F(TTTextBoxTest, FailureHelpCommandTooManyArguments) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -342,12 +361,14 @@ TEST_F(TTTextBoxTest, FailureHelpCommandTooManyArguments) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, SuccessQuitCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -361,6 +382,7 @@ TEST_F(TTTextBoxTest, SuccessQuitCommand) {
     RestartApplication(std::chrono::milliseconds{500});
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mInputStreamMock->input("#quit");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -369,12 +391,14 @@ TEST_F(TTTextBoxTest, SuccessQuitCommand) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, FailureQuitCommandTooManyArguments) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -399,13 +423,15 @@ TEST_F(TTTextBoxTest, FailureQuitCommandTooManyArguments) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
     AddExpectedContactsSwitchMessage(1);
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -431,14 +457,15 @@ TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsAtLeastOneEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
+    EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
+    EXPECT_TRUE(IsAtLeastOneEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages[1]));
 }
 
 TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -463,12 +490,14 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -493,12 +522,14 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
     // Expected messages
     AddExpectedHeartbeatMessage();
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -514,6 +545,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -523,7 +555,8 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
         ""
     };
     EXPECT_EQ(actual, expected);
-    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsEachEqualTo({mSentMessages.begin(), mSentMessages.end() - 1}, mExpectedMessages.front()));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
 TEST_F(TTTextBoxTest, SuccessSmallMessage) {
@@ -535,6 +568,7 @@ TEST_F(TTTextBoxTest, SuccessSmallMessage) {
     AddExpectedMessage(oneCharMsg);
     AddExpectedMessage(customMsg);
     AddExpectedMessage(upToLimitMsg);
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -553,6 +587,7 @@ TEST_F(TTTextBoxTest, SuccessSmallMessage) {
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -565,8 +600,8 @@ TEST_F(TTTextBoxTest, SuccessSmallMessage) {
     };
     EXPECT_EQ(actual, expected);
     EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end() - 1}));
 }
 
 TEST_F(TTTextBoxTest, SuccessBigMessage) {
@@ -588,6 +623,7 @@ TEST_F(TTTextBoxTest, SuccessBigMessage) {
     AddExpectedMessage(bigMessageChunk2);
     AddExpectedMessage(bigMessageChunk3a);
     AddExpectedMessage(bigMessageChunk3b);
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -606,6 +642,7 @@ TEST_F(TTTextBoxTest, SuccessBigMessage) {
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -618,8 +655,8 @@ TEST_F(TTTextBoxTest, SuccessBigMessage) {
     };
     EXPECT_EQ(actual, expected);
     EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end() - 1}));
 }
 
 TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
@@ -628,6 +665,7 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
     AddExpectedContactsSwitchMessage(1);
     const std::string customMsg = "Hello world";
     AddExpectedMessage(customMsg);
+    AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
@@ -645,6 +683,7 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
     mInputStreamMock->input(customMsg);
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
     mInputStreamMock->input("#quit");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -660,6 +699,6 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
     };
     EXPECT_EQ(actual, expected);
     EXPECT_TRUE(IsFirstEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.front()));
-    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end()}));
+    EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
+    EXPECT_TRUE(IsOrderEqualTo({mSentMessages.begin(), mSentMessages.end()}, {mExpectedMessages.begin() + 1, mExpectedMessages.end() - 1}));
 }

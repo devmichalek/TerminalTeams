@@ -5,7 +5,8 @@ enum class TTTextBoxStatus : unsigned int {
     UNDEFINED = 0,
     HEARTBEAT,
     CONTACTS_SWITCH,
-    MESSAGE
+    MESSAGE,
+    GOODBYE
 };
 
 inline std::ostream& operator<<(std::ostream& os, const TTTextBoxStatus& rhs)
@@ -15,6 +16,7 @@ inline std::ostream& operator<<(std::ostream& os, const TTTextBoxStatus& rhs)
         case TTTextBoxStatus::HEARTBEAT: os << "HEARTBEAT"; break;
         case TTTextBoxStatus::CONTACTS_SWITCH: os << "CONTACTS_SWITCH"; break;
         case TTTextBoxStatus::MESSAGE: os << "MESSAGE"; break;
+        case TTTextBoxStatus::GOODBYE: os << "GOODBYE"; break;
         default: os << "UNKNOWN"; break;
     }
     return os;

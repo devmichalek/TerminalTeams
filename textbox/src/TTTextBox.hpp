@@ -36,6 +36,8 @@ private:
     void main(std::promise<void> promise);
     // Generic queue
     void queue(std::unique_ptr<TTTextBoxMessage> message);
+    // Sends goodbye message
+    void goodbye();
     // Literals
     inline const static long QUEUED_MSG_TIMEOUT_MS = 500;
     // IPC communication
