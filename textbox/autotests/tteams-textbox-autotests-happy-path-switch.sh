@@ -20,35 +20,31 @@ EXIT_STATUS=0
 
 # Test scenario
 echo "Info: Waiting for synchronization..."
-sleep 3
+sleep 2
 echo "#switch 0" > "${APP_HANDLER_STDIN}"
-echo "Hello John, how are you?" > "${APP_HANDLER_STDIN}"
-echo "Hi Freddie, good and you?" > "${APP_HANDLER_STDIN}"
-echo "Fine" > "${APP_HANDLER_STDIN}"
-echo "#switch 1" > "${APP_HANDLER_STDIN}"
-echo "What's up bro?" > "${APP_HANDLER_STDIN}"
-echo "Nevermind" > "${APP_HANDLER_STDIN}"
+echo "#switch 100" > "${APP_HANDLER_STDIN}"
+echo "#switch 9999" > "${APP_HANDLER_STDIN}"
+echo "#switch 15" > "${APP_HANDLER_STDIN}"
+echo "#switch 875" > "${APP_HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."
-sleep 3
+sleep 2
 
 # Expected output
 APP_HANDLER_EXPECTED_RESULTS_RAW="#0
-Hello John, how are you?
-Hi Freddie, good and you?
-Fine
-#1
-What's up bro?
-Nevermind"
+#100
+#9999
+#15
+#875"
 APP_HANDLER_EXPECTED_RESULTS=$(echo -e "$APP_HANDLER_EXPECTED_RESULTS_RAW")
 APP_HANDLER_ACTUAL_RESULTS=$(<"${APP_HANDLER_STDOUT}")
 APP_EXPECTED_RESULTS_RAW="\033[2J\033[1;1HType #help to print a help message
-\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H"
+\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H"
 APP_EXPECTED_RESULTS=$(echo -e "$APP_EXPECTED_RESULTS_RAW")
 APP_ACTUAL_RESULTS=$(<"${APP_STDOUT}")
 
 # Test teardown
 echo "#quit" > "${APP_HANDLER_STDIN}"
 echo "Info: Waiting for application to stop..."
-sleep 2
+sleep 1
 echo "Info: Application shall be stopped now"
 source tteams-textbox-autotests-verdict.sh

@@ -14,8 +14,17 @@ get_filename_component(TT_TEXTBOX_HANDLER_TEST_DIRECTORY "." ABSOLUTE)
 get_filename_component(TT_TEXTBOX_DIRECTORY "../src" ABSOLUTE)
 set(TT_TEXTBOX_HANDLER_TEST_SCRIPTS
   "tteams-textbox-autotests.sh"
-  "tteams-textbox-autotests-happy-path.sh"
   "tteams-textbox-autotests-verdict.sh"
+  "tteams-textbox-autotests-happy-path.sh"
+  "tteams-textbox-autotests-happy-path-help.sh"
+  "tteams-textbox-autotests-happy-path-message.sh"
+  "tteams-textbox-autotests-happy-path-quit.sh"
+  "tteams-textbox-autotests-happy-path-switch.sh"
+  "tteams-textbox-autotests-unhappy-path.sh"
+  "tteams-textbox-autotests-unhappy-path-help.sh"
+  "tteams-textbox-autotests-unhappy-path-kill.sh"
+  "tteams-textbox-autotests-unhappy-path-quit.sh"
+  "tteams-textbox-autotests-unhappy-path-switch.sh"
 )
 set(TT_TEXTBOX_HANDLER_DST "autotests")
 

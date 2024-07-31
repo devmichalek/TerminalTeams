@@ -324,7 +324,7 @@ TEST_F(TTTextBoxTest, SuccessHelpCommand) {
             "Type #help to print a help message\n" // no comma on purpose
             "Type #quit to quit the application\n" // no comma on purpose
             "Type #switch <id> to switch contacts\n" // no comma on purpose
-            "Skip # to send a message to the currently selected contact.\n",
+            "Skip # and send a message to the currently selected contact.\n",
         ""
     };
     EXPECT_EQ(actual, expected);
@@ -692,7 +692,7 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
             "Type #help to print a help message\n" // no comma on purpose
             "Type #quit to quit the application\n" // no comma on purpose
             "Type #switch <id> to switch contacts\n" // no comma on purpose
-            "Skip # to send a message to the currently selected contact.\n",
+            "Skip # and send a message to the currently selected contact.\n",
         "",
         "",
         ""

@@ -102,7 +102,7 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
         mOutputStream.print("Type #help to print a help message").endl();
         mOutputStream.print("Type #quit to quit the application").endl();
         mOutputStream.print("Type #switch <id> to switch contacts").endl();
-        mOutputStream.print("Skip # to send a message to the currently selected contact.").endl();
+        mOutputStream.print("Skip # and send a message to the currently selected contact.").endl();
         return true;
     }
 

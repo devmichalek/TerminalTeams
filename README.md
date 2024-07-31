@@ -7,9 +7,9 @@ The tmux terminal multiplexer was used to create program interface.
 
 ### Assumptions
 Application was written with the following assumptions:
-- each username is unique within it's interface IP address
-- each user has the same local time on the system
-- only one user runs application per IP address interface
+- each username is unique per PC's network interface
+- each user in the LAN has the same local time on the system
+- only one user can run an application per IP address interface
 - no centralized server
 - no support for IPv6
 - terminal emulator window resizing is not supported
@@ -54,11 +54,9 @@ Application was tested using:
 - safe cleanup
 - unit tests
     - chat UT
-    - textbox UT
     - engine UT
 - auto tests
     - chat AT
-    - textbox AT
     - engine AT
 - parse function in tttextbox
 - remove IPC files in cpp classes in constructor

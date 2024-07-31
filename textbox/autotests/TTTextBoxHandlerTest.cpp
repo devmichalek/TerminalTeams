@@ -11,7 +11,7 @@ std::unique_ptr<TTTextBoxHandler> handler;
 // Logger
 LOG_DECLARE("tteams-textbox-handler");
 
-void messageSent(std::string msg) {
+void messageSent(const std::string& msg) {
     std::cout << msg << std::endl;
 }
 

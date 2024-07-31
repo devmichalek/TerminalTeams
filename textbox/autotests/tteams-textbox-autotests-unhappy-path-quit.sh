@@ -18,35 +18,29 @@ ${APP_HANDLER_CMD} &> "${APP_HANDLER_STDOUT}" &
 ${APP_CMD} < "${APP_HANDLER_STDIN}" &> ${APP_STDOUT} &
 EXIT_STATUS=0
 
-# Test scenario
-echo "Info: Waiting for synchronization..."
-sleep 3
-echo "#switch 0" > "${APP_HANDLER_STDIN}"
-echo "Hello John, how are you?" > "${APP_HANDLER_STDIN}"
-echo "Hi Freddie, good and you?" > "${APP_HANDLER_STDIN}"
-echo "Fine" > "${APP_HANDLER_STDIN}"
-echo "#switch 1" > "${APP_HANDLER_STDIN}"
-echo "What's up bro?" > "${APP_HANDLER_STDIN}"
-echo "Nevermind" > "${APP_HANDLER_STDIN}"
-echo "Info: Waiting for data to be set..."
-sleep 3
-
 # Expected output
-APP_HANDLER_EXPECTED_RESULTS_RAW="#0
-Hello John, how are you?
-Hi Freddie, good and you?
-Fine
-#1
-What's up bro?
-Nevermind"
+APP_HANDLER_EXPECTED_RESULTS_RAW=""
 APP_HANDLER_EXPECTED_RESULTS=$(echo -e "$APP_HANDLER_EXPECTED_RESULTS_RAW")
 APP_HANDLER_ACTUAL_RESULTS=$(<"${APP_HANDLER_STDOUT}")
-APP_EXPECTED_RESULTS_RAW="\033[2J\033[1;1HType #help to print a help message
-\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H\033[2J\033[1;1H"
+APP_EXPECTED_RESULTS_RAW="\033[2J\033[1;1HType #help to print a help message"
 APP_EXPECTED_RESULTS=$(echo -e "$APP_EXPECTED_RESULTS_RAW")
 APP_ACTUAL_RESULTS=$(<"${APP_STDOUT}")
 
 # Test teardown
+echo "#quit blahblah" > "${APP_HANDLER_STDIN}"
+echo "Info: Waiting for data to be set..."
+sleep 2
+APP_PID=$(pgrep -f "${APP_CMD}" | head -n 1)
+if ! [[ "${APP_PID}" ]]; then
+    echo "Error: Application is not running!"
+    EXIT_STATUS=1
+fi
+APP_HANDLER_PID=$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)
+if ! [[ "${APP_HANDLER_PID}" ]]; then
+    echo "Error: Application handler is not running!"
+    EXIT_STATUS=1
+fi
+
 echo "#quit" > "${APP_HANDLER_STDIN}"
 echo "Info: Waiting for application to stop..."
 sleep 2
