@@ -1,0 +1,12 @@
+@startuml
+!pragma teoz true
+
+participant "TTTextBoxHandler\n(TTNamedPipe)" as TTTextBoxHandler
+participant "Shared Memory\n(System)" as TTNamedPipe
+participant "TTTextBox\n(TTNamedPipe)" as TTTextBox
+
+== Initialization ==
+
+== Communication ==
+
+@enduml

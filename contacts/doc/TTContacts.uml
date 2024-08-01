@@ -28,7 +28,6 @@ TTContacts <.. TTContactsSettings
 TTContacts <.. TTContactsMessage
 TTContactsSettings <.. TTUtilsSyscall
 TTContactsSettings <.. TTUtilsSharedMem
-TTContactsSettings <.. TTUtilsOutputStream
 TTContactsSettings <.. TTContactsMessage
 TTContactsMessage o-- TTContactsStatus
 TTContactsMessage o-- TTContactsState

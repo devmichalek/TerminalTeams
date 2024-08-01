@@ -58,5 +58,9 @@ Application was tested using:
 - auto tests
     - chat AT
     - engine AT
+- documentation
+    - chat
+    - textbox
+    - engine
 - parse function in tttextbox
 - remove IPC files in cpp classes in constructor

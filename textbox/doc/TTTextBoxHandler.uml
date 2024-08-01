@@ -1,0 +1,34 @@
+@startuml
+
+package TTTextBoxBundle <<Rectangle>> {
+  class TTTextBoxHandler
+  struct TTTextBoxMessage
+  class TTTextBoxSettings
+  enum TTTextBoxStatus
+  annotation TTTextBoxCallbackMessageSent
+  annotation TTTextBoxCallbackContactSwitch
+}
+
+package TTDiagnosticsBundle <<Rectangle>> {
+  class TTDiagnosticsLogger
+}
+
+package TTUtilsBundle <<Rectangle>> {
+  class TTUtilsSyscall
+  class TTUtilsNamedPipe
+}
+
+TTTextBoxHandler o-- TTTextBoxMessage
+TTTextBoxHandler o-- TTUtilsNamedPipe
+TTTextBoxHandler *-- TTTextBoxCallbackMessageSent
+TTTextBoxHandler *-- TTTextBoxCallbackContactSwitch
+TTTextBoxHandler <.. TTDiagnosticsLogger
+TTTextBoxHandler <.. TTTextBoxSettings
+TTTextBoxSettings <.. TTUtilsSyscall
+TTTextBoxSettings <.. TTUtilsNamedPipe
+TTTextBoxSettings <.. TTTextBoxMessage
+TTTextBoxMessage o-- TTTextBoxStatus
+TTUtilsNamedPipe o-- TTUtilsSyscall
+TTUtilsNamedPipe <.. TTDiagnosticsLogger
+
+@enduml

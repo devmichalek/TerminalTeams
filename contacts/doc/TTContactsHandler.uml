@@ -14,7 +14,6 @@ package TTDiagnosticsBundle <<Rectangle>> {
 }
 
 package TTUtilsBundle <<Rectangle>> {
-  class TTUtilsOutputStream
   class TTUtilsSyscall
   class TTUtilsSharedMem
 }
@@ -26,7 +25,6 @@ TTContactsHandler <.. TTDiagnosticsLogger
 TTContactsHandler <.. TTContactsSettings
 TTContactsSettings <.. TTUtilsSyscall
 TTContactsSettings <.. TTUtilsSharedMem
-TTContactsSettings <.. TTUtilsOutputStream
 TTContactsSettings <.. TTContactsMessage
 TTContactsMessage o-- TTContactsStatus
 TTContactsMessage o-- TTContactsState
