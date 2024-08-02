@@ -1,12 +1,74 @@
 @startuml
 !pragma teoz true
 
-participant "TTTextBoxHandler\n(TTNamedPipe)" as TTTextBoxHandler
-participant "Shared Memory\n(System)" as TTNamedPipe
-participant "TTTextBox\n(TTNamedPipe)" as TTTextBox
+participant "TTTextBox" as TTTextBox
+participant "TTNamedPipe" as TTNamedPipe
+participant "TTTextBoxHandler" as TTTextBoxHandler
 
 == Initialization ==
+note left of TTTextBoxHandler
+Only one attempt will be made
+to create and open named pipe
+end note
+TTTextBoxHandler -> TTNamedPipe : create and open
+activate TTTextBoxHandler #FFBBBB
+note right of TTTextBox
+Up to three attempts will be
+made to open named pipe
+end note
+{first_open} TTTextBox -> TTNamedPipe : open
+activate TTTextBox #FFBBBB
+TTNamedPipe -> TTTextBox : failure
+TTNamedPipe -> TTTextBoxHandler : success
+deactivate TTTextBoxHandler
+{second_open} TTTextBox -> TTNamedPipe : open
+{first_open} <-> {second_open} : 500 ms
+TTNamedPipe -> TTTextBox : success
+deactivate TTTextBox
+note left of TTTextBoxHandler
+Attempt to check if named pipe is alive
+meanining the connection can be established
+end note
+TTTextBoxHandler -> TTNamedPipe : alive
+TTNamedPipe -> TTTextBoxHandler : success
+TTTextBox -> TTNamedPipe : alive
+TTNamedPipe -> TTTextBox : success
 
 == Communication ==
+TTTextBoxHandler -> TTTextBoxHandler : start receiver thread
+activate TTTextBoxHandler #005500
+deactivate TTTextBoxHandler
+TTTextBox -> TTTextBox : start sender thread
+activate TTTextBox #gold
+deactivate TTTextBox
+note left of TTTextBoxHandler
+Up to three attempts are
+made to receive any message
+after last successful receive
+end note
+{first_receive} TTTextBoxHandler -> TTNamedPipe : receive
+TTNamedPipe -> TTTextBoxHandler : failure
+[o-> TTTextBox : switch command
+[o-> TTTextBox : "Hello world" message
+note right of TTTextBox
+Only one attempt is made
+to send any message
+end note
+TTTextBox -> TTNamedPipe : send (switch contact)
+TTNamedPipe -> TTTextBox : success
+{second_receive} TTTextBoxHandler -> TTNamedPipe : receive
+{first_receive} <-> {second_receive} : 500 ms
+TTNamedPipe -> TTTextBoxHandler : success
+TTTextBoxHandler ->o] : callback (switch contact)
+TTTextBox -> TTNamedPipe : send (message)
+TTNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTNamedPipe : receive
+TTNamedPipe -> TTTextBoxHandler : success
+TTTextBoxHandler ->o] : callback (message)
+[o-> TTTextBox : quit command
+TTTextBox -> TTNamedPipe : send (quit)
+TTNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTNamedPipe : receive
+TTNamedPipe -> TTTextBoxHandler : success
 
 @enduml

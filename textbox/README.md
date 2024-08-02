@@ -1,4 +1,4 @@
-# Terminal Teams Contacts
+# Terminal Teams TextBox
 ## About
 The purpose of this module is to:
 - work as an user input interface
@@ -27,4 +27,5 @@ Both components use IPC for communication (named pipe). Message types taking par
 - message
 - goodbye
 
+Happy path of initialization and example communication can be found down below.
 ![TTTextBoxCommunication](./doc/TTTextBoxCommunication.svg)
