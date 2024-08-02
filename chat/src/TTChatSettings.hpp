@@ -13,7 +13,9 @@ public:
     virtual size_t getTerminalHeight() const { return mHeight; }
     virtual std::shared_ptr<TTUtilsMessageQueue> getPrimaryMessageQueue() const;
     virtual std::shared_ptr<TTUtilsMessageQueue> getSecondaryMessageQueue() const;
-    double getRatio() const { return 0.7; }
+    virtual double getRatio() const { return 0.7; }
+protected:
+    TTChatSettings() = default;
 private:
     size_t mWidth;
     size_t mHeight;

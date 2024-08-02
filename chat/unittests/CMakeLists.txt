@@ -8,9 +8,14 @@ set(TT_CHAT_LIB "tteams-chat")
 set(TT_CHAT_HANDLER_LIB "tteams-chat-handler")
 set(TT_CHAT_UT "tteams-chat-unittests")
 get_filename_component(TT_CHAT_TESTED_DIRECTORY "../src" ABSOLUTE)
+get_filename_component(TT_CHAT_MOCKS_DIRECTORY "../mocks" ABSOLUTE)
+get_filename_component(TT_UTILS_MOCKS_DIRECTORY "../../utils/mocks" ABSOLUTE)
 get_filename_component(TT_CHAT_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 set(TT_CHAT_UNIT_TESTS
   "${TT_CHAT_UNIT_TESTS_DIRECTORY}/Main.cpp"
+  "${TT_CHAT_UNIT_TESTS_DIRECTORY}/TTChatHandlerTest.cpp"
+  "${TT_CHAT_UNIT_TESTS_DIRECTORY}/TTChatSettingsTest.cpp"
+  "${TT_CHAT_UNIT_TESTS_DIRECTORY}/TTChatTest.cpp"
 )
 set(TT_CHAT_UNIT_TESTS_SCRIPTS "tteams-chat-unittests.sh")
 set(TT_CHAT_DST "unittests")
@@ -37,6 +42,8 @@ add_executable(
   "${TT_CHAT_UNIT_TESTS}"
 )
 target_include_directories(${TT_CHAT_UT} PRIVATE "${TT_CHAT_TESTED_DIRECTORY}")
+target_include_directories(${TT_CHAT_UT} PUBLIC "${TT_CHAT_MOCKS_DIRECTORY}")
+target_include_directories(${TT_CHAT_UT} PUBLIC "${TT_UTILS_MOCKS_DIRECTORY}")
 target_include_directories(${TT_CHAT_UT} PUBLIC "${TT_CHAT_UNIT_TESTS_DIRECTORY}")
 target_link_libraries(
   ${TT_CHAT_UT}

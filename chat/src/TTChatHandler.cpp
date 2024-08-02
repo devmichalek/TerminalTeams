@@ -42,14 +42,17 @@ bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timesta
         LOG_WARNING("Forced exit at send message type!");
         return false;
     }
-    std::shared_lock messagesLock(mMessagesMutex);
-    if (id >= mMessages.size()) {
-        LOG_ERROR("ID={} out of range at send message type!", id);
-        return false;
+    {
+        std::shared_lock messagesLock(mMessagesMutex);
+        if (id >= mMessages.size()) {
+            LOG_ERROR("ID={} out of range at send message type!", id);
+            return false;
+        }
     }
+    
+    std::scoped_lock messagesLock(mMessagesMutex);
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::SEND, message, timestamp));
-    std::shared_lock currentIdLock(mCurrentIdMutex);
     if (mCurrentId == id) {
         if (!send(TTChatMessageType::SEND, message, timestamp)) {
             return false;
@@ -64,14 +67,16 @@ bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp time
         LOG_WARNING("Forced exit at receive message type!");
         return false;
     }
-    std::shared_lock messagesLock(mMessagesMutex);
-    if (id >= mMessages.size()) {
-        LOG_ERROR("ID={} out of range at receive message type!", id);
-        return false;
+    {
+        std::shared_lock messagesLock(mMessagesMutex);
+        if (id >= mMessages.size()) {
+            LOG_ERROR("ID={} out of range at receive message type!", id);
+            return false;
+        }
     }
+    std::scoped_lock messagesLock(mMessagesMutex);
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::RECEIVE, message, timestamp));
-    std::shared_lock currentIdLock(mCurrentIdMutex);
     if (mCurrentId == id) {
         if (!send(TTChatMessageType::RECEIVE, message, timestamp)) {
             return false;
@@ -86,15 +91,17 @@ bool TTChatHandler::clear(size_t id) {
         LOG_WARNING("Forced exit at clear message type!");
         return false;
     }
-    std::shared_lock messagesLock(mMessagesMutex);
-    if (id >= mMessages.size()) {
-        LOG_ERROR("ID={} out of range at clear message type!", id);
-        return false;
+    {
+        std::shared_lock messagesLock(mMessagesMutex);
+        if (id >= mMessages.size()) {
+            LOG_ERROR("ID={} out of range at clear message type!", id);
+            return false;
+        }
     }
     if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {
         return false;
     }
-    std::scoped_lock currentIdLock(mCurrentIdMutex);
+    std::scoped_lock messagesLock(mMessagesMutex);
     mCurrentId = id;
     auto& storage = mMessages[id];
     for (auto &message : storage) {
@@ -122,7 +129,8 @@ bool TTChatHandler::create(size_t id) {
     return true;
 }
 
-const TTChatEntries& TTChatHandler::get(size_t id) {
+const TTChatEntries& TTChatHandler::get(size_t id) const {
+    std::shared_lock messagesLock(mMessagesMutex);
     if (id >= mMessages.size()) {
         LOG_ERROR("Failed to return messages of ID={}", id);
         throw std::runtime_error({});

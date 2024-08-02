@@ -7,7 +7,7 @@
 
 class TTChat {
 public:
-    explicit TTChat(const TTChatSettings& settings, const TTUtilsOutputStream& outputStream);
+    explicit TTChat(TTChatSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTChat();
     TTChat(const TTChat&) = delete;
     TTChat(TTChat&&) = delete;
@@ -19,6 +19,8 @@ public:
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
+protected:
+    TTChat() = default;
 private:
     // Sends heartbeat periodically
     void heartbeat(std::promise<void> promise);

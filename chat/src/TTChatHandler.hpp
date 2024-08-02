@@ -26,9 +26,11 @@ public:
     virtual bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
     virtual bool clear(size_t id);
     virtual bool create(size_t id);
-    virtual const TTChatEntries& get(size_t id);
+    virtual const TTChatEntries& get(size_t id) const;
     virtual void stop();
     virtual bool stopped() const;
+protected:
+    TTChatHandler() = default;
 private:
     bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
     std::list<std::unique_ptr<TTChatMessage>> dequeue();
@@ -49,7 +51,6 @@ private:
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;
     // Messages storage
     size_t mCurrentId;
-    std::shared_mutex mCurrentIdMutex;
-    std::shared_mutex mMessagesMutex;
+    mutable std::shared_mutex mMessagesMutex;
     std::vector<TTChatEntries> mMessages;
 };
