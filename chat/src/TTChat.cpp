@@ -39,7 +39,9 @@ TTChat::~TTChat() {
 
 void TTChat::run() {
     LOG_INFO("Started primary loop");
-    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
+    if (!mPrimaryMessageQueue->alive() || !mSecondaryMessageQueue->alive()) {
+        LOG_ERROR("Primary or secondary message queue is not alive!");
+    } else {
         try {
             TTChatMessage message;
             while (true) {
@@ -51,8 +53,9 @@ void TTChat::run() {
                     LOG_WARNING("Failed to send message!");
                     break;
                 }
-                message.data[message.dataLength] = '\0';
-                handle(message);
+                if (!handle(message)) {
+                    break;
+                }
             }
         } catch (...) {
             LOG_ERROR("Caught unknown exception at primary loop!");
@@ -73,15 +76,18 @@ bool TTChat::stopped() const {
 
 void TTChat::heartbeat(std::promise<void> promise) {
     LOG_INFO("Started secondary (heartbeat) loop");
-    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
+    if (!mPrimaryMessageQueue->alive() || !mSecondaryMessageQueue->alive()) {
+        LOG_ERROR("Primary or secondary message queue is not alive!");
+    } else {
         try {
-            char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
+            TTChatMessage message;
+            message.setType(TTChatMessageType::HEARTBEAT); 
             while (true) {
                 if (mStopped.load()) {
                     LOG_WARNING("Forced exit on secondary (heartbeat) loop");
                     break;
                 }
-                if (!mSecondaryMessageQueue->send(reinterpret_cast<const char*>(&dummyBuffer[0]))) {
+                if (!mSecondaryMessageQueue->send(reinterpret_cast<const char*>(&message))) {
                     LOG_WARNING("Failed to send heartbeat message!");
                     break;
                 }
@@ -96,83 +102,85 @@ void TTChat::heartbeat(std::promise<void> promise) {
     LOG_INFO("Completed secondary (heartbeat) loop");
 }
 
-void TTChat::handle(const TTChatMessage& message) {
-    switch (message.type) {
+bool TTChat::handle(const TTChatMessage& message) {
+    switch (message.getType()) {
         case TTChatMessageType::CLEAR:
             LOG_INFO("Received clear message");
             mOutputStream.clear();
-            break;
+            return true;
         case TTChatMessageType::SEND:
             LOG_INFO("Received sender message");
-            print(message.data, message.timestamp, false);
-            break;
+            print(message);
+            return true;
         case TTChatMessageType::RECEIVE:
             LOG_INFO("Received receiver message");
-            print(message.data, message.timestamp, true);
-            break;
+            print(message);
+            return true;
         case TTChatMessageType::HEARTBEAT:
             LOG_INFO("Received heartbeat message");
-            break;
+            return true;
         case TTChatMessageType::GOODBYE:
             LOG_INFO("Received goodbye message");
             stop();
-            break;
+            return false;
         default:
-            break;
+            LOG_ERROR("Received unknown message");
+            stop();
+            return false;
     }
 }
 
-void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool received) {
+void TTChat::print(const TTChatMessage& message) {
     LOG_INFO("Formatting message to be printed...");
     // Remove spaces from the beggining and end
-    std::string message = cmessage;
+    std::string data = message.getData();
     const std::string delimiter = " ";
-    std::string newMessageStr;
-    for (auto charIterator = message.begin(); charIterator != message.end(); charIterator++) {
+    std::string newData;
+    for (auto charIterator = data.begin(); charIterator != data.end(); charIterator++) {
         if (*charIterator != delimiter.back()) {
-            for (; charIterator != message.end(); charIterator++) {
-                newMessageStr.push_back(*charIterator);
+            for (; charIterator != data.end(); charIterator++) {
+                newData.push_back(*charIterator);
             }
             break;
         }
     }
-    message = newMessageStr;
-    if (message.back() == delimiter.back()) {
-        message = message.substr(0, message.rfind(delimiter));
+    data = newData;
+    if (data.back() == delimiter.back()) {
+        data = data.substr(0, data.rfind(delimiter));
     }
 
     // Remove duplicated spaces
-    newMessageStr.clear();
-    for (auto charIterator = message.begin(); charIterator != message.end(); charIterator++) {
+    newData.clear();
+    for (auto charIterator = data.begin(); charIterator != data.end(); charIterator++) {
         if (*charIterator != delimiter.back()) {
-            newMessageStr.push_back(*charIterator);
+            newData.push_back(*charIterator);
         } else {
-            newMessageStr.push_back(delimiter.back());
-            for (; charIterator != message.end() && *charIterator == delimiter.back(); charIterator++) {
+            newData.push_back(delimiter.back());
+            for (; charIterator != data.end() && *charIterator == delimiter.back(); charIterator++) {
             }
-            if (charIterator != message.end()) {
-                newMessageStr.push_back(*charIterator);
+            if (charIterator != data.end()) {
+                newData.push_back(*charIterator);
             } else {
                 break;
             }
         }
     }
-    message = newMessageStr;
+    data = newData;
 
     // Make sure message is not empty
     std::vector<std::string> lines;
-    if (message.empty()) {
+    if (data.empty()) {
         lines.emplace_back(" ");
     } else {
         // Extract words from the message
         std::vector<std::string> words;
         size_t lastPosition = 0, currentPosition;
-        while ((currentPosition = message.find(delimiter, lastPosition)) != std::string::npos) {
-            std::string word = message.substr(lastPosition, currentPosition - lastPosition);
+        while ((currentPosition = data.find(delimiter, lastPosition)) != std::string::npos) {
+            std::string word = data.substr(lastPosition, currentPosition - lastPosition);
             lastPosition += (word.size() + 1);
             words.emplace_back(word);
         }
-        words.emplace_back(message.substr(lastPosition, message.size()));
+        words.emplace_back(data.substr(lastPosition, data.size()));
 
         // Create lines from the words
         auto wordIterator = words.begin();
@@ -195,14 +203,14 @@ void TTChat::print(const char* cmessage, TTChatTimestamp timestmap, bool receive
     }
 
     // Create timestamp string
-    auto time = std::chrono::system_clock::to_time_t(timestmap);
+    const auto time = std::chrono::system_clock::to_time_t(message.getTimestamp());
     std::stringstream ss;
     ss << std::put_time(std::localtime(&time), "%Y-%m-%d %X");
     const auto timestamp = ss.str();
 
     // Print message based on side
     LOG_INFO("Printing message...");
-    if (received) {
+    if (message.getType() == TTChatMessageType::RECEIVE) {
         mOutputStream.print(timestamp).endl();
         for (auto &line : lines) {
             mOutputStream.print(line).endl();

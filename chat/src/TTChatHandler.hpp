@@ -16,7 +16,7 @@ using TTChatEntries = std::deque<TTChatEntry>;
 // Allows to control TTChat process concurrently.
 class TTChatHandler {
 public:
-    explicit TTChatHandler(const TTChatSettings& settings);
+    explicit TTChatHandler(TTChatSettings& settings);
     virtual ~TTChatHandler();
     TTChatHandler(const TTChatHandler&) = delete;
     TTChatHandler(TTChatHandler&&) = delete;

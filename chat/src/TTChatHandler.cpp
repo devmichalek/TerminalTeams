@@ -5,7 +5,7 @@
 #include <limits>
 #include <iostream>
 
-TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
+TTChatHandler::TTChatHandler(TTChatSettings& settings) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
         mStopped{false},
@@ -156,18 +156,24 @@ bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimesta
     }
 
     std::list<std::unique_ptr<TTChatMessage>> messages;
-    const size_t numberOfFullMessages = (data.size() / TTCHAT_DATA_MAX_LENGTH);
+    const size_t numberOfFullMessages = (data.size() / TTChatMessage::MAX_DATA_LENGTH);
     for (size_t i = 0; i < numberOfFullMessages; ++i) {
-        const char* cdata = data.c_str() + (TTCHAT_DATA_MAX_LENGTH * i);
-        auto message = std::make_unique<TTChatMessage>(type, timestamp, TTCHAT_DATA_MAX_LENGTH, cdata);
+        const char* cdata = data.c_str() + (TTChatMessage::MAX_DATA_LENGTH * i);
+        auto message = std::make_unique<TTChatMessage>();
+        message->setType(type);
+        message->setTimestamp(timestamp);
+        message->setData(std::string_view(cdata, TTChatMessage::MAX_DATA_LENGTH));
         messages.push_back(std::move(message));
     }
 
-    const size_t totalFullMessagesDataLength = numberOfFullMessages * TTCHAT_DATA_MAX_LENGTH;
+    const size_t totalFullMessagesDataLength = numberOfFullMessages * TTChatMessage::MAX_DATA_LENGTH;
     const size_t lastMessageDataLength = data.size() - totalFullMessagesDataLength;
     if (lastMessageDataLength > 0 || data.empty()) {
         const char* cdata = data.c_str() + totalFullMessagesDataLength;
-        auto message = std::make_unique<TTChatMessage>(type, timestamp, lastMessageDataLength, cdata);
+        auto message = std::make_unique<TTChatMessage>();
+        message->setType(type);
+        message->setTimestamp(timestamp);
+        message->setData(std::string_view(cdata, lastMessageDataLength));
         messages.push_back(std::move(message));
     }
 
@@ -232,13 +238,13 @@ void TTChatHandler::heartbeat() {
     LOG_INFO("Started secondary (heartbeat) loop");
     if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) { 
         try {
-            char dummyBuffer[TTCHAT_MESSAGE_MAX_LENGTH];
+            TTChatMessage message;
             while (true) {
                 if (stopped()) {
                     LOG_WARNING("Forced exit on secondary (heartbeat) loop");
                     break;
                 }
-                if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&dummyBuffer[0]))) {
+                if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&message))) {
                     LOG_WARNING("Failed to receive heartbeat message!");
                     break;
                 }
@@ -271,7 +277,8 @@ void TTChatHandler::main() {
                 }
             }
         } catch (...) {
-            TTChatMessage goodbye(TTChatMessageType::GOODBYE, std::chrono::system_clock::now(), 0, nullptr);
+            TTChatMessage goodbye;
+            goodbye.setType(TTChatMessageType::GOODBYE);
             mPrimaryMessageQueue->send(reinterpret_cast<char*>(&goodbye));
             LOG_ERROR("Caught unknown exception at primary loop!");
         }

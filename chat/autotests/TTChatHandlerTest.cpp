@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
         sigaction(SIGSTOP, &signalAction, nullptr);
         LOG_INFO("Signal handling initialized");
         // Run main app
-        const TTChatSettings settings(argc, argv);
+        TTChatSettings settings(argc, argv);
         TTChatHandler handler(settings);
         LOG_INFO("Chat handler initialized");
         while (!quitHandle.load()) {

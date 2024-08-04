@@ -20,7 +20,7 @@ public:
         return *this;
     }
 
-    void input(const std::string& data) {
+    virtual void input(const std::string& data) {
         {
             std::scoped_lock lock(mInputMutex);
             mInput.push_front(data);
@@ -28,7 +28,7 @@ public:
         mInputCondition.notify_one();
     }
 
-    void clear() {
+    virtual void clear() {
         mInput.clear();
     }
 

@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
         sigaction(SIGSTOP, &signalAction, nullptr);
         // Run main app
         TTChatSettings settings(argc, argv);
-        const TTUtilsOutputStream outputStream;
+        TTUtilsOutputStream outputStream;
         application = std::make_unique<TTChat>(settings, outputStream);
         application->run();
     } catch (const std::exception& exp) {

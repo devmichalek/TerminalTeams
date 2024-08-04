@@ -55,6 +55,7 @@ Application was tested using:
 - unit tests
     - chat UT
     - engine UT
+    - utils UT
 - auto tests
     - chat AT
     - engine AT

@@ -1,37 +1,39 @@
 #pragma once
+#include <string>
+#include <string_view>
 #include <chrono>
 #include <cstring>
-
-enum class TTChatMessageType : unsigned int {
-    CLEAR = 0,
-    SEND,
-    RECEIVE,
-    HEARTBEAT,
-    GOODBYE
-};
+#include <cassert>
+#include "TTChatMessageType.hpp"
 
 using TTChatTimestamp = std::chrono::time_point<std::chrono::system_clock>;
 
-inline const unsigned int TTCHAT_DATA_MAX_LENGTH = 2048;
-
-struct TTChatMessage {
+class TTChatMessage {
+public:
     TTChatMessage() = default;
-    TTChatMessage(TTChatMessageType type,
-        TTChatTimestamp timestamp,
-        unsigned int dataLength,
-        const char* data) :
-            type(type),
-            timestamp(timestamp),
-            dataLength(dataLength) {
-        memcpy(this->data, data, dataLength);
+    ~TTChatMessage() = default;
+    TTChatMessage(const TTChatMessage&) = default;
+    TTChatMessage(TTChatMessage&&) = default;
+    TTChatMessage& operator=(const TTChatMessage&) = default;
+    TTChatMessage& operator=(TTChatMessage&&) = default;
+    void setType(TTChatMessageType type) { mType = type; }
+    void setTimestamp(TTChatTimestamp timestamp) { mTimestamp = timestamp; }
+    void setData(const std::string_view& data) {
+        assert(data.size() <= MAX_DATA_LENGTH);
+        mDataLength = data.size();
+        memcpy(mData, data.data(), data.size());
     }
-    TTChatMessageType type;
-    TTChatTimestamp timestamp;
-    unsigned int dataLength;
-    char data[TTCHAT_DATA_MAX_LENGTH];
+    TTChatMessageType getType() const { return mType; }
+    TTChatTimestamp getTimestamp() const { return mTimestamp; }
+    std::string getData() const { return std::string(mData, mDataLength); }
+    static constexpr unsigned int MAX_DATA_LENGTH = 2048;
+private:
+    TTChatMessageType mType;
+    TTChatTimestamp mTimestamp;
+    unsigned int mDataLength;
+    char mData[MAX_DATA_LENGTH];
 };
 
-inline const unsigned int TTCHAT_MESSAGE_MAX_LENGTH = sizeof(TTChatMessage);
 inline const unsigned int TTCHAT_MESSAGE_MAX_NUM = 8;
 inline const unsigned int TTCHAT_MESSAGE_PRIORITY = 0;
 inline const long TTCHAT_MESSAGE_SEND_TIMEOUT_S = 1; // 1s

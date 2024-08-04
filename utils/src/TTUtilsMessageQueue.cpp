@@ -8,7 +8,7 @@ TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
     std::shared_ptr<TTUtilsSyscall> syscall) :
         mName(name),
         mDescriptor(-1),
-        mDeleter([](const std::string&){}),
+        mDeleter({}),
         mQueueSize(queueSize),
         mMessageSize(messageSize),
         mSyscall(std::move(syscall)) {
@@ -17,7 +17,9 @@ TTUtilsMessageQueue::TTUtilsMessageQueue(std::string name,
 
 TTUtilsMessageQueue::~TTUtilsMessageQueue() {
     LOG_INFO("Destructing...");
-    mDeleter(mName);
+    if (mDeleter) {
+        mDeleter(mName);
+    }
     mDescriptor = -1;
     LOG_INFO("Successfully destructed!");
 }

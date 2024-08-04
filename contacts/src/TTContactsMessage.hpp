@@ -2,6 +2,7 @@
 #include "TTContactsState.hpp"
 #include "TTContactsStatus.hpp"
 #include <cstring>
+#include <cassert>
 
 inline const unsigned int TTCONTACTS_DATA_MAX_LENGTH = 256;
 inline const long TTCONTACTS_HEARTBEAT_TIMEOUT_MS = 500; // 0.5s
@@ -19,6 +20,7 @@ public:
     void setState(TTContactsState state) { mState = state; }
     void setIdentity(size_t identity) { mIdentity = identity; }
     void setNickname(const std::string& nickname) {
+        assert(nickname.size() < TTCONTACTS_DATA_MAX_LENGTH);
         mDataLength = nickname.size();
         memset(&mData[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
         memcpy(&mData[0], nickname.c_str(), mDataLength);

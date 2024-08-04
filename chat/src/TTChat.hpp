@@ -25,9 +25,9 @@ private:
     // Sends heartbeat periodically
     void heartbeat(std::promise<void> promise);
     // Handles all message types
-    void handle(const TTChatMessage& message);
+    bool handle(const TTChatMessage& message);
     // Prints message in a defined format
-    void print(const char* cmessage, TTChatTimestamp timestmap, bool received);
+    void print(const TTChatMessage& message);
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
