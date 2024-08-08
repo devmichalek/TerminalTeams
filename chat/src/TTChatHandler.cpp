@@ -52,9 +52,9 @@ bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timesta
     
     std::scoped_lock messagesLock(mMessagesMutex);
     auto& storage = mMessages[id];
-    storage.push_back(std::make_tuple(TTChatMessageType::SEND, message, timestamp));
+    storage.push_back(std::make_tuple(TTChatMessageType::SENDER, message, timestamp));
     if (mCurrentId == id) {
-        if (!send(TTChatMessageType::SEND, message, timestamp)) {
+        if (!send(TTChatMessageType::SENDER, message, timestamp)) {
             return false;
         }
     }
@@ -76,9 +76,9 @@ bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp time
     }
     std::scoped_lock messagesLock(mMessagesMutex);
     auto& storage = mMessages[id];
-    storage.push_back(std::make_tuple(TTChatMessageType::RECEIVE, message, timestamp));
+    storage.push_back(std::make_tuple(TTChatMessageType::RECEIVER, message, timestamp));
     if (mCurrentId == id) {
-        if (!send(TTChatMessageType::RECEIVE, message, timestamp)) {
+        if (!send(TTChatMessageType::RECEIVER, message, timestamp)) {
             return false;
         }
     }
@@ -103,8 +103,8 @@ bool TTChatHandler::clear(size_t id) {
     }
     std::scoped_lock messagesLock(mMessagesMutex);
     mCurrentId = id;
-    auto& storage = mMessages[id];
-    for (auto &message : storage) {
+    const auto& storage = mMessages[id];
+    for (const auto &message : storage) {
         if (!send(std::get<0>(message), std::get<1>(message), std::get<2>(message))) {
             return false;
         }
@@ -148,7 +148,7 @@ bool TTChatHandler::stopped() const {
     return mStopped.load();
 }
 
-bool TTChatHandler::send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp) {
+bool TTChatHandler::send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp) {
     LOG_INFO("Started preparing messages to be queued");
     if (stopped()) {
         LOG_WARNING("Forced exit at generic message type!");
@@ -197,8 +197,7 @@ std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
         bool predicate = true;
         {
             std::unique_lock<std::mutex> lock(mQueueMutex);
-            auto waitTimeMs = std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS);
-            predicate = mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
+            predicate = mQueueCondition.wait_for(lock, mHeartbeatTimeout, [this]() {
                 return !mQueuedMessages.empty() || stopped();
             });
 
@@ -248,7 +247,6 @@ void TTChatHandler::heartbeat() {
                     LOG_WARNING("Failed to receive heartbeat message!");
                     break;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS));
             }
         } catch (...) {
             LOG_ERROR("Caught unknown exception at secondary (heartbeat) loop!");

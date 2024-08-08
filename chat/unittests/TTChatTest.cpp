@@ -46,8 +46,12 @@ protected:
     }
     // Called after constructor, before each test
     virtual void SetUp() override {
-        EXPECT_CALL(*mSettingsMock, getTerminalWidth).Times(1);
-        EXPECT_CALL(*mSettingsMock, getTerminalHeight).Times(1);
+        EXPECT_CALL(*mSettingsMock, getTerminalWidth)
+            .Times(1)
+            .WillOnce(Return(TERMINAL_WIDTH));
+        EXPECT_CALL(*mSettingsMock, getTerminalHeight)
+            .Times(1)
+            .WillOnce(Return(TERMINAL_HEIGHT));
         EXPECT_CALL(*mSettingsMock, getPrimaryMessageQueue)
             .Times(1)
             .WillOnce(Return(mPrimaryMessageQueueMock));
@@ -56,10 +60,11 @@ protected:
             .WillOnce(Return(mSecondaryMessageQueueMock));
         EXPECT_CALL(*mSettingsMock, getRatio)
             .Times(1)
-            .WillOnce(Return(1.0));
+            .WillOnce(Return(TERMINAL_RATIO));
     }
     // Called before destructor, after each test
     virtual void TearDown() override {
+        mChat.reset();
         mOutputStreamMock->mOutput.clear();
         mStoppedStatusOnSend.clear();
         mStoppedStatusOnReceive.clear();
@@ -77,6 +82,11 @@ protected:
         mApplicationThread = std::thread{&TTChatTest::StartApplication, this};
     }
 
+    void RestartApplicationNoCheck() {
+        mChat = std::make_unique<TTChat>(*mSettingsMock, *mOutputStreamMock);
+        mApplicationThread = std::thread{&TTChatTest::StartApplication, this};
+    }
+
     void VerifyApplicationTimeout(std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(mApplicationMutex);
         const bool predicate = mApplicationCv.wait_for(lock, timeout, [this]() {
@@ -85,6 +95,46 @@ protected:
         EXPECT_TRUE(predicate); // Check for application timeout
         EXPECT_TRUE(mChat->stopped());
         mApplicationThread.join();
+    }
+
+    TTChatMessage CreateHeartbeatMessage() {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::HEARTBEAT);
+        return message;
+    }
+
+    TTChatMessage CreateGoodbyeMessage() {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::GOODBYE);
+        return message;
+    }
+
+    TTChatMessage CreateUnknownMessage() {
+        TTChatMessage message;
+        message.setType(static_cast<TTChatMessageType>(0xFF));
+        return message;
+    }
+
+    TTChatMessage CreateClearMessage() {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::CLEAR);
+        return message;
+    }
+
+    TTChatMessage CreateSenderMessage(const std::string_view& data, TTChatTimestamp timestamp = {}) {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::SENDER);
+        message.setTimestamp(timestamp);
+        message.setData(data);
+        return message;
+    }
+
+    TTChatMessage CreateReceiverMessage(const std::string_view& data, TTChatTimestamp timestamp = {}) {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::RECEIVER);
+        message.setTimestamp(timestamp);
+        message.setData(data);
+        return message;
     }
 
     std::shared_ptr<TTChatSettingsMock> mSettingsMock;
@@ -98,6 +148,10 @@ protected:
     std::vector<bool> mStoppedStatusOnSend;
     std::vector<bool> mStoppedStatusOnReceive;
     std::vector<TTChatMessage> mSendMessages;
+    constexpr static size_t TERMINAL_WIDTH = 50;
+    constexpr static size_t TERMINAL_HEIGHT = 50;
+    constexpr static double TERMINAL_RATIO = 1.0;
+    constexpr static long HEARTBEAT_TIMEOUT_MS = 500; // 0.5s
 };
 
 TEST_F(TTChatTest, FailedToOpenPrimaryMessageQueue) {
@@ -127,7 +181,7 @@ TEST_F(TTChatTest, FailedToRunPrimaryMessageQueueNotAlive) {
     EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(false));
-    RestartApplication();
+    RestartApplicationNoCheck();
     VerifyApplicationTimeout(std::chrono::milliseconds{500});
 }
 
@@ -144,7 +198,7 @@ TEST_F(TTChatTest, FailedToRunSecondaryMessageQueueNotAlive) {
     EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(false));
-    RestartApplication();
+    RestartApplicationNoCheck();
     VerifyApplicationTimeout(std::chrono::milliseconds{500});
 }
 
@@ -161,13 +215,12 @@ TEST_F(TTChatTest, FailedToReceiveAfterManyReceivedHeartbeats) {
     EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(true));
-    TTChatMessage heartbeat;
-    heartbeat.setType(TTChatMessageType::HEARTBEAT);
-    size_t numOfReceivedHearbeats = 15;
-    size_t minNumOfSentMessages = 4;
-    auto receiveDelayTicks = 200;
-    auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
-    auto sendDelay = std::chrono::milliseconds{0};
+    const auto heartbeat = CreateHeartbeatMessage();
+    const size_t numOfReceivedHearbeats = 15;
+    const size_t minNumOfSentMessages = 4;
+    const auto receiveDelayTicks = 200;
+    const auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
+    const auto sendDelay = std::chrono::milliseconds{0};
     {
         InSequence _;
         EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
@@ -208,12 +261,11 @@ TEST_F(TTChatTest, FailedToSendAfterManySendHeartbeats) {
     EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(true));
-    TTChatMessage heartbeat;
-    heartbeat.setType(TTChatMessageType::HEARTBEAT);
-    size_t numOfSentHearbeats = 5;
-    size_t minNumOfReceivedMessages = 4;
-    auto sendDelay = std::chrono::milliseconds{10};
-    auto receiveDelay = std::chrono::milliseconds{80};
+    const auto heartbeat = CreateHeartbeatMessage();
+    const size_t numOfSentHearbeats = 5;
+    const size_t minNumOfReceivedMessages = 4;
+    const auto sendDelay = std::chrono::milliseconds{10};
+    const auto receiveDelay = std::chrono::milliseconds{80};
     EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
         .Times(AtLeast(minNumOfReceivedMessages))
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, heartbeat, receiveDelay), Return(true)));
@@ -227,7 +279,7 @@ TEST_F(TTChatTest, FailedToSendAfterManySendHeartbeats) {
             .WillOnce(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(false)));
     }
     RestartApplication();
-    VerifyApplicationTimeout(std::chrono::milliseconds{TTCHAT_HEARTBEAT_TIMEOUT_MS * (numOfSentHearbeats + 1)});
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (numOfSentHearbeats + 1)});
     EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfReceivedMessages);
     for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
         EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
@@ -254,13 +306,11 @@ TEST_F(TTChatTest, HappyPathOnlySendAndReceivedHeartbeats) {
     EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
         .Times(AtLeast(1))
         .WillRepeatedly(Return(true));
-    TTChatMessage heartbeat;
-    heartbeat.setType(TTChatMessageType::HEARTBEAT);
-    size_t minNumOfReceivedMessages = 5;
-    size_t minNumOfSentMessages = 5;
-    auto receiveDelayTicks = 200;
-    auto receiveDelay = std::chrono::milliseconds{40};
-    auto sendDelay = std::chrono::milliseconds{10};
+    const auto heartbeat = CreateHeartbeatMessage();
+    const size_t minNumOfReceivedMessages = 5;
+    const size_t minNumOfSentMessages = 5;
+    const auto receiveDelay = std::chrono::milliseconds{40};
+    const auto sendDelay = std::chrono::milliseconds{10};
     EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
         .Times(AtLeast(minNumOfReceivedMessages))
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, heartbeat, receiveDelay), Return(true)));
@@ -269,9 +319,9 @@ TEST_F(TTChatTest, HappyPathOnlySendAndReceivedHeartbeats) {
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
     // Run
     RestartApplication();
-    std::this_thread::sleep_for(std::chrono::milliseconds{TTCHAT_HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    std::this_thread::sleep_for(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
     mChat->stop();
-    VerifyApplicationTimeout(std::chrono::milliseconds{TTCHAT_HEARTBEAT_TIMEOUT_MS});
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS});
     // Verify
     EXPECT_GT(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
     for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
@@ -285,3 +335,188 @@ TEST_F(TTChatTest, HappyPathOnlySendAndReceivedHeartbeats) {
         EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
     }
 }
+
+TEST_F(TTChatTest, UnhappyPathReceivedHeartbeatsThenUnknown) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const auto heartbeat = CreateHeartbeatMessage();
+    const auto unknown = CreateUnknownMessage();
+    const size_t numOfReceivedHeartbeats = 3;
+    const size_t numOfReceivedUnknows = 1;
+    const size_t minNumOfSentMessages = 3;
+    const auto receiveDelay = std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS};
+    const auto sendDelay = std::chrono::milliseconds{10};
+    {
+        InSequence _;
+        EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+            .Times(numOfReceivedHeartbeats)
+            .WillRepeatedly(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, heartbeat, receiveDelay), Return(true)));
+        EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+            .Times(numOfReceivedUnknows)
+            .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, unknown, receiveDelay), Return(true)));
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (numOfReceivedHeartbeats + numOfReceivedUnknows + 1)});
+    // Verify
+    EXPECT_GT(mStoppedStatusOnReceive.size(), numOfReceivedHeartbeats);
+    for (size_t i = 0; i < numOfReceivedHeartbeats; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+}
+
+TEST_F(TTChatTest, HappyPathReceivedHeartbeatsThenGoodbye) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const auto heartbeat = CreateHeartbeatMessage();
+    const auto goodbye = CreateGoodbyeMessage();
+    const size_t numOfReceivedHeartbeats = 3;
+    const size_t numOfReceivedGoodbyes = 1;
+    const size_t minNumOfSentMessages = 3;
+    const auto receiveDelay = std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS};
+    const auto sendDelay = std::chrono::milliseconds{10};
+    {
+        InSequence _;
+        EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+            .Times(numOfReceivedHeartbeats)
+            .WillRepeatedly(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, heartbeat, receiveDelay), Return(true)));
+        EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+            .Times(numOfReceivedGoodbyes)
+            .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, goodbye, receiveDelay), Return(true)));
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (numOfReceivedHeartbeats + numOfReceivedGoodbyes + 1)});
+    // Verify
+    EXPECT_GT(mStoppedStatusOnReceive.size(), numOfReceivedHeartbeats);
+    for (size_t i = 0; i < numOfReceivedHeartbeats; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+}
+
+TEST_F(TTChatTest, HappyPathReceivedMessagesAdditionalWhitespaceCharacters) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const std::vector<TTChatMessage> messagesToBeReceived = {
+        CreateHeartbeatMessage(),
+        CreateClearMessage(),
+        CreateSenderMessage("  \t  Hello, I'm having some additional whitespaces at the beginning"),
+        CreateReceiverMessage("Hi, I've got additional whitespaces at the end  \t  "),
+        CreateReceiverMessage("\t  \t   \t"),
+        CreateGoodbyeMessage()
+    };
+    const size_t receiveDelayTicks = 100;
+    const auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
+    const auto sendDelay = std::chrono::milliseconds{0};
+    const size_t minNumOfSentMessages = (messagesToBeReceived.size() * receiveDelayTicks) / HEARTBEAT_TIMEOUT_MS;
+    const size_t minNumOfReceivedMessages = messagesToBeReceived.size();
+    {
+        InSequence _;
+        for (const auto &message : messagesToBeReceived) {
+            EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+                .Times(1)
+                .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, message, receiveDelay), Return(true)));
+        }
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    // Verify
+    EXPECT_GE(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
+    for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+    const std::string conversation1 =
+        std::string{"                               1970-01-01 01:00:00\n"} +
+        std::string{"  Hello, I'm having some additional whitespaces at\n"} +
+        std::string{"                                     the beginning\n"} +
+        std::string{"\n"} +
+        std::string{"1970-01-01 01:00:00\n"} + 
+        std::string{"Hi, I've got additional whitespaces at the end\n"} +
+        std::string{"\n"} +
+        std::string{"1970-01-01 01:00:00\n"} + 
+        std::string{" \n"} +
+        std::string{"\n"};
+    const auto& expected = std::vector<std::string>{conversation1};
+    const auto& actual = mOutputStreamMock->mOutput;
+    EXPECT_EQ(actual, expected);
+}
+
+// TEST_F(TTChatTest, HappyPathReceivedMessagesDuplicatedWhitespaceCharacters) {
+
+// }
+
+// TEST_F(TTChatTest, HappyPathReceivedMessagesOnlyWhitespaceCharacters) {
+
+// }
+
+// TEST_F(TTChatTest, HappyPathReceivedMessagesTooManyWordsToFitInOneLine) {
+
+// }
+
+// TEST_F(TTChatTest, HappyPathReceivedMessagesMix) {
+
+// }

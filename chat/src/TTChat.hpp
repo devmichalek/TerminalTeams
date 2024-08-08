@@ -31,6 +31,7 @@ private:
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
+    static inline const std::chrono::milliseconds mHeartbeatTimeout{500};
     // Thread concurrent message communication
     std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;

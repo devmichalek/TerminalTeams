@@ -32,7 +32,7 @@ public:
 protected:
     TTChatHandler() = default;
 private:
-    bool send(TTChatMessageType type, std::string data, TTChatTimestamp timestamp);
+    bool send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp);
     std::list<std::unique_ptr<TTChatMessage>> dequeue();
     // Receives heartbeat
     void heartbeat();
@@ -41,6 +41,7 @@ private:
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
+    static inline const std::chrono::milliseconds mHeartbeatTimeout{500};
     // Thread concurrent message communication
     std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;

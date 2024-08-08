@@ -2,8 +2,8 @@
 
 enum class TTChatMessageType : unsigned int {
     CLEAR = 0,
-    SEND,
-    RECEIVE,
+    SENDER,
+    RECEIVER,
     HEARTBEAT,
     GOODBYE
 };

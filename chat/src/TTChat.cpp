@@ -1,5 +1,6 @@
 #include "TTChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsAscii.hpp"
 #include <ctime>
 #include <sstream>
 #include <iomanip>
@@ -91,7 +92,7 @@ void TTChat::heartbeat(std::promise<void> promise) {
                     LOG_WARNING("Failed to send heartbeat message!");
                     break;
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(TTCHAT_HEARTBEAT_TIMEOUT_MS));
+                std::this_thread::sleep_for(mHeartbeatTimeout);
             }
         } catch (...) {
             LOG_ERROR("Caught unknown exception at secondary (heartbeat) loop!");
@@ -108,11 +109,11 @@ bool TTChat::handle(const TTChatMessage& message) {
             LOG_INFO("Received clear message");
             mOutputStream.clear();
             return true;
-        case TTChatMessageType::SEND:
+        case TTChatMessageType::SENDER:
             LOG_INFO("Received sender message");
             print(message);
             return true;
-        case TTChatMessageType::RECEIVE:
+        case TTChatMessageType::RECEIVER:
             LOG_INFO("Received receiver message");
             print(message);
             return true;
@@ -132,45 +133,47 @@ bool TTChat::handle(const TTChatMessage& message) {
 
 void TTChat::print(const TTChatMessage& message) {
     LOG_INFO("Formatting message to be printed...");
-    // Remove spaces from the beggining and end
+    // Remove whitespaces from the beggining
     std::string data = message.getData();
-    const std::string delimiter = " ";
-    std::string newData;
     for (auto charIterator = data.begin(); charIterator != data.end(); charIterator++) {
-        if (*charIterator != delimiter.back()) {
-            for (; charIterator != data.end(); charIterator++) {
-                newData.push_back(*charIterator);
-            }
+        if (!TTUtilsAscii::isWhitespace(*charIterator)) {
+            const auto distance = std::distance(data.begin(), charIterator);
+            data = data.substr(distance, data.size());
             break;
         }
     }
-    data = newData;
-    if (data.back() == delimiter.back()) {
-        data = data.substr(0, data.rfind(delimiter));
+    // Remove whitespaces from the end
+    for (auto charIterator = data.rbegin(); charIterator != data.rend(); charIterator++) {
+        if (!TTUtilsAscii::isWhitespace(*charIterator)) {
+            const auto distance = std::distance(data.rbegin(), charIterator);
+            data = data.substr(0, data.size() - distance);
+            break;
+        }
     }
-
-    // Remove duplicated spaces
-    newData.clear();
+    // Remove duplicated whitespaces
+    const std::string delimiter = " ";
+    std::string newData;
     for (auto charIterator = data.begin(); charIterator != data.end(); charIterator++) {
-        if (*charIterator != delimiter.back()) {
+        if (!TTUtilsAscii::isWhitespace(*charIterator)) {
             newData.push_back(*charIterator);
         } else {
             newData.push_back(delimiter.back());
-            for (; charIterator != data.end() && *charIterator == delimiter.back(); charIterator++) {
+            for (; charIterator != data.end(); charIterator++) {
+                if (!TTUtilsAscii::isWhitespace(*charIterator)) {
+                    break;
+                }
             }
-            if (charIterator != data.end()) {
-                newData.push_back(*charIterator);
-            } else {
+            if (charIterator == data.end()) {
                 break;
             }
+            newData.push_back(*charIterator);
         }
     }
     data = newData;
-
     // Make sure message is not empty
     std::vector<std::string> lines;
     if (data.empty()) {
-        lines.emplace_back(" ");
+        lines.emplace_back(delimiter);
     } else {
         // Extract words from the message
         std::vector<std::string> words;
@@ -201,24 +204,22 @@ void TTChat::print(const TTChatMessage& message) {
             }
         }
     }
-
     // Create timestamp string
     const auto time = std::chrono::system_clock::to_time_t(message.getTimestamp());
     std::stringstream ss;
     ss << std::put_time(std::localtime(&time), "%Y-%m-%d %X");
     const auto timestamp = ss.str();
-
     // Print message based on side
     LOG_INFO("Printing message...");
-    if (message.getType() == TTChatMessageType::RECEIVE) {
+    if (message.getType() == TTChatMessageType::RECEIVER) {
         mOutputStream.print(timestamp).endl();
-        for (auto &line : lines) {
+        for (const auto &line : lines) {
             mOutputStream.print(line).endl();
         }
     } else {
         mOutputStream.print(mBlankLine.substr(0, mBlankLine.size() - timestamp.size()));
         mOutputStream.print(timestamp).endl();
-        for (auto &line : lines) {
+        for (const auto &line : lines) {
             mOutputStream.print(mBlankLine.substr(0, mBlankLine.size() - line.size()));
             mOutputStream.print(line).endl();
         }

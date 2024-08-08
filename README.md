@@ -13,6 +13,7 @@ Application was written with the following assumptions:
 - no centralized server
 - no support for IPv6
 - terminal emulator window resizing is not supported
+- ASCII is the only supported set of characters
 
 ### Installation
 ```
@@ -44,6 +45,9 @@ Application was tested using:
 - Unit tests,
 - Integration tests,
 - Manual tests - using up to four VMs running together in a virtual network.
+
+### Future extensions and support
+- support for other character encodings
 
 ### Todo
 - [[fallthrough]]
