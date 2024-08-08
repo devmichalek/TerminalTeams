@@ -190,7 +190,6 @@ void TTChat::print(const TTChatMessage& message) {
         while (wordIterator != words.end()) {
             if (wordIterator->size() < mSideWidth) {
                 std::string line;
-                size_t leftSideWidth = mSideWidth;
                 while (wordIterator != words.end() && line.size() + wordIterator->size() <= mSideWidth) {
                     line += *wordIterator;
                     line += delimiter;

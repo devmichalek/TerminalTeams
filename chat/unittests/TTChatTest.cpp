@@ -505,18 +505,206 @@ TEST_F(TTChatTest, HappyPathReceivedMessagesAdditionalWhitespaceCharacters) {
     EXPECT_EQ(actual, expected);
 }
 
-// TEST_F(TTChatTest, HappyPathReceivedMessagesDuplicatedWhitespaceCharacters) {
+TEST_F(TTChatTest, HappyPathReceivedMessagesDuplicatedWhitespaceCharacters) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const std::vector<TTChatMessage> messagesToBeReceived = {
+        CreateHeartbeatMessage(),
+        CreateClearMessage(),
+        CreateSenderMessage("Hello, \t I'm  having some \t\tduplicated whitespaces  in  between"),
+        CreateReceiverMessage("Hi,   \t\t\t   I've got duplicated         whitespaces in between     too"),
+        CreateGoodbyeMessage()
+    };
+    const size_t receiveDelayTicks = 100;
+    const auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
+    const auto sendDelay = std::chrono::milliseconds{0};
+    const size_t minNumOfSentMessages = (messagesToBeReceived.size() * receiveDelayTicks) / HEARTBEAT_TIMEOUT_MS;
+    const size_t minNumOfReceivedMessages = messagesToBeReceived.size();
+    {
+        InSequence _;
+        for (const auto &message : messagesToBeReceived) {
+            EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+                .Times(1)
+                .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, message, receiveDelay), Return(true)));
+        }
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    // Verify
+    EXPECT_GE(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
+    for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+    const std::string conversation1 =
+        std::string{"                               1970-01-01 01:00:00\n"} +
+        std::string{"  Hello, I'm having some duplicated whitespaces in\n"} +
+        std::string{"                                           between\n"} +
+        std::string{"\n"} +
+        std::string{"1970-01-01 01:00:00\n"} + 
+        std::string{"Hi, I've got duplicated whitespaces in between too\n"} +
+        std::string{"\n"};
+    const auto& expected = std::vector<std::string>{conversation1};
+    const auto& actual = mOutputStreamMock->mOutput;
+    EXPECT_EQ(actual, expected);
+}
 
-// }
-
-// TEST_F(TTChatTest, HappyPathReceivedMessagesOnlyWhitespaceCharacters) {
-
-// }
-
-// TEST_F(TTChatTest, HappyPathReceivedMessagesTooManyWordsToFitInOneLine) {
-
-// }
-
-// TEST_F(TTChatTest, HappyPathReceivedMessagesMix) {
-
-// }
+TEST_F(TTChatTest, HappyPathReceivedMessagesWithLongWords) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const std::vector<TTChatMessage> messagesToBeReceived = {
+        CreateHeartbeatMessage(),
+        CreateClearMessage(),
+        CreateSenderMessage("Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+                            "Suspendisse interdum imperdiet pharetra. Morbi blandit sapien at sapien vehicula blandit. "
+                            "Morbi at risus mollis leo semper semper. Nulla facilisi. Donec id bibendum odio, eu pellentesque est. "
+                            "Vivamus sem ipsum, aliquet sed tortor sit amet, vestibulum elementum nulla. "
+                            "Duis porta porta erat, et maximus urna ullamcorper sit amet. Praesent quis molestie est. "
+                            "Integer elit turpis, ullamcorper non dolor non, iaculis placerat quam. "
+                            "Pellentesque lobortis elementum erat eget egestas. Integer malesuada tempor convallis. "
+                            "Sed eu pretium justo. Nam tincidunt scelerisque porttitor. "
+                            "Vivamus massa eros, mollis a laoreet accumsan, auctor ac ante. "
+                            "Sed maximus tempor dignissim. Mauris a condimentum eros."),
+        CreateReceiverMessage("Cras semper mi at mauris porttitor accumsan. Proin vel nisi et diam dapibus tristique at at odio. "
+                              "Sed mollis massa sit amet metus consectetur efficitur. "
+                              "Pellentesque tristique massa erat, id pretium quam viverra eget. "
+                              "Proin eget arcu consequat, posuere metus nec, porttitor mauris. "
+                              "Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. "
+                              "Suspendisse sem lorem, iaculis a convallis a, sagittis et arcu. "
+                              "Pellentesque vitae neque ut ante porta gravida. Pellentesque pretium vehicula consectetur. "
+                              "In sed imperdiet eros. Duis sagittis scelerisque nunc vitae ornare. "
+                              "Sed quis sapien eu metus vulputate auctor."),
+        CreateClearMessage(),
+        CreateSenderMessage("Pneumonoultramicroscopicsilicovolcanoconiosis, Pseudopseudohypoparathyroidism, Floccinaucinihilipilification, Antidisestablishmentarianism"),
+        CreateReceiverMessage("Supercalifragilisticexpialidocious, Strengths, Euouae, Unimaginatively, Honorificabilitudinitatibus, Tsktsk, Sesquipedalianism, Uncopyrightable"),
+        CreateClearMessage(),
+        CreateReceiverMessage("VeryLongMessageTakingMoreThanTotalSideWidthBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlah"),
+        CreateSenderMessage("VeryLongMessageTakingMoreThanTotalSideWidthBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlah"),
+        CreateGoodbyeMessage()
+    };
+    const size_t receiveDelayTicks = 100;
+    const auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
+    const auto sendDelay = std::chrono::milliseconds{0};
+    const size_t minNumOfSentMessages = (messagesToBeReceived.size() * receiveDelayTicks) / HEARTBEAT_TIMEOUT_MS;
+    const size_t minNumOfReceivedMessages = messagesToBeReceived.size();
+    {
+        InSequence _;
+        for (const auto &message : messagesToBeReceived) {
+            EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+                .Times(1)
+                .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, message, receiveDelay), Return(true)));
+        }
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    // Verify
+    EXPECT_GE(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
+    for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+    const std::string conversation1 =
+        std::string{"                               1970-01-01 01:00:00\n"} +
+        std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing\n"} +
+        std::string{"    elit. Suspendisse interdum imperdiet pharetra.\n"} +
+        std::string{"  Morbi blandit sapien at sapien vehicula blandit.\n"} +
+        std::string{"    Morbi at risus mollis leo semper semper. Nulla\n"} +
+        std::string{" facilisi. Donec id bibendum odio, eu pellentesque\n"} +
+        std::string{"    est. Vivamus sem ipsum, aliquet sed tortor sit\n"} +
+        std::string{"amet, vestibulum elementum nulla. Duis porta porta\n"} +
+        std::string{"       erat, et maximus urna ullamcorper sit amet.\n"} +
+        std::string{"  Praesent quis molestie est. Integer elit turpis,\n"} +
+        std::string{" ullamcorper non dolor non, iaculis placerat quam.\n"} +
+        std::string{"Pellentesque lobortis elementum erat eget egestas.\n"} +
+        std::string{"Integer malesuada tempor convallis. Sed eu pretium\n"} +
+        std::string{"       justo. Nam tincidunt scelerisque porttitor.\n"} +
+        std::string{"    Vivamus massa eros, mollis a laoreet accumsan,\n"} +
+        std::string{"     auctor ac ante. Sed maximus tempor dignissim.\n"} +
+        std::string{"                        Mauris a condimentum eros.\n"} +
+        std::string{"\n"} +
+        std::string{"1970-01-01 01:00:00\n"} +
+        std::string{"Cras semper mi at mauris porttitor accumsan. Proin\n"} +
+        std::string{"vel nisi et diam dapibus tristique at at odio. Sed\n"} +
+        std::string{"mollis massa sit amet metus consectetur efficitur.\n"} +
+        std::string{"Pellentesque tristique massa erat, id pretium quam\n"} +
+        std::string{"viverra eget. Proin eget arcu consequat, posuere\n"} +
+        std::string{"metus nec, porttitor mauris. Pellentesque habitant\n"} +
+        std::string{"morbi tristique senectus et netus et malesuada\n"} +
+        std::string{"fames ac turpis egestas. Suspendisse sem lorem,\n"} +
+        std::string{"iaculis a convallis a, sagittis et arcu.\n"} +
+        std::string{"Pellentesque vitae neque ut ante porta gravida.\n"} +
+        std::string{"Pellentesque pretium vehicula consectetur. In sed\n"} +
+        std::string{"imperdiet eros. Duis sagittis scelerisque nunc\n"} +
+        std::string{"vitae ornare. Sed quis sapien eu metus vulputate\n"} +
+        std::string{"auctor.\n"} +
+        std::string{"\n"};
+    const std::string conversation2 =
+        std::string{"                               1970-01-01 01:00:00\n"} +
+        std::string{"    Pneumonoultramicroscopicsilicovolcanoconiosis,\n"} +
+        std::string{"                   Pseudopseudohypoparathyroidism,\n"} +
+        std::string{"                    Floccinaucinihilipilification,\n"} +
+        std::string{"                      Antidisestablishmentarianism\n"} +
+        std::string{"\n"} +
+        std::string{"1970-01-01 01:00:00\n"} +
+        std::string{"Supercalifragilisticexpialidocious, Strengths,\n"} +
+        std::string{"Euouae, Unimaginatively,\n"} +
+        std::string{"Honorificabilitudinitatibus, Tsktsk,\n"} +
+        std::string{"Sesquipedalianism, Uncopyrightable\n"} +
+        std::string{"\n"};
+    const std::string conversation3 =
+        std::string{"1970-01-01 01:00:00\n"} +
+        std::string{"VeryLongMessageTakingMoreThanTotalSideWidthBlahBla\n"} +
+        std::string{"hBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahB\n"} +
+        std::string{"lahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlah\n"} +
+        std::string{"\n"} +
+        std::string{"                               1970-01-01 01:00:00\n"} +
+        std::string{"VeryLongMessageTakingMoreThanTotalSideWidthBlahBla\n"} +
+        std::string{"hBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahB\n"} +
+        std::string{"   lahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlah\n"} +
+        std::string{"\n"};
+    const auto& expected = std::vector<std::string>{conversation1, conversation2, conversation3};
+    const auto& actual = mOutputStreamMock->mOutput;
+    EXPECT_EQ(actual, expected);
+}
