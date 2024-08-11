@@ -22,10 +22,11 @@ public:
     TTChatHandler(TTChatHandler&&) = delete;
     TTChatHandler& operator=(const TTChatHandler&) = delete;
     TTChatHandler& operator=(TTChatHandler&&) = delete;
-    virtual bool send(size_t id, std::string message, TTChatTimestamp timestamp);
-    virtual bool receive(size_t id, std::string message, TTChatTimestamp timestamp);
+    virtual bool send(size_t id, const std::string& message, TTChatTimestamp timestamp);
+    virtual bool receive(size_t id, const std::string& message, TTChatTimestamp timestamp);
     virtual bool clear(size_t id);
     virtual bool create(size_t id);
+    virtual bool size() const;
     virtual const TTChatEntries& get(size_t id) const;
     virtual void stop();
     virtual bool stopped() const;
@@ -38,6 +39,8 @@ private:
     void heartbeat();
     // Sends heartbeat periodically or main data if available
     void main();
+    // Sends last bit of information - goodbye message
+    void goodbye();
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;

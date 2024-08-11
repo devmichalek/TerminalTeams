@@ -342,7 +342,7 @@ void TTContactsHandler::main() {
                     goodbye();
                     break; // Forced exit
                 }
-                if (!mSharedMem->send(reinterpret_cast<void*>(message.get()))) {
+                if (!mSharedMem->send(reinterpret_cast<const void*>(message.get()))) {
                     exit = true;
                     break; // Hard failure
                 }
@@ -360,12 +360,12 @@ bool TTContactsHandler::establish() {
     LOG_INFO("Establishing connection...");
     TTContactsMessage message;
     message.setStatus(TTContactsStatus::HEARTBEAT);
-    return mSharedMem->send(reinterpret_cast<void*>(&message), 5);
+    return mSharedMem->send(reinterpret_cast<const void*>(&message), 5);
 }
 
 void TTContactsHandler::goodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTContactsMessage message;
     message.setStatus(TTContactsStatus::GOODBYE);
-    mSharedMem->send(reinterpret_cast<void*>(&message));
+    mSharedMem->send(reinterpret_cast<const void*>(&message));
 }

@@ -230,5 +230,5 @@ void TTTextBox::queue(std::unique_ptr<TTTextBoxMessage> message) {
 void TTTextBox::goodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTTextBoxMessage message(TTTextBoxStatus::GOODBYE, 0, nullptr);
-    mPipe->send(reinterpret_cast<char*>(&message));
+    mPipe->send(reinterpret_cast<const char*>(&message));
 }

@@ -37,7 +37,7 @@ TTChatHandler::~TTChatHandler() {
     LOG_INFO("Successfully destructed!");
 }
 
-bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timestamp) {
+bool TTChatHandler::send(size_t id, const std::string& message, TTChatTimestamp timestamp) {
     if (stopped()) {
         LOG_WARNING("Forced exit at send message type!");
         return false;
@@ -49,7 +49,6 @@ bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timesta
             return false;
         }
     }
-    
     std::scoped_lock messagesLock(mMessagesMutex);
     auto& storage = mMessages[id];
     storage.push_back(std::make_tuple(TTChatMessageType::SENDER, message, timestamp));
@@ -62,7 +61,7 @@ bool TTChatHandler::send(size_t id, std::string message, TTChatTimestamp timesta
     return true;
 }
 
-bool TTChatHandler::receive(size_t id, std::string message, TTChatTimestamp timestamp) {
+bool TTChatHandler::receive(size_t id, const std::string& message, TTChatTimestamp timestamp) {
     if (stopped()) {
         LOG_WARNING("Forced exit at receive message type!");
         return false;
@@ -127,6 +126,11 @@ bool TTChatHandler::create(size_t id) {
     mMessages.push_back({});
     LOG_INFO("Successfully created new storage, ID={}", id);
     return true;
+}
+
+bool TTChatHandler::size() const {
+    std::shared_lock messagesLock(mMessagesMutex);
+    return mMessages.size();
 }
 
 const TTChatEntries& TTChatHandler::get(size_t id) const {
@@ -217,7 +221,6 @@ std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
             }
             // Do not remove scope guards, risk of deadlock
         }
-
         if (!predicate) {
             // There wasn't a new message in a queue
             LOG_INFO("Inserting heartbeat message...");
@@ -226,7 +229,6 @@ std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
             }
             continue;
         }
-
         break;
     }
     LOG_INFO("Completed dequeue");
@@ -235,7 +237,9 @@ std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
 
 void TTChatHandler::heartbeat() {
     LOG_INFO("Started secondary (heartbeat) loop");
-    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) { 
+    if (!mPrimaryMessageQueue->alive() || !mSecondaryMessageQueue->alive()) {
+        LOG_ERROR("Primary or secondary message queue is not alive!");
+    } else {
         try {
             TTChatMessage message;
             while (true) {
@@ -244,7 +248,11 @@ void TTChatHandler::heartbeat() {
                     break;
                 }
                 if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&message))) {
-                    LOG_WARNING("Failed to receive heartbeat message!");
+                    LOG_ERROR("Failed to receive heartbeat message!");
+                    break;
+                }
+                if (message.getType() != TTChatMessageType::HEARTBEAT) {
+                    LOG_ERROR("Received message other than the heartbeat message!");
                     break;
                 }
             }
@@ -258,29 +266,39 @@ void TTChatHandler::heartbeat() {
 
 void TTChatHandler::main() {
     LOG_INFO("Started primary loop");
-    if (mPrimaryMessageQueue->alive() && mSecondaryMessageQueue->alive()) {
+    if (!mPrimaryMessageQueue->alive() || !mSecondaryMessageQueue->alive()) {
+        LOG_ERROR("Primary or secondary message queue is not alive!");
+    } else {
         try {
-            while (true) {
+            bool exit = false;
+            while (!exit) {
                 decltype(auto) messages = dequeue();
                 for (auto &message : messages) {
                     auto& refMessage = *message.get();
                     if (stopped()) {
                         LOG_WARNING("Forced exit on primary loop");
-                        throw std::runtime_error({});
+                        exit = true;
+                        break;
                     }
-                    if (!mPrimaryMessageQueue->send(reinterpret_cast<char*>(&refMessage))) {
+                    if (!mPrimaryMessageQueue->send(reinterpret_cast<const char*>(&refMessage))) {
                         LOG_WARNING("Failed to send message!");
-                        throw std::runtime_error({});
+                        exit = true;
+                        break;
                     }
                 }
             }
         } catch (...) {
-            TTChatMessage goodbye;
-            goodbye.setType(TTChatMessageType::GOODBYE);
-            mPrimaryMessageQueue->send(reinterpret_cast<char*>(&goodbye));
             LOG_ERROR("Caught unknown exception at primary loop!");
         }
+        goodbye();
     }
     stop();
     LOG_INFO("Completed primary loop");
+}
+
+void TTChatHandler::goodbye() {
+    LOG_WARNING("Sending goodbye message...");
+    TTChatMessage message;
+    message.setType(TTChatMessageType::GOODBYE);
+    mPrimaryMessageQueue->send(reinterpret_cast<const char*>(&message));
 }

@@ -1,16 +1,16 @@
 #pragma once
-#include <string>
 #include <string_view>
 #include <chrono>
 #include <cstring>
 #include <cassert>
 #include "TTChatMessageType.hpp"
-
-using TTChatTimestamp = std::chrono::time_point<std::chrono::system_clock>;
+#include "TTChatTimestamp.hpp"
 
 class TTChatMessage {
 public:
-    TTChatMessage() = default;
+    TTChatMessage() {
+        mDataLength = 0;
+    }
     ~TTChatMessage() = default;
     TTChatMessage(const TTChatMessage&) = default;
     TTChatMessage(TTChatMessage&&) = default;
@@ -33,3 +33,37 @@ private:
     unsigned int mDataLength;
     char mData[MAX_DATA_LENGTH];
 };
+
+inline std::ostream& operator<<(std::ostream& os, const TTChatMessage& rhs)
+{
+    os << "{";
+    os << "type: " << rhs.getType() << ", ";
+    os << "timestamp: " << rhs.getTimestamp() << ", ";
+    os << "data: " << rhs.getData();
+    os << "}";
+    return os;
+}
+
+inline bool operator==(const TTChatMessage& lhs, const TTChatMessage& rhs) {
+    switch (lhs.getType()) {
+        case TTChatMessageType::SENDER:
+        case TTChatMessageType::RECEIVER:
+            if (lhs.getType() != rhs.getType()) {
+                return false;
+            }
+            break;
+        case TTChatMessageType::CLEAR:
+        case TTChatMessageType::HEARTBEAT:
+        case TTChatMessageType::GOODBYE:
+            return lhs.getType() == rhs.getType();
+        default:
+            return false;
+    }
+    if (lhs.getTimestamp() != rhs.getTimestamp()) {
+        return false;
+    }
+    if (lhs.getData() != rhs.getData()) {
+        return false;
+    }
+    return true;
+}

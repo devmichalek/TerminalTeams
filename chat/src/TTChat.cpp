@@ -1,7 +1,6 @@
 #include "TTChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include "TTUtilsAscii.hpp"
-#include <ctime>
 #include <sstream>
 #include <iomanip>
 #include <chrono>
@@ -203,13 +202,9 @@ void TTChat::print(const TTChatMessage& message) {
             }
         }
     }
-    // Create timestamp string
-    const auto time = std::chrono::system_clock::to_time_t(message.getTimestamp());
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&time), "%Y-%m-%d %X");
-    const auto timestamp = ss.str();
     // Print message based on side
     LOG_INFO("Printing message...");
+    const auto timestamp = static_cast<std::string>(message.getTimestamp());
     if (message.getType() == TTChatMessageType::RECEIVER) {
         mOutputStream.print(timestamp).endl();
         for (const auto &line : lines) {

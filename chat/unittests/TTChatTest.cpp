@@ -9,7 +9,6 @@
 #include <chrono>
 #include <memory>
 #include <vector>
-#include <span>
 
 using ::testing::Test;
 using ::testing::Return;
@@ -46,18 +45,18 @@ protected:
     }
     // Called after constructor, before each test
     virtual void SetUp() override {
-        EXPECT_CALL(*mSettingsMock, getTerminalWidth)
-            .Times(1)
-            .WillOnce(Return(TERMINAL_WIDTH));
-        EXPECT_CALL(*mSettingsMock, getTerminalHeight)
-            .Times(1)
-            .WillOnce(Return(TERMINAL_HEIGHT));
         EXPECT_CALL(*mSettingsMock, getPrimaryMessageQueue)
             .Times(1)
             .WillOnce(Return(mPrimaryMessageQueueMock));
         EXPECT_CALL(*mSettingsMock, getSecondaryMessageQueue)
             .Times(1)
             .WillOnce(Return(mSecondaryMessageQueueMock));
+        EXPECT_CALL(*mSettingsMock, getTerminalWidth)
+            .Times(1)
+            .WillOnce(Return(TERMINAL_WIDTH));
+        EXPECT_CALL(*mSettingsMock, getTerminalHeight)
+            .Times(1)
+            .WillOnce(Return(TERMINAL_HEIGHT));
         EXPECT_CALL(*mSettingsMock, getRatio)
             .Times(1)
             .WillOnce(Return(TERMINAL_RATIO));
@@ -705,6 +704,72 @@ TEST_F(TTChatTest, HappyPathReceivedMessagesWithLongWords) {
         std::string{"   lahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlahBlah\n"} +
         std::string{"\n"};
     const auto& expected = std::vector<std::string>{conversation1, conversation2, conversation3};
+    const auto& actual = mOutputStreamMock->mOutput;
+    EXPECT_EQ(actual, expected);
+}
+
+TEST_F(TTChatTest, HappyPathReceivedMessagesDifferentSystemTime) {
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, open)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const std::time_t epoch1 = 8555226;
+    const std::time_t epoch2 = 8555227;
+    const std::vector<TTChatMessage> messagesToBeReceived = {
+        CreateHeartbeatMessage(),
+        CreateClearMessage(),
+        CreateSenderMessage("Hello John", std::chrono::system_clock::from_time_t(epoch1)),
+        CreateReceiverMessage("Hi Mike", std::chrono::system_clock::from_time_t(epoch2)),
+        CreateGoodbyeMessage()
+    };
+    const size_t receiveDelayTicks = 100;
+    const auto receiveDelay = std::chrono::milliseconds{receiveDelayTicks};
+    const auto sendDelay = std::chrono::milliseconds{0};
+    const size_t minNumOfSentMessages = (messagesToBeReceived.size() * receiveDelayTicks) / HEARTBEAT_TIMEOUT_MS;
+    const size_t minNumOfReceivedMessages = messagesToBeReceived.size();
+    {
+        InSequence _;
+        for (const auto &message : messagesToBeReceived) {
+            EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
+                .Times(1)
+                .WillOnce(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, message, receiveDelay), Return(true)));
+        }
+    }
+    EXPECT_CALL(*mSecondaryMessageQueueMock, send)
+        .Times(AtLeast(minNumOfSentMessages))
+        .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
+    // Run
+    RestartApplication();
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    // Verify
+    EXPECT_GE(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
+    for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnReceive[i]) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), minNumOfSentMessages);
+    for (size_t i = 0; i < minNumOfSentMessages; ++i) {
+        EXPECT_FALSE(mStoppedStatusOnSend[i]) << "At some point application was stopped while sending message!";
+    }
+    for (const auto& sendMessage : mSendMessages) {
+        EXPECT_EQ(sendMessage.getType(), TTChatMessageType::HEARTBEAT);
+    }
+    const std::string conversation1 =
+        std::string{"                               1970-04-10 01:27:06\n"} +
+        std::string{"                                        Hello John\n"} +
+        std::string{"\n"} +
+        std::string{"1970-04-10 01:27:07\n"} + 
+        std::string{"Hi Mike\n"} +
+        std::string{"\n"};
+    const auto& expected = std::vector<std::string>{conversation1};
     const auto& actual = mOutputStreamMock->mOutput;
     EXPECT_EQ(actual, expected);
 }
