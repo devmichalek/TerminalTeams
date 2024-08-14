@@ -111,6 +111,22 @@ protected:
         return message;
     }
 
+    TTChatMessage CreateSenderMessage(const std::string_view& data, TTChatTimestamp timestamp = {}) {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::SENDER);
+        message.setTimestamp(timestamp);
+        message.setData(data);
+        return message;
+    }
+
+    TTChatMessage CreateReceiverMessage(const std::string_view& data, TTChatTimestamp timestamp = {}) {
+        TTChatMessage message;
+        message.setType(TTChatMessageType::RECEIVER);
+        message.setTimestamp(timestamp);
+        message.setData(data);
+        return message;
+    }
+
     // Called after constructor, before each test
     virtual void SetUp() override {
         EXPECT_CALL(*mSettingsMock, getPrimaryMessageQueue)
@@ -149,6 +165,7 @@ protected:
     std::vector<TTChatMessage> mSentMessages;
     std::vector<bool> mStoppedStatusOnSend;
     std::vector<bool> mStoppedStatusOnReceive;
+    constexpr static long HEARTBEAT_TIMEOUT_MS = 500; // 0.5s
 };
 
 TEST_F(TTChatHandlerTest, FailedToCreatePrimaryMessageQueue) {
@@ -247,6 +264,7 @@ TEST_F(TTChatHandlerTest, FailedToReceiveAfterManyReceivedHeartbeats) {
     EXPECT_TRUE(StartHandler(std::chrono::milliseconds{std::chrono::milliseconds{100}}));
     std::this_thread::sleep_for(std::chrono::milliseconds{2200});
     EXPECT_EQ(mChatHandler->size(), 0);
+    EXPECT_EQ(mChatHandler->current(), std::nullopt);
     EXPECT_TRUE(mChatHandler->stopped());
     for (const auto status : mStoppedStatusOnReceive) {
         EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
@@ -305,6 +323,7 @@ TEST_F(TTChatHandlerTest, FailedToReceiveAfterManyReceivedHeartbeatsThenUnknown)
     EXPECT_TRUE(StartHandler(std::chrono::milliseconds{std::chrono::milliseconds{100}}));
     std::this_thread::sleep_for(std::chrono::milliseconds{2200});
     EXPECT_EQ(mChatHandler->size(), 0);
+    EXPECT_EQ(mChatHandler->current(), std::nullopt);
     EXPECT_TRUE(mChatHandler->stopped());
     for (const auto status : mStoppedStatusOnReceive) {
         EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
@@ -358,6 +377,7 @@ TEST_F(TTChatHandlerTest, FailedToSendAfterManySendHeartbeats) {
     EXPECT_TRUE(StartHandler(std::chrono::milliseconds{std::chrono::milliseconds{100}}));
     std::this_thread::sleep_for(std::chrono::milliseconds{2500});
     EXPECT_EQ(mChatHandler->size(), 0);
+    EXPECT_EQ(mChatHandler->current(), std::nullopt);
     EXPECT_TRUE(mChatHandler->stopped());
     EXPECT_GT(mStoppedStatusOnReceive.size(), 1);
     mStoppedStatusOnReceive.pop_back();
@@ -396,7 +416,6 @@ TEST_F(TTChatHandlerTest, HappyPathAtLeastThreeHeartbeatsAndGoodbye) {
     const auto receiveDelay = std::chrono::milliseconds{20};
     const auto sendDelay = std::chrono::milliseconds{10};
     const auto messageToBeReceived = CreateHeartbeatMessage();
-    const size_t minNumOfSentMessages = 3;
     EXPECT_CALL(*mSecondaryMessageQueueMock, receive)
         .Times(AtLeast(1))
         .WillRepeatedly(DoAll(std::bind(&TTChatHandlerTest::ProvideReceivedMessage, this, _1, messageToBeReceived, receiveDelay), Return(true)));
@@ -407,6 +426,7 @@ TEST_F(TTChatHandlerTest, HappyPathAtLeastThreeHeartbeatsAndGoodbye) {
     EXPECT_TRUE(StartHandler(std::chrono::milliseconds{std::chrono::milliseconds{100}}));
     std::this_thread::sleep_for(std::chrono::milliseconds{2000});
     EXPECT_EQ(mChatHandler->size(), 0);
+    EXPECT_EQ(mChatHandler->current(), std::nullopt);
     EXPECT_FALSE(mChatHandler->stopped());
     EXPECT_TRUE(StopHandler(std::chrono::milliseconds{100}));
     EXPECT_GT(mStoppedStatusOnReceive.size(), 1);
@@ -424,10 +444,128 @@ TEST_F(TTChatHandlerTest, HappyPathAtLeastThreeHeartbeatsAndGoodbye) {
     EXPECT_TRUE(IsLastEqualTo(mSentMessages, expectedSentMessages.back()));
 }
 
-// TEST_F(TTChatHandlerTest, HappyPathMessages) {
-// }
+TEST_F(TTChatHandlerTest, HappyPathCreateSendAndReceive) {
+    // Expected sent messages, entries
+    std::vector<TTChatMessage> expectedSentMessages = {
+        CreateHeartbeatMessage(),
+        CreateSenderMessage("Hello Simon!"),
+        CreateReceiverMessage("Hi Tommy!"),
+        CreateClearMessage(),
+        CreateSenderMessage("Hello from the other side!"),
+        CreateReceiverMessage("Welcome \"other side\"!"),
+        CreateSenderMessage("Are you ok?"),
+        CreateReceiverMessage("Yes, thanks for asking"),
+        CreateClearMessage(),
+        CreateSenderMessage("Hello Simon!"),
+        CreateReceiverMessage("Hi Tommy!"),
+        CreateReceiverMessage("How are you?"),
+        CreateGoodbyeMessage()
+    };
+    const TTChatEntries expectedEntries0 = {
+        TTChatEntry{TTChatMessageType::SENDER, {}, "Hello Simon!"},
+        TTChatEntry{TTChatMessageType::RECEIVER, {}, "Hi Tommy!"},
+        TTChatEntry{TTChatMessageType::RECEIVER, {}, "How are you?"}
+    };
+    const TTChatEntries expectedEntries1 = {
+        TTChatEntry{TTChatMessageType::SENDER, {}, "Hello from the other side!"},
+        TTChatEntry{TTChatMessageType::RECEIVER, {}, "Welcome \"other side\"!"},
+        TTChatEntry{TTChatMessageType::SENDER, {}, "Are you ok?"},
+        TTChatEntry{TTChatMessageType::RECEIVER, {}, "Yes, thanks for asking"},
+    };
+    // Expected calls
+    EXPECT_CALL(*mPrimaryMessageQueueMock, create)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, create)
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mSecondaryMessageQueueMock, alive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    const auto receiveDelay = std::chrono::milliseconds{20};
+    const auto sendDelay = std::chrono::milliseconds{10};
+    const auto messageToBeReceived = CreateHeartbeatMessage();
+    EXPECT_CALL(*mSecondaryMessageQueueMock, receive)
+        .Times(AtLeast(1))
+        .WillRepeatedly(DoAll(std::bind(&TTChatHandlerTest::ProvideReceivedMessage, this, _1, messageToBeReceived, receiveDelay), Return(true)));
+    EXPECT_CALL(*mPrimaryMessageQueueMock, send)
+        .Times(AtLeast(1))
+        .WillRepeatedly(DoAll(std::bind(&TTChatHandlerTest::RetrieveSentMessage, this, _1, sendDelay), Return(true)));
+    // Verify
+    EXPECT_TRUE(StartHandler(std::chrono::milliseconds{std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS + 100}}));
+    // Create first contact
+    EXPECT_FALSE(mChatHandler->create(1));
+    EXPECT_TRUE(mChatHandler->create(0));
+    EXPECT_FALSE(mChatHandler->create(0));
+    // Attempt to send, receive or select non existing contact
+    EXPECT_FALSE(mChatHandler->send(1, "Dummy", {}));
+    EXPECT_FALSE(mChatHandler->receive(1, "Dummy", {}));
+    EXPECT_FALSE(mChatHandler->select(1));
+    // Check if currently selected contacts is non-existing and size is correct
+    EXPECT_EQ(mChatHandler->current(), std::nullopt);
+    EXPECT_EQ(mChatHandler->size(), 1);
+    // Send and receive attempts
+    EXPECT_FALSE(mChatHandler->send(0, "Dummy", {}));
+    EXPECT_TRUE(mChatHandler->select(0));
+    EXPECT_TRUE(mChatHandler->send(0, "Hello Simon!", {}));
+    EXPECT_TRUE(mChatHandler->receive(0, "Hi Tommy!", {}));
+    EXPECT_FALSE(mChatHandler->select(0));
+    EXPECT_NE(mChatHandler->current(), std::nullopt);
+    EXPECT_EQ(mChatHandler->current().value(), 0);
+    // Create second contact
+    EXPECT_TRUE(mChatHandler->create(1));
+    EXPECT_FALSE(mChatHandler->create(1));
+    // Select second contact and add chat
+    EXPECT_TRUE(mChatHandler->select(1));
+    EXPECT_TRUE(mChatHandler->send(1, "Hello from the other side!", {}));
+    EXPECT_TRUE(mChatHandler->receive(1, "Welcome \"other side\"!", {}));
+    // Receive on non selected contact
+    EXPECT_TRUE(mChatHandler->receive(0, "How are you?", {}));
+    EXPECT_FALSE(mChatHandler->send(0, "Dummy", {}));
+    EXPECT_TRUE(mChatHandler->send(1, "Are you ok?", {}));
+    EXPECT_TRUE(mChatHandler->receive(1, "Yes, thanks for asking", {}));
+    // Select again the first contact and answer
+    EXPECT_TRUE(mChatHandler->select(0));
+    EXPECT_FALSE(mChatHandler->send(1, "Good, and you?", {}));
+    // Some sleep and other checks
+    std::this_thread::sleep_for(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS});
+    EXPECT_FALSE(mChatHandler->stopped());
+    EXPECT_TRUE(StopHandler(std::chrono::milliseconds{100}));
+    EXPECT_FALSE(mChatHandler->create(1));
+    EXPECT_FALSE(mChatHandler->send(0, "Dummy", {}));
+    EXPECT_FALSE(mChatHandler->receive(0, "Dummy", {}));
+    EXPECT_FALSE(mChatHandler->select(0));
+    EXPECT_NE(mChatHandler->current(), std::nullopt);
+    EXPECT_EQ(mChatHandler->current().value(), 0);
+    // Check entries
+    EXPECT_NE(mChatHandler->get(0), std::nullopt);
+    const auto actualEntries0 = mChatHandler->get(0).value();
+    EXPECT_EQ(mChatHandler->get(0).value(), expectedEntries0);
+    EXPECT_NE(mChatHandler->get(1), std::nullopt);
+    const auto actualEntries1 = mChatHandler->get(1).value();
+    EXPECT_EQ(mChatHandler->get(1).value(), expectedEntries1);
+    // Check messages
+    EXPECT_GT(mStoppedStatusOnReceive.size(), 1);
+    mStoppedStatusOnReceive.pop_back();
+    for (const auto status : mStoppedStatusOnReceive) {
+        EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_GT(mStoppedStatusOnSend.size(), 2);
+    mStoppedStatusOnSend.pop_back();
+    mStoppedStatusOnSend.pop_back();
+    for (const auto status : mStoppedStatusOnSend) {
+        EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
+    }
+    EXPECT_TRUE(IsFirstEqualTo(mSentMessages, expectedSentMessages.front()));
+    EXPECT_TRUE(IsOrderEqualTo(mSentMessages, {expectedSentMessages.begin() + 1, expectedSentMessages.end() - 1}));
+    EXPECT_TRUE(IsLastEqualTo(mSentMessages, expectedSentMessages.back()));
+}
 
 // TEST_F(TTChatHandlerTest, HappyPathHugeMessages) {
+    
 // }
 
 // TEST_F(TTChatHandlerTest, UnhappyPathUsageAfterStop) {

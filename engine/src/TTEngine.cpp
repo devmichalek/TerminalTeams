@@ -18,6 +18,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         mContacts->create(settings.getNickname(), settings.getIdentity(), i.getIpAddressAndPort());
         mContacts->select(0);
         mChat->create(0);
+        mChat->select(0);
         mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
         mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
     }
@@ -138,14 +139,13 @@ void TTEngine::mailbox(const std::string& message) {
     LOG_INFO("Received callback - message sent");
     if (mChat) {
         std::scoped_lock lock(mMailboxMutex);
-        const auto current = mContacts->current();
-        if (!current) {
-            LOG_ERROR("Received callback - failed to get current contact!");
+        if (!mContacts->current() || !mChat->current()) {
+            LOG_ERROR("Received callback - failed to get current value!");
             stop();
         } else {
             const auto now = std::chrono::system_clock::now();
-            bool result = mChat->send(current.value(), message, now);
-            result &= mContacts->send(current.value());
+            bool result = mChat->send(mChat->current(), message, now);
+            result &= mContacts->send(mContacts->current());
             if (!result) {
                 LOG_ERROR("Received callback - failed to sent message!");
                 stop();
@@ -160,7 +160,7 @@ void TTEngine::switcher(size_t message) {
         if (message < mContacts->size()) {
             std::scoped_lock lock(mSwitcherMutex);
             bool result = mContacts->select(message);
-            result &= mChat->clear(message);
+            result &= mChat->select(message);
             if (!result) {
                 LOG_ERROR("Received callback - failed to switch contact!");
                 stop();

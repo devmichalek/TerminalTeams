@@ -1,16 +1,14 @@
 #pragma once
 #include "TTChatMessage.hpp"
 #include "TTChatSettings.hpp"
-#include <mqueue.h>
+#include "TTChatEntry.hpp"
 #include <memory>
 #include <future>
 #include <queue>
 #include <vector>
 #include <list>
 #include <shared_mutex>
-
-using TTChatEntry = std::tuple<TTChatMessageType, std::string, TTChatTimestamp>;
-using TTChatEntries = std::deque<TTChatEntry>;
+#include <optional>
 
 // Class meant to be embedded into other higher abstract class.
 // Allows to control TTChat process concurrently.
@@ -24,10 +22,11 @@ public:
     TTChatHandler& operator=(TTChatHandler&&) = delete;
     virtual bool send(size_t id, const std::string& message, TTChatTimestamp timestamp);
     virtual bool receive(size_t id, const std::string& message, TTChatTimestamp timestamp);
-    virtual bool clear(size_t id);
+    virtual bool select(size_t id);
     virtual bool create(size_t id);
     virtual bool size() const;
-    virtual const TTChatEntries& get(size_t id) const;
+    virtual std::optional<TTChatEntries> get(size_t id) const;
+    virtual std::optional<size_t> current() const;
     virtual void stop();
     virtual bool stopped() const;
 protected:
@@ -54,7 +53,7 @@ private:
     std::condition_variable mQueueCondition;
     std::queue<std::unique_ptr<TTChatMessage>> mQueuedMessages;
     // Messages storage
-    size_t mCurrentId;
+    std::optional<size_t> mCurrentId;
     mutable std::shared_mutex mMessagesMutex;
     std::vector<TTChatEntries> mMessages;
 };

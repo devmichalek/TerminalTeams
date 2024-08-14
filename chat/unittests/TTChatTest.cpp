@@ -309,7 +309,8 @@ TEST_F(TTChatTest, HappyPathOnlySendAndReceivedHeartbeats) {
     const size_t minNumOfReceivedMessages = 5;
     const size_t minNumOfSentMessages = 5;
     const auto receiveDelay = std::chrono::milliseconds{40};
-    const auto sendDelay = std::chrono::milliseconds{10};
+    const auto sendDelayTicks = 10;
+    const auto sendDelay = std::chrono::milliseconds{sendDelayTicks};
     EXPECT_CALL(*mPrimaryMessageQueueMock, receive)
         .Times(AtLeast(minNumOfReceivedMessages))
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::SetArgPointerInReceiveMessage, this, _1, heartbeat, receiveDelay), Return(true)));
@@ -318,7 +319,7 @@ TEST_F(TTChatTest, HappyPathOnlySendAndReceivedHeartbeats) {
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
     // Run
     RestartApplication();
-    std::this_thread::sleep_for(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    std::this_thread::sleep_for(std::chrono::milliseconds{(HEARTBEAT_TIMEOUT_MS + sendDelayTicks) * (minNumOfSentMessages + 1)});
     mChat->stop();
     VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS});
     // Verify

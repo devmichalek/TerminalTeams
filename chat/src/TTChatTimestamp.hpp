@@ -30,8 +30,8 @@ public:
         ss << std::put_time(std::localtime(&time), "%Y-%m-%d %X");
         return ss.str();
     }
-    bool operator==(const TTChatTimestamp& rhs) {return mData == rhs.mData;}
-    bool operator!=(const TTChatTimestamp& rhs) {return !(mData == rhs.mData);}
+    bool operator==(const TTChatTimestamp& rhs) const {return mData == rhs.mData;}
+    bool operator!=(const TTChatTimestamp& rhs) const {return !(mData == rhs.mData);}
 private:
     TTChatTimestampRaw mData;
 };
