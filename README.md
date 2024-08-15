@@ -58,7 +58,6 @@ Application was tested using:
 - safe cleanup
 - engine unit tests
 - utils unit tests
-- chat auto tests
 - engine auto tests
 - chat documentation
 - engine documentation

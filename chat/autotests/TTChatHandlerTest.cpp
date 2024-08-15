@@ -62,23 +62,21 @@ int main(int argc, char** argv) {
                 }
                 tokens = getTokens(line);
             }
-            bool status = false;
             if (!tokens.empty()) {
                 const std::string& command = tokens[0];
                 const auto id = std::stoi(tokens[1]);
                 // Send command
                 const std::chrono::time_point<std::chrono::system_clock> dt(std::chrono::milliseconds(0));
                 if (command == "send") {
-                    status = handler.send(id, tokens[2], dt);
+                    std::cout << "send status=" << static_cast<int>(handler.send(id, tokens[2], dt)) << std::endl;
                 } else if (command == "receive") {
-                    status = handler.receive(id, tokens[2], dt);
+                    std::cout << "receive status=" << static_cast<int>(handler.receive(id, tokens[2], dt)) << std::endl;
                 } else if (command == "select") {
-                    status = handler.select(id);
+                    std::cout << "select status=" << static_cast<int>(handler.select(id)) << std::endl;
                 } else if (command == "create") {
-                    status = handler.create(id);
+                    std::cout << "create status=" << static_cast<int>(handler.create(id)) << std::endl;
                 }
-            }
-            if (!status) {
+            } else {
                 break;
             }
         }
