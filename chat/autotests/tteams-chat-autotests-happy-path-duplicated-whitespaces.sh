@@ -19,16 +19,16 @@ ${APP_CMD} &> "${HANDLER_STDOUT}" &
 # Test scenario
 echo "Info: Waiting for synchronization..."
 sleep 3
-echo "create 0" > "${HANDLER_STDIN}"
-echo "create 1" > "${HANDLER_STDIN}"
-echo "select 0" > "${HANDLER_STDIN}"
-echo "send 0 Hello John, how are you?" > "${HANDLER_STDIN}"
-echo "receive 0 Hi Freddie, good and you?" > "${HANDLER_STDIN}"
-echo "send 0 Fine" > "${HANDLER_STDIN}"
-echo "select 1" > "${HANDLER_STDIN}"
-echo "send 1 What's up bro?" > "${HANDLER_STDIN}"
-echo "receive 1 Nothing" > "${HANDLER_STDIN}"
-echo "select 0" > "${HANDLER_STDIN}"
+echo -e "create 0" > "${HANDLER_STDIN}"
+echo -e  "create 1" > "${HANDLER_STDIN}"
+echo -e  "select 0" > "${HANDLER_STDIN}"
+echo -e  "send 0 Hello John,          how are you?" > "${HANDLER_STDIN}"
+echo -e  "receive 0 Hi Freddie, \t\t\t\tgood and you?" > "${HANDLER_STDIN}"
+echo -e  "send 0 Fine" > "${HANDLER_STDIN}"
+echo -e  "select 1" > "${HANDLER_STDIN}"
+echo -e  "send 1 \t\t\tWhat's                               up bro?" > "${HANDLER_STDIN}"
+echo -e  "receive 1 Nothing" > "${HANDLER_STDIN}"
+echo -e  "select 0" > "${HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."
 sleep 3
 

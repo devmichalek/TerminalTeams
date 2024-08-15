@@ -53,12 +53,15 @@ int main(int argc, char** argv) {
         LOG_INFO("Chat handler initialized");
         while (!quitHandle.load()) {
             // Get tokens
-            std::string line;
-            std::getline(std::cin, line);
-            if (quitHandle.load()) {
-                break;
+            std::vector<std::string> tokens;
+            {
+                std::string line;
+                std::getline(std::cin, line);
+                if (quitHandle.load()) {
+                    break;
+                }
+                tokens = getTokens(line);
             }
-            auto tokens = getTokens(line);
             bool status = false;
             if (!tokens.empty()) {
                 const std::string& command = tokens[0];
@@ -69,8 +72,8 @@ int main(int argc, char** argv) {
                     status = handler.send(id, tokens[2], dt);
                 } else if (command == "receive") {
                     status = handler.receive(id, tokens[2], dt);
-                } else if (command == "clear") {
-                    status = handler.clear(id);
+                } else if (command == "select") {
+                    status = handler.select(id);
                 } else if (command == "create") {
                     status = handler.create(id);
                 }

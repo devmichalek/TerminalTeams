@@ -56,14 +56,10 @@ Application was tested using:
 - std::launder
 - std::once_flag
 - safe cleanup
-- unit tests
-    - chat UT
-    - engine UT
-    - utils UT
-- auto tests
-    - chat AT
-    - engine AT
-- documentation
-    - chat
-    - engine
+- engine unit tests
+- utils unit tests
+- chat auto tests
+- engine auto tests
+- chat documentation
+- engine documentation
 - remove IPC files in cpp classes in constructor
