@@ -106,15 +106,59 @@ bool TTChat::handle(const TTChatMessage& message) {
     switch (message.getType()) {
         case TTChatMessageType::CLEAR:
             LOG_INFO("Received clear message");
+            if (!mChunks.empty()) {
+                LOG_ERROR("Received clear message that doesn't match previous chunk!");
+                return false;
+            }
             mOutputStream.clear();
             return true;
         case TTChatMessageType::SENDER:
+        {
             LOG_INFO("Received sender message");
-            print(message);
+            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::SENDER_CHUNK) {
+                LOG_ERROR("Received sender chunk message that doesn't match previous chunk!");
+                return false;
+            }
+            std::string data;
+            for (const auto& chunkMessage : mChunks) {
+                data += chunkMessage.getData();
+            }
+            mChunks.clear();
+            data += message.getData();
+            print(message.getType(), message.getTimestamp(), data);
+            return true;
+        }
+        case TTChatMessageType::SENDER_CHUNK:
+            LOG_INFO("Received sender chunk message");
+            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) {
+                LOG_ERROR("Received sender chunk message that doesn't match previous chunk!");
+                return false;
+            }
+            mChunks.push_back(message);
             return true;
         case TTChatMessageType::RECEIVER:
+        {
             LOG_INFO("Received receiver message");
-            print(message);
+            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::RECEIVER_CHUNK) {
+                LOG_ERROR("Received receiver chunk message that doesn't match previous chunk!");
+                return false;
+            }
+            std::string data;
+            for (const auto& chunkMessage : mChunks) {
+                data += chunkMessage.getData();
+            }
+            mChunks.clear();
+            data += message.getData();
+            print(message.getType(), message.getTimestamp(), data);
+            return true;
+        }
+        case TTChatMessageType::RECEIVER_CHUNK:
+            LOG_INFO("Received receiver chunk message");
+            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) {
+                LOG_ERROR("Received receiver chunk message that doesn't match previous chunk!");
+                return false;
+            }
+            mChunks.push_back(message);
             return true;
         case TTChatMessageType::HEARTBEAT:
             LOG_INFO("Received heartbeat message");
@@ -128,12 +172,12 @@ bool TTChat::handle(const TTChatMessage& message) {
             stop();
             return false;
     }
+    return false;
 }
 
-void TTChat::print(const TTChatMessage& message) {
+void TTChat::print(TTChatMessageType type, TTChatTimestamp timestamp, std::string data) {
     LOG_INFO("Formatting message to be printed...");
     // Remove whitespaces from the beggining
-    std::string data = message.getData();
     for (auto charIterator = data.begin(); charIterator != data.end(); charIterator++) {
         if (!TTUtilsAscii::isWhitespace(*charIterator)) {
             const auto distance = std::distance(data.begin(), charIterator);
@@ -204,15 +248,15 @@ void TTChat::print(const TTChatMessage& message) {
     }
     // Print message based on side
     LOG_INFO("Printing message...");
-    const auto timestamp = static_cast<std::string>(message.getTimestamp());
-    if (message.getType() == TTChatMessageType::RECEIVER) {
-        mOutputStream.print(timestamp).endl();
+    const auto timestampStr = static_cast<std::string>(timestamp);
+    if (type == TTChatMessageType::RECEIVER) {
+        mOutputStream.print(timestampStr).endl();
         for (const auto &line : lines) {
             mOutputStream.print(line).endl();
         }
     } else {
-        mOutputStream.print(mBlankLine.substr(0, mBlankLine.size() - timestamp.size()));
-        mOutputStream.print(timestamp).endl();
+        mOutputStream.print(mBlankLine.substr(0, mBlankLine.size() - timestampStr.size()));
+        mOutputStream.print(timestampStr).endl();
         for (const auto &line : lines) {
             mOutputStream.print(mBlankLine.substr(0, mBlankLine.size() - line.size()));
             mOutputStream.print(line).endl();

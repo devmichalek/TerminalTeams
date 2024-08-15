@@ -163,28 +163,31 @@ bool TTChatHandler::send(TTChatMessageType type, const std::string& data, TTChat
         return false;
     }
 
+    size_t numberOfFullMessages = (data.size() / TTChatMessage::MAX_DATA_LENGTH);
+    size_t totalFullMessagesDataLength = numberOfFullMessages * TTChatMessage::MAX_DATA_LENGTH;
+    size_t lastMessageDataLength = data.size() - totalFullMessagesDataLength;
+
+    if (numberOfFullMessages != 0 && lastMessageDataLength == 0) {
+        numberOfFullMessages -= 1;
+        totalFullMessagesDataLength -= TTChatMessage::MAX_DATA_LENGTH;
+        lastMessageDataLength = TTChatMessage::MAX_DATA_LENGTH;
+    }
+
+    // Create chunk messages
     std::list<std::unique_ptr<TTChatMessage>> messages;
-    const size_t numberOfFullMessages = (data.size() / TTChatMessage::MAX_DATA_LENGTH);
     for (size_t i = 0; i < numberOfFullMessages; ++i) {
         const char* cdata = data.c_str() + (TTChatMessage::MAX_DATA_LENGTH * i);
-        auto message = std::make_unique<TTChatMessage>();
-        message->setType(type);
-        message->setTimestamp(timestamp);
-        message->setData(std::string_view(cdata, TTChatMessage::MAX_DATA_LENGTH));
+        const auto chunkType = static_cast<TTChatMessageType>(static_cast<size_t>(type) + 1);
+        auto message = std::make_unique<TTChatMessage>(chunkType, timestamp, std::string_view(cdata, TTChatMessage::MAX_DATA_LENGTH));
         messages.push_back(std::move(message));
     }
-
-    const size_t totalFullMessagesDataLength = numberOfFullMessages * TTChatMessage::MAX_DATA_LENGTH;
-    const size_t lastMessageDataLength = data.size() - totalFullMessagesDataLength;
-    if (lastMessageDataLength > 0 || data.empty()) {
+    // Create full message
+    {
         const char* cdata = data.c_str() + totalFullMessagesDataLength;
-        auto message = std::make_unique<TTChatMessage>();
-        message->setType(type);
-        message->setTimestamp(timestamp);
-        message->setData(std::string_view(cdata, lastMessageDataLength));
+        auto message = std::make_unique<TTChatMessage>(type, timestamp, std::string_view(cdata, lastMessageDataLength));
         messages.push_back(std::move(message));
     }
-
+    // Fill the queue
     {
         std::scoped_lock lock(mQueueMutex);
         for (auto & it : messages) {

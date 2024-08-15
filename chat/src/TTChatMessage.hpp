@@ -11,6 +11,11 @@ public:
     TTChatMessage() {
         mDataLength = 0;
     }
+    TTChatMessage(TTChatMessageType type, TTChatTimestamp timestamp = {}, const std::string_view& data = {}) {
+        setType(type);
+        setTimestamp(timestamp);
+        setData(data);
+    }
     ~TTChatMessage() = default;
     TTChatMessage(const TTChatMessage&) = default;
     TTChatMessage(TTChatMessage&&) = default;
@@ -47,7 +52,9 @@ inline std::ostream& operator<<(std::ostream& os, const TTChatMessage& rhs)
 inline bool operator==(const TTChatMessage& lhs, const TTChatMessage& rhs) {
     switch (lhs.getType()) {
         case TTChatMessageType::SENDER:
+        case TTChatMessageType::SENDER_CHUNK:
         case TTChatMessageType::RECEIVER:
+        case TTChatMessageType::RECEIVER_CHUNK:
             if (lhs.getType() != rhs.getType()) {
                 return false;
             }

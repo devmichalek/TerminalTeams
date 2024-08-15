@@ -4,6 +4,7 @@
 #include "TTUtilsOutputStream.hpp"
 #include <future>
 #include <functional>
+#include <deque>
 
 class TTChat {
 public:
@@ -27,7 +28,7 @@ private:
     // Handles all message types
     bool handle(const TTChatMessage& message);
     // Prints message in a defined format
-    void print(const TTChatMessage& message);
+    void print(TTChatMessageType type, TTChatTimestamp timestamp, std::string data);
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
@@ -43,4 +44,6 @@ private:
     std::string mBlankLine;
     // Output stream
     TTUtilsOutputStream& mOutputStream;
+    // Gathered chunks
+    std::deque<TTChatMessage> mChunks;
 };
