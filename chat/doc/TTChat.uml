@@ -1,0 +1,36 @@
+@startuml
+
+package TTChatBundle <<Rectangle>> {
+  class TTChat
+  struct TTChatMessage
+  class TTChatSettings
+  enum TTChatMessageType
+  class TTChatTimestamp
+}
+
+package TTDiagnosticsBundle <<Rectangle>> {
+  class TTDiagnosticsLogger
+}
+
+package TTUtilsBundle <<Rectangle>> {
+  class TTUtilsOutputStream
+  class TTUtilsSyscall
+  class TTUtilsMessageQueue
+}
+
+TTChat o-- TTUtilsOutputStream
+TTChat o-- TTUtilsMessageQueue
+TTChat <.. TTDiagnosticsLogger
+TTChat <.. TTChatSettings
+TTChat <.. TTChatMessage
+TTChat <.. TTChatMessageType
+TTChat <.. TTChatTimestamp
+TTChatSettings <.. TTUtilsSyscall
+TTChatSettings <.. TTUtilsMessageQueue
+TTChatSettings <.. TTChatMessage
+TTChatMessage o-- TTChatMessageType
+TTChatMessage o-- TTChatTimestamp
+TTUtilsMessageQueue o-- TTUtilsSyscall
+TTUtilsMessageQueue <.. TTDiagnosticsLogger
+
+@enduml
