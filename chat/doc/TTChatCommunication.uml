@@ -1,0 +1,120 @@
+@startuml
+!pragma teoz true
+
+participant "TTChatHandler" as TTChatHandler
+participant "TTUtilsMessageQueue\n(primary)" as TTUtilsMessageQueuePrimary
+participant "TTUtilsMessageQueue\n(secondary)" as TTUtilsMessageQueueSecondary
+participant "TTChat" as TTChat
+
+== Initialization ==
+note left of TTChatHandler
+Only one attempt will be made
+to create and open message queue
+end note
+TTChatHandler -> TTUtilsMessageQueuePrimary : create and\nopen primary
+activate TTChatHandler #FFBBBB
+note right of TTChat
+Up to five attempts will be
+made to open primmary message queue
+end note
+{first_open} TTChat -> TTUtilsMessageQueuePrimary : open primary
+activate TTChat #FFBBBB
+TTUtilsMessageQueuePrimary -> TTChat : failure
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+deactivate TTChatHandler
+{second_open} TTChat -> TTUtilsMessageQueuePrimary : open primary
+TTChatHandler -> TTUtilsMessageQueueSecondary : create and\nopen secondary
+activate TTChatHandler #FFBBBB
+{first_open} <-> {second_open} : 1000 ms
+TTUtilsMessageQueuePrimary -> TTChat : success
+deactivate TTChat
+TTUtilsMessageQueueSecondary -> TTChatHandler : success
+deactivate TTChatHandler
+TTChat -> TTUtilsMessageQueueSecondary : open secondary
+activate TTChat #FFBBBB
+TTUtilsMessageQueueSecondary -> TTChat : success
+deactivate TTChat
+== Communication ==
+note left of TTChatHandler
+Primary message queue is used
+to send one-way any messages
+to the application.
+end note
+TTChatHandler -> TTChatHandler : start sender thread\n(primary message queue)
+activate TTChatHandler #005500
+deactivate TTChatHandler
+note right of TTChat
+Secondary message queue is used
+to send one-way heartbeat messages
+to the application handler. messages
+from primary message queue are reiceved
+in the main thread.
+end note
+TTChat -> TTChat : start sender thread\n(secondary message queue)
+activate TTChat #gold
+deactivate TTChat
+TTChatHandler -> TTChatHandler : start receiver thread\n(secondary message queue)
+activate TTChatHandler #005500
+deactivate TTChatHandler
+note right of TTChat
+Up to three attempts will be
+made to receive any message
+end note
+{receive1} TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueuePrimary -> TTChat : failure
+TTChatHandler -> TTUtilsMessageQueuePrimary : send (heartbeat)
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+{receive2} TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueuePrimary -> TTChat : success
+{receive1} <-> {receive2} : 1000 ms
+note left of TTChatHandler
+Up to three attempts will be
+made to receive heartbeat message.
+end note
+{receive3} TTChatHandler -> TTUtilsMessageQueueSecondary : receive
+TTUtilsMessageQueueSecondary -> TTChatHandler : failure
+TTChat -> TTUtilsMessageQueueSecondary : send (heartbeat)
+TTUtilsMessageQueueSecondary -> TTChat : success
+{receive4} TTChatHandler -> TTUtilsMessageQueueSecondary : receive
+TTUtilsMessageQueueSecondary -> TTChatHandler : success
+{receive3} <-> {receive4} : 1000 ms
+== Communication cont. ==
+[o-> TTChatHandler : create
+[o-> TTChatHandler : select
+TTChatHandler -> TTUtilsMessageQueuePrimary : send (clear)
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+note right of TTChat
+Heartbeats are send continuously
+in the secondary message queue (thread).
+Any messages are received continuously
+in the primary message queue.
+end note
+TTChat -> TTUtilsMessageQueueSecondary : send (heartbeat)
+TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueueSecondary -> TTChat : success
+TTUtilsMessageQueuePrimary -> TTChat : success
+[o-> TTChatHandler : send
+note left of TTChatHandler
+Heartbeats are send from time to time
+if no other messages are queued in
+the primary message queue.
+Heartbeats are received continuously
+in the secondary message queue.
+end note
+TTChatHandler -> TTUtilsMessageQueueSecondary : receive
+TTChatHandler -> TTUtilsMessageQueuePrimary : send (send)
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueuePrimary -> TTChat : success
+TTUtilsMessageQueueSecondary -> TTChatHandler : success
+[o-> TTChatHandler : receive
+TTChatHandler -> TTUtilsMessageQueuePrimary : send (receive)
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueuePrimary -> TTChat : success
+[o-> TTChatHandler : stop
+TTChatHandler -> TTUtilsMessageQueuePrimary : send (goodbye)
+TTUtilsMessageQueuePrimary -> TTChatHandler : success
+TTChat -> TTUtilsMessageQueuePrimary : receive
+TTUtilsMessageQueuePrimary -> TTChat : success
+@enduml

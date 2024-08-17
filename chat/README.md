@@ -1,4 +1,4 @@
-# Terminal Teams TextBox
+# Terminal Teams Chat
 ## About
 The purpose of this module is to:
 - work as an user output interface based on terminal dimensions

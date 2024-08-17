@@ -2,7 +2,7 @@
 !pragma teoz true
 
 participant "TTTextBox" as TTTextBox
-participant "TTNamedPipe" as TTNamedPipe
+participant "TTUtilsNamedPipe" as TTUtilsNamedPipe
 participant "TTTextBoxHandler" as TTTextBoxHandler
 
 == Initialization ==
@@ -10,29 +10,29 @@ note left of TTTextBoxHandler
 Only one attempt will be made
 to create and open named pipe
 end note
-TTTextBoxHandler -> TTNamedPipe : create and open
+TTTextBoxHandler -> TTUtilsNamedPipe : create and open
 activate TTTextBoxHandler #FFBBBB
 note right of TTTextBox
 Up to three attempts will be
 made to open named pipe
 end note
-{first_open} TTTextBox -> TTNamedPipe : open
+{first_open} TTTextBox -> TTUtilsNamedPipe : open
 activate TTTextBox #FFBBBB
-TTNamedPipe -> TTTextBox : failure
-TTNamedPipe -> TTTextBoxHandler : success
+TTUtilsNamedPipe -> TTTextBox : failure
+TTUtilsNamedPipe -> TTTextBoxHandler : success
 deactivate TTTextBoxHandler
-{second_open} TTTextBox -> TTNamedPipe : open
+{second_open} TTTextBox -> TTUtilsNamedPipe : open
 {first_open} <-> {second_open} : 500 ms
-TTNamedPipe -> TTTextBox : success
+TTUtilsNamedPipe -> TTTextBox : success
 deactivate TTTextBox
 note left of TTTextBoxHandler
 Attempt to check if named pipe is alive
 meanining the connection can be established
 end note
-TTTextBoxHandler -> TTNamedPipe : alive
-TTNamedPipe -> TTTextBoxHandler : success
-TTTextBox -> TTNamedPipe : alive
-TTNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTUtilsNamedPipe : alive
+TTUtilsNamedPipe -> TTTextBoxHandler : success
+TTTextBox -> TTUtilsNamedPipe : alive
+TTUtilsNamedPipe -> TTTextBox : success
 
 == Communication ==
 TTTextBoxHandler -> TTTextBoxHandler : start receiver thread
@@ -46,29 +46,29 @@ Up to three attempts are
 made to receive any message
 after last successful receive
 end note
-{first_receive} TTTextBoxHandler -> TTNamedPipe : receive
-TTNamedPipe -> TTTextBoxHandler : failure
+{first_receive} TTTextBoxHandler -> TTUtilsNamedPipe : receive
+TTUtilsNamedPipe -> TTTextBoxHandler : failure
 [o-> TTTextBox : switch command
 [o-> TTTextBox : "Hello world" message
 note right of TTTextBox
 Only one attempt is made
 to send any message
 end note
-TTTextBox -> TTNamedPipe : send (switch contact)
-TTNamedPipe -> TTTextBox : success
-{second_receive} TTTextBoxHandler -> TTNamedPipe : receive
+TTTextBox -> TTUtilsNamedPipe : send (switch contact)
+TTUtilsNamedPipe -> TTTextBox : success
+{second_receive} TTTextBoxHandler -> TTUtilsNamedPipe : receive
 {first_receive} <-> {second_receive} : 500 ms
-TTNamedPipe -> TTTextBoxHandler : success
+TTUtilsNamedPipe -> TTTextBoxHandler : success
 TTTextBoxHandler ->o] : callback (switch contact)
-TTTextBox -> TTNamedPipe : send (message)
-TTNamedPipe -> TTTextBox : success
-TTTextBoxHandler -> TTNamedPipe : receive
-TTNamedPipe -> TTTextBoxHandler : success
+TTTextBox -> TTUtilsNamedPipe : send (message)
+TTUtilsNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTUtilsNamedPipe : receive
+TTUtilsNamedPipe -> TTTextBoxHandler : success
 TTTextBoxHandler ->o] : callback (message)
 [o-> TTTextBox : quit command
-TTTextBox -> TTNamedPipe : send (quit)
-TTNamedPipe -> TTTextBox : success
-TTTextBoxHandler -> TTNamedPipe : receive
-TTNamedPipe -> TTTextBoxHandler : success
+TTTextBox -> TTUtilsNamedPipe : send (quit)
+TTUtilsNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTUtilsNamedPipe : receive
+TTUtilsNamedPipe -> TTTextBoxHandler : success
 
 @enduml
