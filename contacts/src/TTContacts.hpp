@@ -13,7 +13,7 @@
 
 class TTContacts {
 public:
-    explicit TTContacts(TTContactsSettings& settings, TTUtilsOutputStream& outputStream);
+    explicit TTContacts(const TTContactsSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTContacts();
     TTContacts(const TTContacts&) = delete;
     TTContacts(TTContacts&&) = delete;

@@ -14,7 +14,7 @@
 // Allows to control TTChat process concurrently.
 class TTChatHandler {
 public:
-    explicit TTChatHandler(TTChatSettings& settings);
+    explicit TTChatHandler(const TTChatSettings& settings);
     virtual ~TTChatHandler();
     TTChatHandler(const TTChatHandler&) = delete;
     TTChatHandler(TTChatHandler&&) = delete;

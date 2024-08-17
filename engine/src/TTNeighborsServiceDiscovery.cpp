@@ -1,7 +1,7 @@
 #include "TTNeighborsServiceDiscovery.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTNeighborsServiceDiscovery::TTNeighborsServiceDiscovery(TTNeighborsDiscovery& handler) : mHandler(handler) {
+TTNeighborsServiceDiscovery::TTNeighborsServiceDiscovery(TTBroadcasterDiscoveryIf& handler) : mHandler(handler) {
     LOG_INFO("Successfully constructed!");
 }
 
@@ -18,6 +18,7 @@ grpc::Status TTNeighborsServiceDiscovery::Greet(grpc::ServerContext* context, co
         reply->set_nickname(mHandler.getNickname());
         reply->set_identity(mHandler.getIdentity());
         reply->set_ipaddressandport(mHandler.getIpAddressAndPort());
+        reply->set_sequencenumber();
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;
     }

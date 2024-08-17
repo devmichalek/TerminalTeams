@@ -4,7 +4,7 @@
 #include <list>
 #include <cstring>
 
-TTContactsHandler::TTContactsHandler(TTContactsSettings& settings) :
+TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mSharedMem(std::move(settings.getSharedMemory())),
         mStopped{false},
         mHandlerThread{},

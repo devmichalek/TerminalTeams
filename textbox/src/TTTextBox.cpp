@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <charconv>
 
-TTTextBox::TTTextBox(TTTextBoxSettings& settings,
+TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
     TTUtilsOutputStream& outputStream,
     TTUtilsInputStream& inputStream) :
         mPipe(settings.getNamedPipe()),

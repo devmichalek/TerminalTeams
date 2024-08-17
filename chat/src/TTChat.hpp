@@ -8,7 +8,7 @@
 
 class TTChat {
 public:
-    explicit TTChat(TTChatSettings& settings, TTUtilsOutputStream& outputStream);
+    explicit TTChat(const TTChatSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTChat();
     TTChat(const TTChat&) = delete;
     TTChat(TTChat&&) = delete;

@@ -17,7 +17,7 @@
 // Allows to control TTContacts process concurrently.
 class TTContactsHandler {
 public:
-    explicit TTContactsHandler(TTContactsSettings& settings);
+    explicit TTContactsHandler(const TTContactsSettings& settings);
     virtual ~TTContactsHandler();
     TTContactsHandler(const TTContactsHandler&) = delete;
     TTContactsHandler(TTContactsHandler&&) = delete;

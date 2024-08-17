@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <chrono>
 
-TTChat::TTChat(TTChatSettings& settings, TTUtilsOutputStream& outputStream) :
+TTChat::TTChat(const TTChatSettings& settings, TTUtilsOutputStream& outputStream) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
         mStopped{false},

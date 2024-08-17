@@ -11,14 +11,14 @@ struct TTHeartbeatMessage {
     std::string identity;
 };
 
-class TTNeighborsDiscovery {
+class TTBroadcasterDiscoveryIf {
 public:
-    TTNeighborsDiscovery() = default;
-    virtual ~TTNeighborsDiscovery() = default;
-    TTNeighborsDiscovery(const TTNeighborsDiscovery&) = default;
-    TTNeighborsDiscovery(TTNeighborsDiscovery&&) = default;
-    TTNeighborsDiscovery& operator=(const TTNeighborsDiscovery&) = default;
-    TTNeighborsDiscovery& operator=(TTNeighborsDiscovery&&) = default;
+    TTBroadcasterDiscoveryIf() = default;
+    virtual ~TTBroadcasterDiscoveryIf() = 0;
+    TTBroadcasterDiscoveryIf(const TTBroadcasterDiscoveryIf&) = default;
+    TTBroadcasterDiscoveryIf(TTBroadcasterDiscoveryIf&&) = default;
+    TTBroadcasterDiscoveryIf& operator=(const TTBroadcasterDiscoveryIf&) = default;
+    TTBroadcasterDiscoveryIf& operator=(TTBroadcasterDiscoveryIf&&) = default;
     virtual bool handleGreet(const TTGreetMessage& message) = 0;
     virtual bool handleHeartbeat(const TTHeartbeatMessage& message) = 0;
     virtual std::string getNickname() const = 0;

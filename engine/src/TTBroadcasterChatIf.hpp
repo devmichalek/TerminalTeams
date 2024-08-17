@@ -13,14 +13,14 @@ struct TTNarrateMessage {
 
 using TTNarrateMessages = std::list<TTNarrateMessage>;
 
-class TTNeighborsChat {
+class TTBroadcasterChatIf {
 public:
-    TTNeighborsChat() = default;
-    virtual ~TTNeighborsChat() = default;
-    TTNeighborsChat(const TTNeighborsChat&) = default;
-    TTNeighborsChat(TTNeighborsChat&&) = default;
-    TTNeighborsChat& operator=(const TTNeighborsChat&) = default;
-    TTNeighborsChat& operator=(TTNeighborsChat&&) = default;
+    TTBroadcasterChatIf() = default;
+    virtual ~TTBroadcasterChatIf() = 0;
+    TTBroadcasterChatIf(const TTBroadcasterChatIf&) = default;
+    TTBroadcasterChatIf(TTBroadcasterChatIf&&) = default;
+    TTBroadcasterChatIf& operator=(const TTBroadcasterChatIf&) = default;
+    TTBroadcasterChatIf& operator=(TTBroadcasterChatIf&&) = default;
     virtual bool handleTell(const TTNarrateMessage& message) = 0;
     virtual bool handleNarrate(const TTNarrateMessages& messages) = 0;
     virtual std::string getIdentity() const = 0;

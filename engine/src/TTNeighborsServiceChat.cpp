@@ -1,7 +1,7 @@
 #include "TTNeighborsServiceChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTNeighborsServiceChat::TTNeighborsServiceChat(TTNeighborsChat& handler) : mHandler(handler) {
+TTNeighborsServiceChat::TTNeighborsServiceChat(TTBroadcasterChatIf& handler) : mHandler(handler) {
     LOG_INFO("Successfully constructed!");
 };
 

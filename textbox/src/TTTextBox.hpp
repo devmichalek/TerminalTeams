@@ -10,7 +10,7 @@
 
 class TTTextBox {
 public:
-    explicit TTTextBox(TTTextBoxSettings& settings,
+    explicit TTTextBox(const TTTextBoxSettings& settings,
         TTUtilsOutputStream& outputStream,
         TTUtilsInputStream& inputStream);
     virtual ~TTTextBox();

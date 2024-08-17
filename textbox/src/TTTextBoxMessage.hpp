@@ -3,7 +3,7 @@
 #include "TTTextBoxStatus.hpp"
 
 struct TTTextBoxMessage {
-    explicit TTTextBoxMessage(TTTextBoxStatus status, unsigned dataLength, const char* src) :
+    explicit TTTextBoxMessage(TTTextBoxStatus status, unsigned int dataLength, const char* src) :
         status(status), dataLength(dataLength) {
         memset(data, 0, DATA_MAX_LENGTH);
         memcpy(data, src, dataLength);

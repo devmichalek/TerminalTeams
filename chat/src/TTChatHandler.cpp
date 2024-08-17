@@ -5,7 +5,7 @@
 #include <limits>
 #include <iostream>
 
-TTChatHandler::TTChatHandler(TTChatSettings& settings) :
+TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
         mStopped{false},
