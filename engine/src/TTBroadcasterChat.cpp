@@ -12,7 +12,7 @@ TTBroadcasterChat::~TTBroadcasterChat() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTBroadcasterChat::run() {
+void TTBroadcasterChat::run(const size_t neighborOffset) {
     LOG_INFO("Started broadcasting chat");
     while (!stopped()) {
         std::unique_lock<std::mutex> lock(mNeighborsMutex);
@@ -22,7 +22,7 @@ void TTBroadcasterChat::run() {
         if (stopped()) {
             break;
         }
-        for (size_t j = 0; j < mNeighbors.size(); ++j) {
+        for (size_t j = neighborOffset; j < mNeighbors.size(); ++j) {
             if (!mNeighbors[j].stub) {
                 const auto ipAddressAndPort = mContactsHandler.get(j).value().ipAddressAndPort;
                 mNeighbors[j].stub = createStub(ipAddressAndPort);
@@ -53,7 +53,7 @@ bool TTBroadcasterChat::stopped() const {
     return mStopped.load();
 }
 
-bool TTBroadcasterChat::handleSend(const std::string& message) {
+bool TTBroadcasterChat::handleSend(const std::string& message, const size_t neighborOffset) {
     const auto now = std::chrono::system_clock::now();
     const auto chatCurrent = mChatHandler.current().value();
     const auto contactsCurrent = mContactsHandler.current().value();
@@ -66,15 +66,23 @@ bool TTBroadcasterChat::handleSend(const std::string& message) {
         return false;
     }
     std::scoped_lock lock(mNeighborsMutex);
-    if (contactsCurrent == mNeighbors.size()) {
-        Neighbor neighbor;
-        const auto ipAddressAndPort = mContactsHandler.get(contactsCurrent).value().ipAddressAndPort;
-        mNeighbors.push_back({});
-        mNeighbors.back().stub = createStub(ipAddressAndPort);
-    } else if (contactsCurrent > mNeighbors.size()) {
+    const bool newNeighbor = (contactsCurrent == mNeighbors.size());
+    const bool invalidNeighbor = (contactsCurrent > mNeighbors.size());
+    const bool silentNeighbor = (contactsCurrent < neighborOffset);
+    if (invalidNeighbor) {
         LOG_ERROR("Failed to handle send (id is exceeded)!");
         stop();
         return false;
+    }
+    if (newNeighbor) {
+        mNeighbors.push_back({});
+    }
+    if (silentNeighbor) {
+        return true;
+    }
+    if (newNeighbor) {
+        const auto ipAddressAndPort = mContactsHandler.get(contactsCurrent).value().ipAddressAndPort;
+        mNeighbors.back().stub = createStub(ipAddressAndPort);
     }
     mNeighbors[contactsCurrent].pendingMessages.push_back(message);
     mNeighborsCondition.notify_one();

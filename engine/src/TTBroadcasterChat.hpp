@@ -21,13 +21,13 @@ public:
     TTBroadcasterChat& operator=(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat& operator=(TTBroadcasterChat&&) = delete;
     // Main loop
-    virtual void run();
+    virtual void run(const size_t neighborOffset);
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
     // Handles message send
-    virtual bool handleSend(const std::string& message) override;
+    virtual bool handleSend(const std::string& message, const size_t neighborOffset);
     // Tell message handler
     virtual bool handleTell(const TTNarrateMessage& message) override;
     // Narrate message handler

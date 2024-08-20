@@ -18,7 +18,6 @@ public:
     TTBroadcasterChatIf(TTBroadcasterChatIf&&) = default;
     TTBroadcasterChatIf& operator=(const TTBroadcasterChatIf&) = default;
     TTBroadcasterChatIf& operator=(TTBroadcasterChatIf&&) = default;
-    virtual bool handleSend(const std::string& message) = 0;
     virtual bool handleTell(const TTNarrateMessage& message) = 0;
     virtual bool handleNarrate(const TTNarrateMessages& messages) = 0;
     virtual std::string getIdentity() const = 0;

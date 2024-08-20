@@ -36,6 +36,7 @@ private:
     std::unique_ptr<TTTextBoxHandler> mTextBox;
     std::mutex mExternalCallsMutex;
     // Node data
+    size_t neighborOffset;
     std::unique_ptr<grpc::Server> mServer;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;
     std::unique_ptr<TTBroadcasterDiscovery> mBroadcasterDiscovery;
