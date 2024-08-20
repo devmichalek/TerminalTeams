@@ -34,8 +34,7 @@ private:
     std::unique_ptr<TTContactsHandler> mContacts;
     std::unique_ptr<TTChatHandler> mChat;
     std::unique_ptr<TTTextBoxHandler> mTextBox;
-    std::mutex mMailboxMutex;
-    std::mutex mSwitcherMutex;
+    std::mutex mExternalCallsMutex;
     // Node data
     std::unique_ptr<grpc::Server> mServer;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;

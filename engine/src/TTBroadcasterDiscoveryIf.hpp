@@ -5,6 +5,7 @@ struct TTGreetMessage {
     std::string nickname;
     std::string identity;
     std::string ipAddressAndPort;
+    unsigned int sequenceNumber;
 };
 
 struct TTHeartbeatMessage {
@@ -14,7 +15,7 @@ struct TTHeartbeatMessage {
 class TTBroadcasterDiscoveryIf {
 public:
     TTBroadcasterDiscoveryIf() = default;
-    virtual ~TTBroadcasterDiscoveryIf() = 0;
+    virtual ~TTBroadcasterDiscoveryIf() = default;
     TTBroadcasterDiscoveryIf(const TTBroadcasterDiscoveryIf&) = default;
     TTBroadcasterDiscoveryIf(TTBroadcasterDiscoveryIf&&) = default;
     TTBroadcasterDiscoveryIf& operator=(const TTBroadcasterDiscoveryIf&) = default;

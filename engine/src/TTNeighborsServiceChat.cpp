@@ -13,9 +13,6 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
     TTNarrateMessage message;
     message.identity = request->identity();
     message.message = request->message();
-    message.sequenceNumber = request->sequencenumber();
-    std::memcpy(&message.timestamp, request->timestamp().c_str(), request->timestamp().size());
-    message.senderSide = true;
     if (mHandler.handleTell(message)) {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
@@ -33,16 +30,9 @@ grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc:
     TTNarrateMessages messages;
     tt::NarrateRequest request;
     while (stream->Read(&request)) {
-        if (request.side() == tt::Side::UNSPECIFIED) {
-            LOG_ERROR("Side is unspecified!");
-            return grpc::Status(grpc::StatusCode::OUT_OF_RANGE, "Side is unspecified!");
-        }
         TTNarrateMessage message;
         message.identity = request.identity();
         message.message = request.message();
-        message.sequenceNumber = request.sequencenumber();
-        std::memcpy(&message.timestamp, request.timestamp().c_str(), request.timestamp().size());
-        message.senderSide = request.side() == tt::Side::SENDER;
         messages.push_back(message);
     }
     if (mHandler.handleNarrate(messages)) {

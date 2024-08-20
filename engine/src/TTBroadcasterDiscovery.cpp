@@ -2,16 +2,14 @@
 #include "TTDiagnosticsLogger.hpp"
 
 TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
+                                               TTChatHandler& chatHandler,
                                                TTNetworkInterface interface,
                                                std::deque<std::string> neighbors) :
-        mStopped{false}, mInterface(interface), mContactsHandler(contactsHandler) {
-    LOG_INFO("Constructing...");
-    for (const auto& neighbor : neighbors) {
-        auto greetResult = sendGreet(neighbor);
-        if (greetResult) {
-            addNeighbor(*greetResult);
-        }
-    }
+        mStopped{false},
+        mContactsHandler(contactsHandler),
+        mChatHandler(chatHandler),
+        mInterface(interface),
+        mStaticNeighbors(neighbors) {
     LOG_INFO("Successfully constructed!");
 }
 
@@ -23,29 +21,41 @@ TTBroadcasterDiscovery::~TTBroadcasterDiscovery() {
 
 void TTBroadcasterDiscovery::run(const size_t neighborOffset) {
     LOG_INFO("Started broadcasting discovery");
+    for (const auto& neighbor : mStaticNeighbors) {
+        if (stopped()) {
+            break;
+        }
+        auto greetResult = sendGreet(neighbor);
+        if (greetResult) {
+            addNeighbor(*greetResult);
+        }
+    }
     while (!stopped()) {
         size_t count = getNeighborsCount();
         std::chrono::milliseconds smallest = TIMESTAMP_TIMEOUT;
         for (size_t i = 0; i < count; ++i) {
-            if (mTimestampTrials[i]) {
-                if (mTimestamps[i].expired()) {
-                    const auto res = sendHeartbeat(mStubs[i]);
+            if (mDynamicNeighbors[i].trials) {
+                if (mDynamicNeighbors[i].timestamp.expired()) {
+                    const auto res = sendHeartbeat(mDynamicNeighbors[i].stub);
                     if (res && !res->identity.empty()) {
-                        mTimestampTrials[i] = TIMESTAMP_TRIALS;
+                        mDynamicNeighbors[i].trials = TIMESTAMP_TRIALS;
                         if (!mContactsHandler.activate(i + neighborOffset)) {
                             stop();
                             break;
                         }
                     } else {
-                        --mTimestampTrials[i];
+                        --mDynamicNeighbors[i].trials;
                         if (!mContactsHandler.deactivate(i + neighborOffset)) {
                             stop();
                             break;
                         }
                     }
-                    mTimestamps[i].kick();
+                    mDynamicNeighbors[i].timestamp.kick();
                 } else {
-                    smallest = mTimestamps[i].remaining();
+                    const auto remaining = mDynamicNeighbors[i].timestamp.remaining();
+                    if (remaining < smallest) {
+                        smallest = remaining;
+                    }
                 }
             }
         }
@@ -64,20 +74,8 @@ bool TTBroadcasterDiscovery::stopped() const {
 }
 
 bool TTBroadcasterDiscovery::handleGreet(const TTGreetMessage& message) {
-    decltype(auto) id = mContactsHandler.get(message.identity);
-    if (id == std::nullopt) {
-        LOG_INFO("Handling greet, new contact id={}", message.identity);
-        if (!addNeighbor(message)) {
-            LOG_ERROR("Handling greet, failed to create contact id={}", message.identity);
-            stop();
-            return false;
-        }
-    } else {
-        LOG_INFO("Handling greet, existing contact id={}", message.identity);
-        // to do: inform end user that we will narrate soon!
-    }
-
-    return true;
+    LOG_INFO("Handling greet, new contact id={}", message.identity);
+    return addNeighbor(message);
 }
 
 bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatMessage& message) {
@@ -117,7 +115,7 @@ std::string TTBroadcasterDiscovery::getIpAddressAndPort() const {
     return opt->ipAddressAndPort;
 }
 
-std::unique_ptr<NeighborsDiscovery::Stub> TTBroadcasterDiscovery::createStub(const std::string& ipAddressAndPort) {
+TTBroadcasterDiscovery::UniqueStub TTBroadcasterDiscovery::createStub(const std::string& ipAddressAndPort) {
     try {
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
         return NeighborsDiscovery::NewStub(channel);
@@ -127,7 +125,7 @@ std::unique_ptr<NeighborsDiscovery::Stub> TTBroadcasterDiscovery::createStub(con
     }
 }
 
-std::optional<TTGreetMessage> TTBroadcasterDiscovery::sendGreet(std::unique_ptr<NeighborsDiscovery::Stub>& stub) {
+std::optional<TTGreetMessage> TTBroadcasterDiscovery::sendGreet(TTBroadcasterDiscovery::UniqueStub& stub) {
     try {
         GreetRequest request;
         request.set_nickname(getNickname());
@@ -158,7 +156,7 @@ std::optional<TTGreetMessage> TTBroadcasterDiscovery::sendGreet(const std::strin
     return sendGreet(stub);
 }
 
-std::optional<TTHeartbeatMessage> TTBroadcasterDiscovery::sendHeartbeat(std::unique_ptr<NeighborsDiscovery::Stub>& stub) {
+std::optional<TTHeartbeatMessage> TTBroadcasterDiscovery::sendHeartbeat(TTBroadcasterDiscovery::UniqueStub& stub) {
     try {
         HeartbeatRequest request;
         request.set_identity(getIdentity());
@@ -186,27 +184,38 @@ std::optional<TTHeartbeatMessage> TTBroadcasterDiscovery::sendHeartbeat(const st
 }
 
 bool TTBroadcasterDiscovery::addNeighbor(const TTGreetMessage& message) {
+    LOG_INFO("Adding neighbor...");
     if (message.nickname.empty() || message.identity.empty() || message.ipAddressAndPort.empty()) {
+        LOG_WARNING("Rejecting neighbor (incomplete data)...");
         return false;
     }
-
-    LOG_INFO("Adding neighbor...");
-    {
-        std::scoped_lock neighborLock(mNeighborMutex);
-        if (mContactsHandler.create(message.nickname, message.identity, message.ipAddressAndPort)) {
-            auto stub = createStub(message.ipAddressAndPort);
-            mStubs.emplace_back(std::move(stub));
-            mTimestamps.emplace_back(TIMESTAMP_TIMEOUT);
-            mTimestampTrials.emplace_back(TIMESTAMP_TRIALS);
-            return true;
-        }
+    std::scoped_lock neighborLock(mNeighborMutex);
+    decltype(auto) id = mContactsHandler.get(message.identity);
+    if (id != std::nullopt) {
+        LOG_WARNING("Rejecting neighbor (already present)...");
+        return true;
     }
-
-    stop();
-    return false;
+    if (!mContactsHandler.create(message.nickname, message.identity, message.ipAddressAndPort)) {
+        LOG_WARNING("Rejecting neighbor (failed to create)...");
+        return false;
+    }
+    id = mContactsHandler.get(message.identity);
+    if (id == std::nullopt) {
+        LOG_ERROR("Rejecting neighbor (cannot find new identity)...");
+        stop();
+        return false;
+    }
+    if (!mChatHandler.create(id.value())) {
+        LOG_ERROR("Rejecting neighbor (cannot proceed with creation)...");
+        stop();
+        return false;
+    }
+    auto stub = createStub(message.ipAddressAndPort);
+    mDynamicNeighbors.emplace_back(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub));
+    return true;
 }
 
 size_t TTBroadcasterDiscovery::getNeighborsCount() const {
     std::shared_lock neighborLock(mNeighborMutex);
-    return mStubs.size();
+    return mDynamicNeighbors.size();
 }

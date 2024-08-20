@@ -3,13 +3,13 @@
 
 class TTTimestamp final {
 public:
-    explicit TTTimestamp(std::chrono::milliseconds threshold) :
-            mThreshold{threshold}, mTimestamp{std::chrono::steady_clock::now()} {}
+    TTTimestamp(std::chrono::milliseconds threshold) :
+        mThreshold{threshold}, mTimestamp{std::chrono::steady_clock::now()} {}
     ~TTTimestamp() = default;
-    TTTimestamp(const TTTimestamp&) = delete;
-    TTTimestamp(TTTimestamp&&) = delete;
-    TTTimestamp& operator=(const TTTimestamp&) = delete;
-    TTTimestamp& operator=(TTTimestamp&&) = delete;
+    TTTimestamp(const TTTimestamp&) = default;
+    TTTimestamp(TTTimestamp&&) = default;
+    TTTimestamp& operator=(const TTTimestamp&) = default;
+    TTTimestamp& operator=(TTTimestamp&&) = default;
     bool expired() const {
         return remaining() >= mThreshold;
     }

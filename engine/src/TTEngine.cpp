@@ -20,7 +20,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         mChat->create(0);
         mChat->select(0);
         mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
-        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, settings.getInterface(), settings.getNeighbors());
+        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, *mChat, settings.getInterface(), settings.getNeighbors());
     }
     LOG_INFO("Setting server thread...");
     {
@@ -137,28 +137,26 @@ void TTEngine::discovery(std::promise<void> promise) {
 
 void TTEngine::mailbox(const std::string& message) {
     LOG_INFO("Received callback - message sent");
-    if (mChat) {
-        std::scoped_lock lock(mMailboxMutex);
+    if (mContacts && mChat && mBroadcasterChat) {
+        std::scoped_lock lock(mExternalCallsMutex);
         if (!mContacts->current() || !mChat->current()) {
             LOG_ERROR("Received callback - failed to get current value!");
             stop();
-        } else {
-            const auto now = std::chrono::system_clock::now();
-            bool result = mChat->send(mChat->current(), message, now);
-            result &= mContacts->send(mContacts->current());
-            if (!result) {
-                LOG_ERROR("Received callback - failed to sent message!");
-                stop();
-            }
+        } else if (!mBroadcasterChat->handleSend(message)) {
+            LOG_ERROR("Received callback - failed to sent message!");
+            stop();
         }
+    } else {
+        LOG_ERROR("Received callback - failed to sent message to uninitialized instances!");
+        stop();
     }
 }
 
 void TTEngine::switcher(size_t message) {
     LOG_INFO("Received callback - contacts switch");
-    if (mContacts) {
+    if (mContacts && mChat) {
         if (message < mContacts->size()) {
-            std::scoped_lock lock(mSwitcherMutex);
+            std::scoped_lock lock(mExternalCallsMutex);
             bool result = mContacts->select(message);
             result &= mChat->select(message);
             if (!result) {
@@ -168,5 +166,8 @@ void TTEngine::switcher(size_t message) {
         } else {
             LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
         }
+    } else {
+        LOG_ERROR("Received callback - failed to sent message to uninitialized instances!");
+        stop();
     }
 }

@@ -34,17 +34,9 @@ message HeartbeatReply {
   string identity = 1;
 }
 
-enum Side {
-  UNSPECIFIED = 0;
-  SENDER = 1;
-  RECEIVER = 2;
-}
-
 message TellRequest {
   string identity = 1;
   string message = 2;
-  int32 sequenceNumber = 3;
-  bytes timestamp = 4;
 }
 
 message TellReply {
@@ -54,9 +46,6 @@ message TellReply {
 message NarrateRequest {
   string identity = 1;
   string message = 2;
-  int32 sequenceNumber = 3;
-  bytes timestamp = 4;
-  Side side = 5;
 }
 
 message NarrateReply {

@@ -6,9 +6,6 @@
 struct TTNarrateMessage {
     std::string identity;
     std::string message;
-    int sequenceNumber;
-    std::chrono::time_point<std::chrono::system_clock> timestamp;
-    bool senderSide;
 };
 
 using TTNarrateMessages = std::list<TTNarrateMessage>;
@@ -16,11 +13,12 @@ using TTNarrateMessages = std::list<TTNarrateMessage>;
 class TTBroadcasterChatIf {
 public:
     TTBroadcasterChatIf() = default;
-    virtual ~TTBroadcasterChatIf() = 0;
+    virtual ~TTBroadcasterChatIf() = default;
     TTBroadcasterChatIf(const TTBroadcasterChatIf&) = default;
     TTBroadcasterChatIf(TTBroadcasterChatIf&&) = default;
     TTBroadcasterChatIf& operator=(const TTBroadcasterChatIf&) = default;
     TTBroadcasterChatIf& operator=(TTBroadcasterChatIf&&) = default;
+    virtual bool handleSend(const std::string& message) = 0;
     virtual bool handleTell(const TTNarrateMessage& message) = 0;
     virtual bool handleNarrate(const TTNarrateMessages& messages) = 0;
     virtual std::string getIdentity() const = 0;
