@@ -1,6 +1,6 @@
 #include "TTEngineSettings.hpp"
 #include <string>
-#include <sstream>
+#include <charconv>
 #include <iostream>
 #include <arpa/inet.h>
 
@@ -51,8 +51,15 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         if (inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr)) == 0) {
             throw std::runtime_error(std::string("TTEngineSettings: Invalid IPv4 address=") + ipAddress);
         }
-        const std::string port = argv[8];
-        mInterface = TTNetworkInterface(name, ipAddress, port);
+        size_t port = -1;
+        auto [ptr, ec] = std::from_chars(argv[8], argv[8] + strlen(argv[8]), port);
+        if (ec != std::errc()) {
+            throw std::runtime_error(std::string("TTEngineSettings: Invalid port=") + argv[8]);
+        }
+        if (port > static_cast<size_t>(std::numeric_limits<uint16_t>::max())) {
+            throw std::runtime_error(std::string("TTEngineSettings: Invalid (out of range) port=") + argv[8]);
+        }
+        mInterface = TTNetworkInterface(name, ipAddress, argv[8]);
     }
 
     for (int i = MIN_ARGC; i < argc; ++i) {

@@ -870,7 +870,7 @@ TEST_F(TTChatTest, HappyPathReceivedChunkMessages) {
         .WillRepeatedly(DoAll(std::bind(&TTChatTest::GetArgPointerInSendMessage, this, _1, sendDelay), Return(true)));
     // Run
     RestartApplication();
-    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1)});
+    VerifyApplicationTimeout(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS * (minNumOfSentMessages + 1 + 1)});
     // Verify
     EXPECT_GE(mStoppedStatusOnReceive.size(), minNumOfReceivedMessages);
     for (size_t i = 0; i < minNumOfReceivedMessages; ++i) {

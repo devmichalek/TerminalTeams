@@ -20,6 +20,8 @@ public:
     virtual const std::string& getIdentity() const { return mIdentity; }
     virtual const TTNetworkInterface& getInterface() const { return mInterface; }
     virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
+protected:
+    TTEngineSettings() = default;
 private:
     // Delegated settings
     std::unique_ptr<TTContactsSettings> mContactsSettings;

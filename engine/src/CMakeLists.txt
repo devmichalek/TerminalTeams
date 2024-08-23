@@ -48,13 +48,13 @@ if (NOT TARGET ${TT_UTILS_LIB})
   add_subdirectory("${TT_UTILS_DIRECTORY}" "${TT_UTILS_LIB}")
 endif()
 if (NOT TARGET ${TT_CHAT_LIB})
-  add_subdirectory(${TT_CHAT_DIRECTORY} ${TT_CHAT_LIB} EXCLUDE_FROM_ALL)
+  add_subdirectory("${TT_CHAT_DIRECTORY}" "${TT_CHAT_LIB}" EXCLUDE_FROM_ALL)
 endif()
 if (NOT TARGET ${TT_CONTACTS_LIB})
-  add_subdirectory(${TT_CONTACTS_DIRECTORY} ${TT_CONTACTS_LIB} EXCLUDE_FROM_ALL)
+  add_subdirectory("${TT_CONTACTS_DIRECTORY}" "${TT_CONTACTS_LIB}" EXCLUDE_FROM_ALL)
 endif()
 if (NOT TARGET ${TT_TEXTBOX_LIB})
-  add_subdirectory(${TT_TEXTBOX_DIRECTORY} ${TT_TEXTBOX_LIB} EXCLUDE_FROM_ALL)
+  add_subdirectory("${TT_TEXTBOX_DIRECTORY}" "${TT_TEXTBOX_LIB}" EXCLUDE_FROM_ALL)
 endif()
 include(FetchContent)
 FetchContent_Declare(
@@ -99,9 +99,8 @@ target_link_libraries(${TT_GRPC_LIB}
   ${EXT_PROTOBUF_LIB}
 )
 
-# Build executable
-add_executable(${TT_ENGINE_EXE}
-  "${TT_ENGINE_SRC_DIRECTORY}/Main.cpp"
+# Build library
+add_library(${TT_ENGINE_LIB}
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngine.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngineSettings.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterChat.cpp"
@@ -109,9 +108,12 @@ add_executable(${TT_ENGINE_EXE}
   "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceChat.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceDiscovery.cpp"
 )
-target_include_directories(${TT_ENGINE_EXE} PUBLIC "${PROJECT_BINARY_DIR}")
-set_target_properties(${TT_ENGINE_EXE} PROPERTIES OUTPUT_NAME ${TT_ENGINE_LIB})
-target_link_libraries(${TT_ENGINE_EXE}
+target_include_directories (${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories (${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_UTILS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  target_link_libraries(${TT_ENGINE_LIB} ${TT_DIAGNOSTICS_LIB})
+endif()
+target_link_libraries(${TT_ENGINE_LIB}
   ${TT_GRPC_LIB}
   ${EXT_ABSL_FLAGS_LIB}
   ${EXT_ABSL_FLAGS_PARSE_LIB}
@@ -122,6 +124,14 @@ target_link_libraries(${TT_ENGINE_EXE}
   ${TT_CONTACTS_HANDLER_LIB}
   ${TT_TEXTBOX_HANDLER_LIB}
 )
+
+# Build executable
+add_executable(${TT_ENGINE_EXE}
+  "${TT_ENGINE_SRC_DIRECTORY}/Main.cpp"
+)
+target_include_directories(${TT_ENGINE_EXE} PUBLIC "${PROJECT_BINARY_DIR}")
+set_target_properties(${TT_ENGINE_EXE} PROPERTIES OUTPUT_NAME ${TT_ENGINE_LIB})
+target_link_libraries(${TT_ENGINE_EXE} ${TT_ENGINE_LIB})
 
 # Installation rules
 install(TARGETS ${TT_ENGINE_EXE} DESTINATION "bin")

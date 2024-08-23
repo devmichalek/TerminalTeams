@@ -17,28 +17,28 @@ TEST(TTChatSettingsTest, HappyPath) {
     EXPECT_NE(settings.getSecondaryMessageQueue(), nullptr);
 }
 
-TEST(TTChatSettingsTest, NotEnoughArguments) {
+TEST(TTChatSettingsTest, UnhappyPathNotEnoughArguments) {
     const int argc = 1;
     const char* const argv[1] = { "a" };
     EXPECT_THAT([&]() {TTChatSettings(argc, argv);},
         ThrowsMessage<std::runtime_error>(HasSubstr("TTChatSettings: Invalid number of arguments")));
 }
 
-TEST(TTChatSettingsTest, TooManyArguments) {
+TEST(TTChatSettingsTest, UnhappyPathTooManyArguments) {
     const int argc = 5;
     const char* const argv[5] = { "a", "b", "c", "d", "e" };
     EXPECT_THAT([&]() {TTChatSettings(argc, argv);},
         ThrowsMessage<std::runtime_error>(HasSubstr("TTChatSettings: Invalid number of arguments")));
 }
 
-TEST(TTChatSettingsTest, InvalidTerminalWidth) {
+TEST(TTChatSettingsTest, UnhappyPathInvalidTerminalWidth) {
     const int argc = 4;
     const char* const argv[4] = { "/tmp", "blahblah", "45" };
     EXPECT_THAT([&]() {TTChatSettings(argc, argv);},
         ThrowsMessage<std::runtime_error>(HasSubstr("TTChatSettings: Invalid terminal emulator width=blahblah")));
 }
 
-TEST(TTChatSettingsTest, InvalidTerminalHeight) {
+TEST(TTChatSettingsTest, UnhappyPathInvalidTerminalHeight) {
     const int argc = 4;
     const char* const argv[4] = { "/tmp", "90", "blahblah", "chat" };
     EXPECT_THAT([&]() {TTChatSettings(argc, argv);},

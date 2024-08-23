@@ -5,3 +5,4 @@ set(CMAKE_CXX_FLAGS_RELEASE_INIT "${CMAKE_CXX_FLAGS_RELEASE_INIT} -Wall")
 set(CMAKE_CXX_FLAGS_DEBUG_INIT "${CMAKE_CXX_FLAGS_DEBUG_INIT} -Wall")
 
 add_subdirectory("./src")
+add_subdirectory("./unittests")
