@@ -19,8 +19,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         mContacts->select(0);
         mChat->create(0);
         mChat->select(0);
-        neighborOffset = 1;
-        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat);
+        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat, settings.getInterface());
         mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, *mChat, settings.getInterface(), settings.getNeighbors());
     }
     LOG_INFO("Setting server thread...");
@@ -122,7 +121,7 @@ void TTEngine::server(std::promise<void> promise) {
 
 void TTEngine::chat(std::promise<void> promise) {
     LOG_INFO("Started chat loop");
-    mBroadcasterChat->run(neighborOffset);
+    mBroadcasterChat->run();
     stop();
     promise.set_value();
     LOG_INFO("Completed chat loop");
@@ -130,7 +129,7 @@ void TTEngine::chat(std::promise<void> promise) {
 
 void TTEngine::discovery(std::promise<void> promise) {
     LOG_INFO("Started discovery loop");
-    mBroadcasterDiscovery->run(neighborOffset);
+    mBroadcasterDiscovery->run();
     stop();
     promise.set_value();
     LOG_INFO("Completed discovery loop");
@@ -143,7 +142,7 @@ void TTEngine::mailbox(const std::string& message) {
         if (!mContacts->current() || !mChat->current()) {
             LOG_ERROR("Received callback - failed to get current value!");
             stop();
-        } else if (!mBroadcasterChat->handleSend(message, neighborOffset)) {
+        } else if (!mBroadcasterChat->handleSend(message)) {
             LOG_ERROR("Received callback - failed to sent message!");
             stop();
         }

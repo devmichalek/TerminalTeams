@@ -13,7 +13,7 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
     TTNarrateMessage message;
     message.identity = request->identity();
     message.message = request->message();
-    if (mHandler.handleTell(message)) {
+    if (mHandler.handleReceive(message)) {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;
@@ -35,7 +35,7 @@ grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc:
         message.message = request.message();
         messages.push_back(message);
     }
-    if (mHandler.handleNarrate(messages)) {
+    if (mHandler.handleReceive(messages)) {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;

@@ -1,7 +1,6 @@
 #include "TTEngineSettings.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include <stdexcept>
 
 using ::testing::ThrowsMessage;
 using ::testing::HasSubstr;

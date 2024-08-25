@@ -1,8 +1,8 @@
 #include "TTBroadcasterChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler) :
-        mStopped{false}, mContactsHandler(contactsHandler), mChatHandler(chatHandler) {
+TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler, TTNetworkInterface interface) :
+        mStopped{false}, mContactsHandler(contactsHandler), mChatHandler(chatHandler), mInterface(interface) {
     LOG_INFO("Successfully constructed!");
 }
 
@@ -12,7 +12,7 @@ TTBroadcasterChat::~TTBroadcasterChat() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTBroadcasterChat::run(const size_t neighborOffset) {
+void TTBroadcasterChat::run() {
     LOG_INFO("Started broadcasting chat");
     while (!stopped()) {
         std::unique_lock<std::mutex> lock(mNeighborsMutex);
@@ -22,24 +22,23 @@ void TTBroadcasterChat::run(const size_t neighborOffset) {
         if (stopped()) {
             break;
         }
-        for (size_t j = neighborOffset; j < mNeighbors.size(); ++j) {
-            if (!mNeighbors[j].stub) {
-                const auto ipAddressAndPort = mContactsHandler.get(j).value().ipAddressAndPort;
-                mNeighbors[j].stub = createStub(ipAddressAndPort);
+        for (auto &[id, neighbor] : mNeighbors) {
+            if (!neighbor.stub) {
+                const auto ipAddressAndPort = mContactsHandler.get(id).value().ipAddressAndPort;
+                neighbor.stub = createStub(ipAddressAndPort);
             }
-            if (mNeighbors[j].stub) {
-                if (mNeighbors[j].pendingMessages.size() > 1) {
-                    if (sendNarrate(mNeighbors[j])) {
-                        mNeighbors[j].pendingMessages.clear();
+            if (neighbor.stub) {
+                if (neighbor.pendingMessages.size() > 1) {
+                    if (sendNarrate(neighbor)) {
+                        neighbor.pendingMessages.clear();
                     }
-                } else if (!mNeighbors[j].pendingMessages.empty()) {
-                    if (sendTell(mNeighbors[j])) {
-                        mNeighbors[j].pendingMessages.clear();
+                } else if (!neighbor.pendingMessages.empty()) {
+                    if (sendTell(neighbor)) {
+                        neighbor.pendingMessages.clear();
                     }
                 }
             }
         }
-        
     }
     LOG_INFO("Stopped broadcasting chat");
 }
@@ -53,10 +52,11 @@ bool TTBroadcasterChat::stopped() const {
     return mStopped.load();
 }
 
-bool TTBroadcasterChat::handleSend(const std::string& message, const size_t neighborOffset) {
+bool TTBroadcasterChat::handleSend(const std::string& message) {
     const auto now = std::chrono::system_clock::now();
     const auto chatCurrent = mChatHandler.current().value();
     const auto contactsCurrent = mContactsHandler.current().value();
+    const auto contactsCurrentEntry = mContactsHandler.get(contactsCurrent).value();
     bool result = mChatHandler.send(chatCurrent, message, now);
     result &= mContactsHandler.send(contactsCurrent);
     result &= (chatCurrent == contactsCurrent);
@@ -65,65 +65,65 @@ bool TTBroadcasterChat::handleSend(const std::string& message, const size_t neig
         stop();
         return false;
     }
-    std::scoped_lock lock(mNeighborsMutex);
-    const bool newNeighbor = (contactsCurrent == mNeighbors.size());
-    const bool invalidNeighbor = (contactsCurrent > mNeighbors.size());
-    const bool silentNeighbor = (contactsCurrent < neighborOffset);
-    if (invalidNeighbor) {
-        LOG_ERROR("Failed to handle send (id is exceeded)!");
-        stop();
-        return false;
-    }
-    if (newNeighbor) {
-        mNeighbors.push_back({});
-    }
-    if (silentNeighbor) {
+    if (contactsCurrentEntry.ipAddressAndPort == mInterface.getIpAddressAndPort()) {
+        LOG_INFO("Success, nothing to be send!");
         return true;
     }
-    if (newNeighbor) {
-        const auto ipAddressAndPort = mContactsHandler.get(contactsCurrent).value().ipAddressAndPort;
-        mNeighbors.back().stub = createStub(ipAddressAndPort);
+    std::scoped_lock lock(mNeighborsMutex);
+    auto lb = mNeighbors.lower_bound(contactsCurrent);
+    if(lb != mNeighbors.end() && !(mNeighbors.key_comp()(contactsCurrent, lb->first)))
+    {
+        lb->second.pendingMessages.push_back(message);
+        LOG_INFO("Success, neighbor already in the map, inserted new message!");
     }
-    mNeighbors[contactsCurrent].pendingMessages.push_back(message);
+    else
+    {
+        mNeighbors.insert(lb, decltype(mNeighbors)::value_type(contactsCurrent, Neighbor{}));
+        lb->second.stub = createStub(contactsCurrentEntry.ipAddressAndPort);
+        lb->second.pendingMessages.push_back(message);
+        LOG_INFO("Success, inserted new neighbor to the map, inserted new message!");
+    }
     mNeighborsCondition.notify_one();
     return true;
 }
 
-bool TTBroadcasterChat::handleTell(const TTNarrateMessage& message) {
-    LOG_INFO("Handling tell...");
+bool TTBroadcasterChat::handleReceive(const TTNarrateMessage& message) {
+    LOG_INFO("Handing reception of one message...");
     const auto id = mContactsHandler.get(message.identity);
     if (!id) {
-        LOG_WARNING("Failed to handle tell, no such identity={}", message.identity);
+        LOG_WARNING("Failed to handle reception, no such identity={}", message.identity);
         return false;
     }
     if (!mContactsHandler.receive(id.value())) {
-        LOG_ERROR("Failed to handle tell on contacts receive");
+        LOG_ERROR("Failed to handle reception on contacts receive");
         stop();
     }
     if (!mChatHandler.receive(id.value(), message.message, std::chrono::system_clock::now())) {
-        LOG_ERROR("Failed to handle tell on chat receive");
+        LOG_ERROR("Failed to handle reception on chat receive");
         stop();
     }
+    LOG_INFO("Successfully handled reception!");
     return true;
 }
 
-bool TTBroadcasterChat::handleNarrate(const TTNarrateMessages& messages) {
-    LOG_INFO("Handling narrate...");
+bool TTBroadcasterChat::handleReceive(const TTNarrateMessages& messages) {
+    LOG_INFO("Handing reception of many messages...");
     for (const auto &message : messages) {
         const auto id = mContactsHandler.get(message.identity);
         if (!id) {
-            LOG_WARNING("Failed to handle narrate, no such identity={}", message.identity);
+            LOG_WARNING("Failed to handle reception, no such identity={}", message.identity);
             return false;
         }
         if (!mContactsHandler.receive(id.value())) {
-            LOG_ERROR("Failed to handle narrate on contacts receive");
+            LOG_ERROR("Failed to handle reception on contacts receive");
             stop();
         }
         if (!mChatHandler.receive(id.value(), message.message, std::chrono::system_clock::now())) {
-            LOG_ERROR("Failed to handle narrate on chat receive");
+            LOG_ERROR("Failed to handle reception on chat receive");
             stop();
         }
     }
+    LOG_INFO("Successfully handled reception!");
     return true;
 }
 
@@ -156,6 +156,7 @@ bool TTBroadcasterChat::sendTell(const TTBroadcasterChat::Neighbor& neighbor) {
         if (status.ok()) {
             return true;
         }
+        LOG_ERROR("Error status received on send tell!");
         return false;
     } catch (...) {
         LOG_ERROR("Exception occurred while sending tell!");
@@ -175,7 +176,7 @@ bool TTBroadcasterChat::sendNarrate(const TTBroadcasterChat::Neighbor& neighbor)
             request.set_identity(identity);
             request.set_message(message);
             if (!writer->Write(request)) {
-                LOG_ERROR("Exception occurred while sending narrate (broken stream)!");
+                LOG_ERROR("Error occurred while sending narrate (broken stream)!");
                 return false;
             }
         }
@@ -183,6 +184,7 @@ bool TTBroadcasterChat::sendNarrate(const TTBroadcasterChat::Neighbor& neighbor)
         if (status.ok()) {
             return true;
         }
+        LOG_ERROR("Error status received on send narrate!");
         return false;
     } catch (...) {
         LOG_ERROR("Exception occurred while sending narrate!");

@@ -25,7 +25,7 @@ public:
     TTBroadcasterDiscovery& operator=(const TTBroadcasterDiscovery&) = delete;
     TTBroadcasterDiscovery& operator=(TTBroadcasterDiscovery&&) = delete;
     // Main loop
-    virtual void run(const size_t neighborOffset);
+    virtual void run();
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
@@ -55,14 +55,13 @@ private:
         TTTimestamp timestamp;
         size_t trials;
         UniqueStub stub;
-        std::atomic<bool> locked;
     };
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNetworkInterface mInterface;
     std::deque<std::string> mStaticNeighbors;
-    std::deque<Neighbor> mDynamicNeighbors;
+    std::map<size_t, Neighbor> mDynamicNeighbors;
     mutable std::shared_mutex mNeighborMutex;
     static inline std::chrono::milliseconds TIMESTAMP_TIMEOUT{3000};
     static inline size_t TIMESTAMP_TRIALS{5};

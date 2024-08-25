@@ -93,7 +93,7 @@ bool TTChatHandler::select(size_t id) {
     }
     if (mCurrentId && mCurrentId.value() == id) {
         LOG_WARNING("Current ID={} is matching, no need continue on select!", id);
-        return false;
+        return true;
     }
     if (mCurrentId) {
         if (!send(TTChatMessageType::CLEAR, {}, std::chrono::system_clock::now())) {

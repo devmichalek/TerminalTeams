@@ -19,7 +19,7 @@ TTBroadcasterDiscovery::~TTBroadcasterDiscovery() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTBroadcasterDiscovery::run(const size_t neighborOffset) {
+void TTBroadcasterDiscovery::run() {
     LOG_INFO("Started broadcasting discovery");
     for (const auto& neighbor : mStaticNeighbors) {
         if (stopped()) {
@@ -31,30 +31,33 @@ void TTBroadcasterDiscovery::run(const size_t neighborOffset) {
         }
     }
     while (!stopped()) {
-        size_t count = getNeighborsCount();
         std::chrono::milliseconds smallest = TIMESTAMP_TIMEOUT;
-        for (size_t i = 0; i < count; ++i) {
-            if (mDynamicNeighbors[i].trials) {
-                if (mDynamicNeighbors[i].timestamp.expired()) {
-                    const auto res = sendHeartbeat(mDynamicNeighbors[i].stub);
-                    if (res && !res->identity.empty()) {
-                        mDynamicNeighbors[i].trials = TIMESTAMP_TRIALS;
-                        if (!mContactsHandler.activate(i + neighborOffset)) {
-                            stop();
-                            break;
+        {
+            std::scoped_lock neighborLock(mNeighborMutex);
+            const auto count = mDynamicNeighbors.size();
+            for (auto &[id, neighbor] : mDynamicNeighbors) {
+                if (neighbor.trials) {
+                    if (neighbor.timestamp.expired()) {
+                        const auto res = sendHeartbeat(neighbor.stub);
+                        if (res && !res->identity.empty()) {
+                            neighbor.trials = TIMESTAMP_TRIALS;
+                            if (!mContactsHandler.activate(id)) {
+                                stop();
+                                break;
+                            }
+                        } else {
+                            --neighbor.trials;
+                            if (!mContactsHandler.deactivate(id)) {
+                                stop();
+                                break;
+                            }
                         }
+                        neighbor.timestamp.kick();
                     } else {
-                        --mDynamicNeighbors[i].trials;
-                        if (!mContactsHandler.deactivate(i + neighborOffset)) {
-                            stop();
-                            break;
+                        const auto remaining = neighbor.timestamp.remaining();
+                        if (remaining < smallest) {
+                            smallest = remaining;
                         }
-                    }
-                    mDynamicNeighbors[i].timestamp.kick();
-                } else {
-                    const auto remaining = mDynamicNeighbors[i].timestamp.remaining();
-                    if (remaining < smallest) {
-                        smallest = remaining;
                     }
                 }
             }
@@ -211,7 +214,10 @@ bool TTBroadcasterDiscovery::addNeighbor(const TTGreetMessage& message) {
         return false;
     }
     auto stub = createStub(message.ipAddressAndPort);
-    mDynamicNeighbors.emplace_back(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub));
+    mDynamicNeighbors.emplace(std::piecewise_construct,
+        std::forward_as_tuple(id.value()),
+        std::forward_as_tuple(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub)));
+    LOG_INFO("Successfully added neighbor!");
     return true;
 }
 

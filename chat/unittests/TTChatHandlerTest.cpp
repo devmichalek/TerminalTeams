@@ -480,7 +480,7 @@ TEST_F(TTChatHandlerTest, HappyAndUnhappyPathCreateSendAndReceive) {
     EXPECT_TRUE(mChatHandler->select(0));
     EXPECT_TRUE(mChatHandler->send(0, "Hello Simon!", {}));
     EXPECT_TRUE(mChatHandler->receive(0, "Hi Tommy!", {}));
-    EXPECT_FALSE(mChatHandler->select(0));
+    EXPECT_TRUE(mChatHandler->select(0));
     EXPECT_NE(mChatHandler->current(), std::nullopt);
     EXPECT_EQ(mChatHandler->current().value(), 0);
     // Create second contact

@@ -14,24 +14,24 @@ using tt::NarrateReply;
 
 class TTBroadcasterChat : public TTBroadcasterChatIf {
 public:
-    TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler);
+    TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler, TTNetworkInterface interface);
     virtual ~TTBroadcasterChat();
     TTBroadcasterChat(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat(TTBroadcasterChat&&) = delete;
     TTBroadcasterChat& operator=(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat& operator=(TTBroadcasterChat&&) = delete;
     // Main loop
-    virtual void run(const size_t neighborOffset);
+    virtual void run();
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
-    // Handles message send
-    virtual bool handleSend(const std::string& message, const size_t neighborOffset);
-    // Tell message handler
-    virtual bool handleTell(const TTNarrateMessage& message) override;
-    // Narrate message handler
-    virtual bool handleNarrate(const TTNarrateMessages& messages) override;
+    // Handles message (send)
+    virtual bool handleSend(const std::string& message);
+    // Handles message (receive)
+    virtual bool handleReceive(const TTNarrateMessage& message) override;
+    // Handles message (receive)
+    virtual bool handleReceive(const TTNarrateMessages& messages) override;
     // Returns root nickname
     virtual std::string getIdentity() const override;
 private:
@@ -46,8 +46,9 @@ private:
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
+    TTNetworkInterface mInterface;
     std::mutex mNeighborsMutex;
     std::condition_variable mNeighborsCondition;
-    std::deque<Neighbor> mNeighbors;
+    std::map<size_t, Neighbor> mNeighbors;
     static inline const std::chrono::milliseconds mNeighborsTimeout{100};
 };
