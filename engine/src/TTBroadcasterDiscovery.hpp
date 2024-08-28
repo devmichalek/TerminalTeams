@@ -2,18 +2,10 @@
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
-#include "TTBroadcasterDiscoveryIf.hpp"
 #include "TTTimestamp.hpp"
-#include "TerminalTeams.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
+#include "TTBroadcasterStub.hpp"
 
-using tt::NeighborsDiscovery;
-using tt::GreetRequest;
-using tt::GreetReply;
-using tt::HeartbeatRequest;
-using tt::HeartbeatReply;
-
-class TTBroadcasterDiscovery : public TTBroadcasterDiscoveryIf {
+class TTBroadcasterDiscovery {
 public:
     TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                            TTChatHandler& chatHandler,
@@ -30,36 +22,30 @@ public:
     virtual void stop();
     // Returns true if application is stopped
     virtual bool stopped() const;
-    // Greet message handler
-    virtual bool handleGreet(const TTGreetMessage& message) override;
-    // Heartbeat message handler
-    virtual bool handleHeartbeat(const TTHeartbeatMessage& message) override;
+    // Greet request handler
+    virtual bool handleGreet(const TTGreetRequest& request);
+    // Heartbeat request handler
+    virtual bool handleHeartbeat(const TTHeartbeatRequest& request);
     // Returns root nickname
-    virtual std::string getNickname() const override;
+    virtual std::string getNickname() const;
     // Returns root identity
-    virtual std::string getIdentity() const override;
+    virtual std::string getIdentity() const;
     // Returns root IP address and port
-    virtual std::string getIpAddressAndPort() const override;
+    virtual std::string getIpAddressAndPort() const;
 private:
-    using UniqueStub = std::unique_ptr<NeighborsDiscovery::Stub>;
-    UniqueStub createStub(const std::string& ipAddressAndPort);
-    std::optional<TTGreetMessage> sendGreet(UniqueStub& stub);
-    std::optional<TTGreetMessage> sendGreet(const std::string& ipAddressAndPort);
-    std::optional<TTHeartbeatMessage> sendHeartbeat(UniqueStub& stub);
-    std::optional<TTHeartbeatMessage> sendHeartbeat(const std::string& ipAddressAndPort);
-    bool addNeighbor(const TTGreetMessage& message);
-    size_t getNeighborsCount() const;
+    bool addNeighbor(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort);
     struct Neighbor {
-        Neighbor(TTTimestamp timestamp, size_t trials, UniqueStub stub) :
+        Neighbor(TTTimestamp timestamp, size_t trials, UniqueDiscoveryStub stub) :
             timestamp(timestamp), trials(trials), stub(std::move(stub)) {} 
         TTTimestamp timestamp;
         size_t trials;
-        UniqueStub stub;
+        UniqueDiscoveryStub stub;
     };
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNetworkInterface mInterface;
+    TTBroadcasterStub mBroadcasterStub;
     std::deque<std::string> mStaticNeighbors;
     std::map<size_t, Neighbor> mDynamicNeighbors;
     mutable std::shared_mutex mNeighborMutex;

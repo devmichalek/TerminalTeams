@@ -32,8 +32,12 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
 TTChatHandler::~TTChatHandler() {
     LOG_INFO("Destructing...");
     stop();
-    mHeartbeatResult.wait();
-    mHandlerResult.wait();
+    if (mHeartbeatResult.valid()) {
+        mHeartbeatResult.wait();
+    }
+    if (mHandlerResult.valid()) {
+        mHandlerResult.wait();
+    }
     LOG_INFO("Successfully destructed!");
 }
 

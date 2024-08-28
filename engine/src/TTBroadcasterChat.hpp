@@ -2,17 +2,9 @@
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
-#include "TTBroadcasterChatIf.hpp"
-#include "TerminalTeams.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
+#include "TTBroadcasterStub.hpp"
 
-using tt::NeighborsChat;
-using tt::TellRequest;
-using tt::TellReply;
-using tt::NarrateRequest;
-using tt::NarrateReply;
-
-class TTBroadcasterChat : public TTBroadcasterChatIf {
+class TTBroadcasterChat {
 public:
     TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler, TTNetworkInterface interface);
     virtual ~TTBroadcasterChat();
@@ -28,25 +20,23 @@ public:
     virtual bool stopped() const;
     // Handles message (send)
     virtual bool handleSend(const std::string& message);
-    // Handles message (receive)
-    virtual bool handleReceive(const TTNarrateMessage& message) override;
-    // Handles message (receive)
-    virtual bool handleReceive(const TTNarrateMessages& messages) override;
+    // Handles request (receive)
+    virtual bool handleReceive(const TTTellRequest& request);
+    // Handles request (receive)
+    virtual bool handleReceive(const TTNarrateRequest& request);
     // Returns root nickname
-    virtual std::string getIdentity() const override;
+    virtual std::string getIdentity();
 private:
-    using UniqueStub = std::unique_ptr<NeighborsChat::Stub>;
     struct Neighbor {
-        UniqueStub stub;
+        UniqueChatStub stub;
         std::deque<std::string> pendingMessages;
     };
-    UniqueStub createStub(const std::string& ipAddressAndPort);
-    bool sendTell(const Neighbor& neighbor);
-    bool sendNarrate(const Neighbor& neighbor);
+    
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNetworkInterface mInterface;
+    TTBroadcasterStub mBroadcasterStub;
     std::mutex mNeighborsMutex;
     std::condition_variable mNeighborsCondition;
     std::map<size_t, Neighbor> mNeighbors;

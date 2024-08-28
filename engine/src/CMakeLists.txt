@@ -86,7 +86,6 @@ add_custom_command(
 )
 
 # Build library
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 add_library(${TT_GRPC_LIB}
   ${TT_GRPC_SRCS}
   ${TT_GRPC_HDRS}
@@ -105,11 +104,13 @@ add_library(${TT_ENGINE_LIB}
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngineSettings.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterChat.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterDiscovery.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceChat.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceDiscovery.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterServiceChat.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterServiceDiscovery.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterStub.cpp"
 )
-target_include_directories (${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
-target_include_directories (${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_UTILS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(${TT_ENGINE_LIB} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
+target_include_directories(${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_DIAGNOSTICS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
+target_include_directories(${TT_ENGINE_LIB} PUBLIC $<TARGET_PROPERTY:${TT_UTILS_LIB},INTERFACE_INCLUDE_DIRECTORIES>)
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
   target_link_libraries(${TT_ENGINE_LIB} ${TT_DIAGNOSTICS_LIB})
 endif()

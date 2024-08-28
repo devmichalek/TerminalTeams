@@ -21,6 +21,7 @@ get_filename_component(TT_ENGINE_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 set(TT_ENGINE_UNIT_TESTS
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/Main.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTEngineSettingsTest.cpp"
+  "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTBroadcasterChatTest.cpp"
 )
 set(TT_ENGINE_UNIT_TESTS_SCRIPTS "tteams-engine-unittests.sh")
 set(TT_ENGINE_DST "unittests")
@@ -46,13 +47,13 @@ add_executable(${TT_ENGINE_UT}
   "${TT_ENGINE_UNIT_TESTS}"
 )
 target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_ENGINE_SRC_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_ENGINE_MOCKS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_DIAGNOSTICS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_UTILS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_CHAT_MOCKS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_CONTACTS_MOCKS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_TEXTBOX_MOCKS_DIRECTORY}")
-target_include_directories(${TT_ENGINE_UT} PUBLIC "${TT_ENGINE_UNIT_TESTS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_ENGINE_MOCKS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_DIAGNOSTICS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_UTILS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_CHAT_MOCKS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_CONTACTS_MOCKS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_TEXTBOX_MOCKS_DIRECTORY}")
+target_include_directories(${TT_ENGINE_UT} PRIVATE "${TT_ENGINE_UNIT_TESTS_DIRECTORY}")
 target_link_libraries(${TT_ENGINE_UT}
   ${TT_ENGINE_LIB}
   GTest::gtest_main
