@@ -3,13 +3,14 @@
 
 TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                                                TTChatHandler& chatHandler,
+                                               TTNeighborsStub& neighborsStub,
                                                TTNetworkInterface interface,
                                                std::deque<std::string> neighbors) :
         mStopped{false},
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
+        mNeighborsStub(neighborsStub),
         mInterface(interface),
-        mBroadcasterStub(),
         mStaticNeighbors(neighbors) {
     LOG_INFO("Successfully constructed!");
 }
@@ -26,9 +27,9 @@ void TTBroadcasterDiscovery::run() {
         if (stopped()) {
             break;
         }
-        auto stub = mBroadcasterStub.createDiscoveryStub(neighbor);
+        auto stub = mNeighborsStub.createDiscoveryStub(neighbor);
         auto greetRequest = TTGreetRequest{getNickname(), getIdentity(), getIpAddressAndPort()};
-        auto greetResponse = mBroadcasterStub.sendGreet(stub, greetRequest);
+        auto greetResponse = mNeighborsStub.sendGreet(*stub, greetRequest);
         if (greetResponse.status) {
             addNeighbor(greetResponse.nickname, greetResponse.identity, greetResponse.ipAddressAndPort);
         }
@@ -42,7 +43,7 @@ void TTBroadcasterDiscovery::run() {
                 if (neighbor.trials) {
                     if (neighbor.timestamp.expired()) {
                         const auto heartbeatRequest = TTHeartbeatRequest{getIdentity()};
-                        const auto heartbeatResponse = mBroadcasterStub.sendHeartbeat(neighbor.stub, heartbeatRequest);
+                        const auto heartbeatResponse = mNeighborsStub.sendHeartbeat(*neighbor.stub, heartbeatRequest);
                         if (heartbeatResponse.status && !heartbeatResponse.identity.empty()) {
                             neighbor.trials = TIMESTAMP_TRIALS;
                             if (!mContactsHandler.activate(id)) {
@@ -149,7 +150,7 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname, const std:
         stop();
         return false;
     }
-    auto stub = mBroadcasterStub.createDiscoveryStub(ipAddressAndPort);
+    auto stub = mNeighborsStub.createDiscoveryStub(ipAddressAndPort);
     mDynamicNeighbors.emplace(std::piecewise_construct,
         std::forward_as_tuple(id.value()),
         std::forward_as_tuple(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub)));

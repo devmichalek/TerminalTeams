@@ -37,6 +37,7 @@ private:
     std::mutex mExternalCallsMutex;
     // Node data
     std::unique_ptr<grpc::Server> mServer;
+    std::unique_ptr<TTNeighborsStub> mNeighborsStub;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;
     std::unique_ptr<TTBroadcasterDiscovery> mBroadcasterDiscovery;
     // Concurrent communication

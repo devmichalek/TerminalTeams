@@ -3,12 +3,13 @@
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
 #include "TTTimestamp.hpp"
-#include "TTBroadcasterStub.hpp"
+#include "TTNeighborsStub.hpp"
 
 class TTBroadcasterDiscovery {
 public:
     TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                            TTChatHandler& chatHandler,
+                           TTNeighborsStub& neighborsStub,
                            TTNetworkInterface interface,
                            std::deque<std::string> neighbors);
     virtual ~TTBroadcasterDiscovery();
@@ -35,17 +36,22 @@ public:
 private:
     bool addNeighbor(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort);
     struct Neighbor {
-        Neighbor(TTTimestamp timestamp, size_t trials, UniqueDiscoveryStub stub) :
-            timestamp(timestamp), trials(trials), stub(std::move(stub)) {} 
+        Neighbor(TTTimestamp timestamp, size_t trials, TTUniqueDiscoveryStub stub) :
+            timestamp(timestamp), trials(trials), stub(std::move(stub)) {}
+        ~Neighbor() = default;
+        Neighbor(const Neighbor&) = default;
+        Neighbor(Neighbor&&) = default;
+        Neighbor& operator=(const Neighbor&) = default;
+        Neighbor& operator=(Neighbor&&) = default;
         TTTimestamp timestamp;
         size_t trials;
-        UniqueDiscoveryStub stub;
+        TTUniqueDiscoveryStub stub;
     };
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
+    TTNeighborsStub& mNeighborsStub;
     TTNetworkInterface mInterface;
-    TTBroadcasterStub mBroadcasterStub;
     std::deque<std::string> mStaticNeighbors;
     std::map<size_t, Neighbor> mDynamicNeighbors;
     mutable std::shared_mutex mNeighborMutex;

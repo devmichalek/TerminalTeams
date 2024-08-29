@@ -1,8 +1,15 @@
 #include "TTBroadcasterChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler, TTNetworkInterface interface) :
-        mStopped{false}, mContactsHandler(contactsHandler), mChatHandler(chatHandler), mInterface(interface), mBroadcasterStub() {
+TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler,
+                                     TTChatHandler& chatHandler,
+                                     TTNeighborsStub& neighborsStub,
+                                     TTNetworkInterface interface) :
+        mStopped{false},
+        mContactsHandler(contactsHandler),
+        mChatHandler(chatHandler),
+        mNeighborsStub(neighborsStub),
+        mInterface(interface) {
     LOG_INFO("Successfully constructed!");
 }
 
@@ -25,17 +32,17 @@ void TTBroadcasterChat::run() {
         for (auto &[id, neighbor] : mNeighbors) {
             if (!neighbor.stub) {
                 const auto ipAddressAndPort = mContactsHandler.get(id).value().ipAddressAndPort;
-                neighbor.stub = mBroadcasterStub.createChatStub(ipAddressAndPort);
+                neighbor.stub = mNeighborsStub.createChatStub(ipAddressAndPort);
             }
             if (neighbor.stub) {
                 if (neighbor.pendingMessages.size() > 1) {
                     const auto narrateRequest = TTNarrateRequest{getIdentity(), neighbor.pendingMessages};
-                    if (mBroadcasterStub.sendNarrate(neighbor.stub, narrateRequest).status) {
+                    if (mNeighborsStub.sendNarrate(*neighbor.stub, narrateRequest).status) {
                         neighbor.pendingMessages.clear();
                     }
                 } else if (!neighbor.pendingMessages.empty()) {
                     const auto tellRequest = TTTellRequest{getIdentity(), neighbor.pendingMessages.back()};
-                    if (mBroadcasterStub.sendTell(neighbor.stub, tellRequest).status) {
+                    if (mNeighborsStub.sendTell(*neighbor.stub, tellRequest).status) {
                         neighbor.pendingMessages.clear();
                     }
                 }
@@ -104,9 +111,10 @@ bool TTBroadcasterChat::handleSend(const std::string& message) {
     }
     else
     {
-        mNeighbors.insert(lb, decltype(mNeighbors)::value_type(contactsCurrentId, Neighbor{}));
-        lb->second.stub = mBroadcasterStub.createChatStub(requestedIpAddress);
-        lb->second.pendingMessages.push_back(message);
+        auto newNeighbor = std::pair{contactsCurrentId, Neighbor{}};
+        newNeighbor.second.stub = mNeighborsStub.createChatStub(requestedIpAddress);
+        newNeighbor.second.pendingMessages.push_back(message);
+        mNeighbors.insert(lb, std::move(newNeighbor));
         LOG_INFO("Success, inserted new neighbor to the map, inserted new message!");
     }
     mNeighborsCondition.notify_one();

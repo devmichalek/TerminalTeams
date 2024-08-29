@@ -1,6 +1,8 @@
 #include "TTBroadcasterChat.hpp"
 #include "TTContactsHandlerMock.hpp"
 #include "TTChatHandlerMock.hpp"
+#include "TTNeighborsStubMock.hpp"
+#include "TTNeighborsChatStubMock.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
@@ -11,18 +13,20 @@ using ::testing::InSequence;
 using ::testing::_;
 using ::testing::AtLeast;
 using ::testing::Matcher;
+using ::testing::ByMove;
 
 class TTBroadcasterChatTest : public Test {
 protected:
     TTBroadcasterChatTest() : mInterface("eno1", "192.168.1.1", "1777") {
         mContactsHandler = std::make_shared<TTContactsHandlerMock>();
         mChatHandler = std::make_shared<TTChatHandlerMock>();
+        mNeighborsStub = std::make_shared<TTNeighborsStubMock>();
     }
     ~TTBroadcasterChatTest() {
     }
     // Called after constructor, before each test
     virtual void SetUp() override {
-        mBroadcaster = std::make_unique<TTBroadcasterChat>(*mContactsHandler, *mChatHandler, mInterface);
+        mBroadcaster = std::make_unique<TTBroadcasterChat>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mInterface);
     }
     // Called before destructor, after each test
     virtual void TearDown() override {
@@ -31,6 +35,7 @@ protected:
     TTNetworkInterface mInterface;
     std::shared_ptr<TTContactsHandlerMock> mContactsHandler;
     std::shared_ptr<TTChatHandlerMock> mChatHandler;
+    std::shared_ptr<TTNeighborsStubMock> mNeighborsStub;
     std::unique_ptr<TTBroadcasterChat> mBroadcaster;
 };
 
@@ -153,7 +158,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestChatHandlerFailed)
 }
 
 TEST_F(TTBroadcasterChatTest, HappyPathGetIdentity) {
-    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88");
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
     EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(size_t(0))))
         .Times(1)
         .WillOnce(Return(entry));
@@ -276,14 +281,99 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendHostMatch) {
     EXPECT_FALSE(mBroadcaster->stopped());
 }
 
-TEST_F(TTBroadcasterChatTest, UnhappyPathSendImmediateStubCreationFailed) {
-    // std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
-    // std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-    // mBroadcaster->stop();
-    // std::this_thread::sleep_for(std::chrono::milliseconds{1000});
-    // loop.join();
+TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
+    // Setup
+    const size_t currentId = 1;
+    const std::string message = "foo";
+    const std::string identity = "f71e7fb";
+    const std::string hostIdentity = "888992ef";
+    TTTellRequest expectedRequest;
+    expectedRequest.message = message;
+    expectedRequest.identity = hostIdentity;
+    const TTContactsHandlerEntry entry("neighbor", identity, "192.168.1.80:8879");
+    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
+    EXPECT_CALL(*mContactsHandler, current())
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(currentId));
+    EXPECT_CALL(*mChatHandler, current())
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(currentId));
+    EXPECT_CALL(*mContactsHandler, send(currentId))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mChatHandler, send(currentId, message, _))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mContactsHandler, get(currentId))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(entry));
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(size_t(0))))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(hostEntry));
+    {
+        InSequence __;
+        EXPECT_CALL(*mNeighborsStub, createChatStub(entry.ipAddressAndPort))
+            .Times(1)
+            .WillOnce(Return(ByMove(nullptr)));
+        EXPECT_CALL(*mNeighborsStub, createChatStub(entry.ipAddressAndPort))
+            .Times(1)
+            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>())));
+        EXPECT_CALL(*mNeighborsStub, sendTell(_, expectedRequest))
+            .Times(1)
+            .WillOnce(Return(TTTellResponse{true}));
+    }
+    // Start async consumer
+    std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
+    // Send message
+    EXPECT_TRUE(mBroadcaster->handleSend(message));
+    EXPECT_FALSE(mBroadcaster->stopped());
+    // Expect consumer to react
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    mBroadcaster->stop();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    loop.join();
 }
 
-TEST_F(TTBroadcasterChatTest, UnhappyPathSendLazyStubCreationFailed) {
+TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellLazyStubCreationFailed) {
+    // Setup
+    const size_t currentId = 1;
+    const std::string message = "foo";
+    const std::string identity = "f71e7fb";
+    const TTContactsHandlerEntry entry("neighbor", identity, "192.168.1.80:8879");
+    EXPECT_CALL(*mContactsHandler, current())
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(currentId));
+    EXPECT_CALL(*mChatHandler, current())
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(currentId));
+    EXPECT_CALL(*mContactsHandler, send(currentId))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mChatHandler, send(currentId, message, _))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(true));
+    EXPECT_CALL(*mContactsHandler, get(currentId))
+        .Times(AtLeast(1))
+        .WillRepeatedly(Return(entry));
+    EXPECT_CALL(*mNeighborsStub, createChatStub(entry.ipAddressAndPort))
+        .Times(AtLeast(1))
+        .WillRepeatedly([&](){ return std::unique_ptr<TTNeighborsChatStubMock>(nullptr); });
+    // Start async consumer
+    std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
+    // Send message
+    EXPECT_TRUE(mBroadcaster->handleSend(message));
+    EXPECT_FALSE(mBroadcaster->stopped());
+    // Expect consumer to react
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    mBroadcaster->stop();
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
+    loop.join();
+}
+
+TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
+
+}
+
+TEST_F(TTBroadcasterChatTest, HappyPathSendNarrateImmediateStubCreationFailed) {
     
 }

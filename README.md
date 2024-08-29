@@ -53,12 +53,14 @@ Application was tested using:
 - [[fallthrough]]
 - [[noreturn]]
 - [[likely]]
+- [[nodiscard]]
 - std::launder
 - std::once_flag
 - safe cleanup
 - engine unit tests
 - utils unit tests
 - engine auto tests
-- chat documentation
+- TTConfig.hpp for each module displayed in logs
 - engine documentation
 - remove IPC files in cpp classes in constructor
+- comment code

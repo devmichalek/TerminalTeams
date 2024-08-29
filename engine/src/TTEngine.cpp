@@ -19,8 +19,9 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
         mContacts->select(0);
         mChat->create(0);
         mChat->select(0);
-        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat, settings.getInterface());
-        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, *mChat, settings.getInterface(), settings.getNeighbors());
+        mNeighborsStub = std::make_unique<TTNeighborsStub>();
+        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat, *mNeighborsStub, settings.getInterface());
+        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, *mChat, *mNeighborsStub, settings.getInterface(), settings.getNeighbors());
     }
     LOG_INFO("Setting server thread...");
     {

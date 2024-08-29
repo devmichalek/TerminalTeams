@@ -1,7 +1,7 @@
-#include "TTBroadcasterStub.hpp"
+#include "TTNeighborsStub.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-UniqueChatStub TTBroadcasterStub::createChatStub(const std::string& ipAddressAndPort) {
+TTUniqueChatStub TTNeighborsStub::createChatStub(const std::string& ipAddressAndPort) const {
     try {
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
         return NeighborsChat::NewStub(channel);
@@ -11,7 +11,7 @@ UniqueChatStub TTBroadcasterStub::createChatStub(const std::string& ipAddressAnd
     }
 }
 
-UniqueDiscoveryStub TTBroadcasterStub::createDiscoveryStub(const std::string& ipAddressAndPort) {
+TTUniqueDiscoveryStub TTNeighborsStub::createDiscoveryStub(const std::string& ipAddressAndPort) const {
     try {
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
         return NeighborsDiscovery::NewStub(channel);
@@ -21,14 +21,14 @@ UniqueDiscoveryStub TTBroadcasterStub::createDiscoveryStub(const std::string& ip
     }
 }
 
-TTTellResponse TTBroadcasterStub::sendTell(const UniqueChatStub& stub, const TTTellRequest& rhs) {
+TTTellResponse TTNeighborsStub::sendTell(TTNeighborsChatStubIf& stub, const TTTellRequest& rhs) const {
     try {
         TellRequest request;
         request.set_identity(rhs.identity);
         request.set_message(rhs.message);
         TellReply reply;
         grpc::ClientContext context;
-        grpc::Status status = stub->Tell(&context, request, &reply);
+        grpc::Status status = stub.Tell(&context, request, &reply);
         if (status.ok()) {
             return {true};
         }
@@ -39,11 +39,11 @@ TTTellResponse TTBroadcasterStub::sendTell(const UniqueChatStub& stub, const TTT
     return {false};
 }
 
-TTNarrateResponse TTBroadcasterStub::sendNarrate(const UniqueChatStub& stub, const TTNarrateRequest& rhs) {
+TTNarrateResponse TTNeighborsStub::sendNarrate(TTNeighborsChatStubIf& stub, const TTNarrateRequest& rhs) const {
     try {
         grpc::ClientContext context;
         NarrateReply reply;
-        std::unique_ptr<grpc::ClientWriter<NarrateRequest>> writer(stub->Narrate(&context, &reply));
+        std::unique_ptr<grpc::ClientWriterInterface<NarrateRequest>> writer(stub.Narrate(&context, &reply));
         for (const auto &message : rhs.messages) {
             NarrateRequest request;
             request.set_identity(rhs.identity);
@@ -64,7 +64,7 @@ TTNarrateResponse TTBroadcasterStub::sendNarrate(const UniqueChatStub& stub, con
     return {false};
 }
 
-TTGreetResponse TTBroadcasterStub::sendGreet(const UniqueDiscoveryStub& stub, const TTGreetRequest& rhs) {
+TTGreetResponse TTNeighborsStub::sendGreet(TTNeighborsDiscoveryStubIf& stub, const TTGreetRequest& rhs) const {
     try {
         GreetRequest request;
         request.set_nickname(rhs.nickname);
@@ -72,7 +72,7 @@ TTGreetResponse TTBroadcasterStub::sendGreet(const UniqueDiscoveryStub& stub, co
         request.set_ipaddressandport(rhs.ipAddressAndPort);
         GreetReply reply;
         grpc::ClientContext context;
-        grpc::Status status = stub->Greet(&context, request, &reply);
+        grpc::Status status = stub.Greet(&context, request, &reply);
         if (status.ok()) {
             TTGreetResponse result;
             result.status = true;
@@ -88,13 +88,13 @@ TTGreetResponse TTBroadcasterStub::sendGreet(const UniqueDiscoveryStub& stub, co
     return {};
 }
 
-TTHeartbeatResponse TTBroadcasterStub::sendHeartbeat(const UniqueDiscoveryStub& stub, const TTHeartbeatRequest& rhs) {
+TTHeartbeatResponse TTNeighborsStub::sendHeartbeat(TTNeighborsDiscoveryStubIf& stub, const TTHeartbeatRequest& rhs) const {
     try {
         HeartbeatRequest request;
         request.set_identity(rhs.identity);
         HeartbeatReply reply;
         grpc::ClientContext context;
-        grpc::Status status = stub->Heartbeat(&context, request, &reply);
+        grpc::Status status = stub.Heartbeat(&context, request, &reply);
         if (status.ok()) {
             TTHeartbeatResponse result;
             result.status = true;

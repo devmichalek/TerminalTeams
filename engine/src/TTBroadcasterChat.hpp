@@ -2,11 +2,14 @@
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
-#include "TTBroadcasterStub.hpp"
+#include "TTNeighborsStub.hpp"
 
 class TTBroadcasterChat {
 public:
-    TTBroadcasterChat(TTContactsHandler& contactsHandler, TTChatHandler& chatHandler, TTNetworkInterface interface);
+    TTBroadcasterChat(TTContactsHandler& contactsHandler,
+                      TTChatHandler& chatHandler,
+                      TTNeighborsStub& neighborsStub,
+                      TTNetworkInterface interface);
     virtual ~TTBroadcasterChat();
     TTBroadcasterChat(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat(TTBroadcasterChat&&) = delete;
@@ -28,15 +31,23 @@ public:
     virtual std::string getIdentity();
 private:
     struct Neighbor {
-        UniqueChatStub stub;
+        explicit Neighbor() {
+            stub.reset();
+        }
+        ~Neighbor() = default;
+        Neighbor(const Neighbor&) = default;
+        Neighbor(Neighbor&&) = default;
+        Neighbor& operator=(const Neighbor&) = default;
+        Neighbor& operator=(Neighbor&&) = default;
+        TTUniqueChatStub stub;
         std::deque<std::string> pendingMessages;
     };
     
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
+    TTNeighborsStub& mNeighborsStub;
     TTNetworkInterface mInterface;
-    TTBroadcasterStub mBroadcasterStub;
     std::mutex mNeighborsMutex;
     std::condition_variable mNeighborsCondition;
     std::map<size_t, Neighbor> mNeighbors;
