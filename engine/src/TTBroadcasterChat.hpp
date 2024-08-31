@@ -3,6 +3,8 @@
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
 #include "TTNeighborsStub.hpp"
+#include "TTTimestamp.hpp"
+#include <random>
 
 class TTBroadcasterChat {
 public:
@@ -31,15 +33,14 @@ public:
     virtual std::string getIdentity();
 private:
     struct Neighbor {
-        explicit Neighbor() {
-            stub.reset();
-        }
+        Neighbor() = default;
         ~Neighbor() = default;
         Neighbor(const Neighbor&) = default;
         Neighbor(Neighbor&&) = default;
         Neighbor& operator=(const Neighbor&) = default;
         Neighbor& operator=(Neighbor&&) = default;
         TTUniqueChatStub stub;
+        TTTimestamp timestamp;
         std::deque<std::string> pendingMessages;
     };
     
@@ -51,5 +52,11 @@ private:
     std::mutex mNeighborsMutex;
     std::condition_variable mNeighborsCondition;
     std::map<size_t, Neighbor> mNeighbors;
-    static inline const std::chrono::milliseconds mNeighborsTimeout{100};
+    std::atomic<bool> mNeighborsFlag;
+    static inline const size_t NEIGHBORS_FLAG_TIMEOUT{500};
+    static inline const size_t INACTIVITY_TIMEOUT_MIN{3000};
+    static inline const size_t INACTIVITY_TIMEOUT_MAX{6000};
+    std::random_device mRandomDevice;
+    std::mt19937 mRandomNumberGenerator;
+    std::uniform_int_distribution<std::mt19937::result_type> mInactivityDistribution;
 };

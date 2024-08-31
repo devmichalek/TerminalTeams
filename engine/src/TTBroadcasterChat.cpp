@@ -9,7 +9,10 @@ TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler,
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
-        mInterface(interface) {
+        mInterface(interface),
+        mNeighborsFlag{false},
+        mRandomNumberGenerator(mRandomDevice()),
+        mInactivityDistribution(INACTIVITY_TIMEOUT_MIN, INACTIVITY_TIMEOUT_MAX) {
     LOG_INFO("Successfully constructed!");
 }
 
@@ -22,29 +25,39 @@ TTBroadcasterChat::~TTBroadcasterChat() {
 void TTBroadcasterChat::run() {
     LOG_INFO("Started broadcasting chat");
     while (!stopped()) {
+        mNeighborsFlag.store(false);
         std::unique_lock<std::mutex> lock(mNeighborsMutex);
-        const bool predicate = mNeighborsCondition.wait_for(lock, mNeighborsTimeout, [this]() {
-            return !mNeighbors.empty() || stopped();
+        const bool predicate = mNeighborsCondition.wait_for(lock, std::chrono::milliseconds(NEIGHBORS_FLAG_TIMEOUT), [this]() {
+            return mNeighborsFlag.load() || stopped();
         });
         if (stopped()) {
             break;
         }
         for (auto &[id, neighbor] : mNeighbors) {
+            if (!neighbor.timestamp.expired()) {
+                continue;
+            }
+            neighbor.timestamp.kick();
+            const auto neighborsEntry = mContactsHandler.get(id).value();
+            if (neighborsEntry.state.isInactive()) {
+                continue;
+            }
             if (!neighbor.stub) {
-                const auto ipAddressAndPort = mContactsHandler.get(id).value().ipAddressAndPort;
+                const auto ipAddressAndPort = neighborsEntry.ipAddressAndPort;
                 neighbor.stub = mNeighborsStub.createChatStub(ipAddressAndPort);
             }
-            if (neighbor.stub) {
-                if (neighbor.pendingMessages.size() > 1) {
-                    const auto narrateRequest = TTNarrateRequest{getIdentity(), neighbor.pendingMessages};
-                    if (mNeighborsStub.sendNarrate(*neighbor.stub, narrateRequest).status) {
-                        neighbor.pendingMessages.clear();
-                    }
-                } else if (!neighbor.pendingMessages.empty()) {
-                    const auto tellRequest = TTTellRequest{getIdentity(), neighbor.pendingMessages.back()};
-                    if (mNeighborsStub.sendTell(*neighbor.stub, tellRequest).status) {
-                        neighbor.pendingMessages.clear();
-                    }
+            if (!neighbor.stub) {
+                continue;
+            }
+            if (neighbor.pendingMessages.size() > 1) {
+                const auto narrateRequest = TTNarrateRequest{getIdentity(), neighbor.pendingMessages};
+                if (mNeighborsStub.sendNarrate(*neighbor.stub, narrateRequest).status) {
+                    neighbor.pendingMessages.clear();
+                }
+            } else if (!neighbor.pendingMessages.empty()) {
+                const auto tellRequest = TTTellRequest{getIdentity(), neighbor.pendingMessages.back()};
+                if (mNeighborsStub.sendTell(*neighbor.stub, tellRequest).status) {
+                    neighbor.pendingMessages.clear();
                 }
             }
         }
@@ -113,10 +126,13 @@ bool TTBroadcasterChat::handleSend(const std::string& message) {
     {
         auto newNeighbor = std::pair{contactsCurrentId, Neighbor{}};
         newNeighbor.second.stub = mNeighborsStub.createChatStub(requestedIpAddress);
+        newNeighbor.second.timestamp = TTTimestamp(std::chrono::milliseconds(mInactivityDistribution(mRandomNumberGenerator)));
+        newNeighbor.second.timestamp.expire();
         newNeighbor.second.pendingMessages.push_back(message);
         mNeighbors.insert(lb, std::move(newNeighbor));
         LOG_INFO("Success, inserted new neighbor to the map, inserted new message!");
     }
+    mNeighborsFlag.store(true);
     mNeighborsCondition.notify_one();
     return true;
 }

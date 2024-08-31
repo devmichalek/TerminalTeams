@@ -31,6 +31,9 @@ struct TTTellResponse {
 };
 
 struct TTNarrateRequest {
+    bool operator==(const TTNarrateRequest& rhs) const {
+        return identity == rhs.identity && messages == rhs.messages;
+    }
     std::string identity;
     std::deque<std::string> messages;
 };
