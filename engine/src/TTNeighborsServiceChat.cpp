@@ -1,11 +1,11 @@
-#include "TTBroadcasterServiceChat.hpp"
+#include "TTNeighborsServiceChat.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTBroadcasterServiceChat::TTBroadcasterServiceChat(TTBroadcasterChat& handler) : mHandler(handler) {
+TTNeighborsServiceChat::TTNeighborsServiceChat(TTBroadcasterChat& handler) : mHandler(handler) {
     LOG_INFO("Successfully constructed!");
 };
 
-grpc::Status TTBroadcasterServiceChat::Tell(grpc::ServerContext* context, const tt::TellRequest* request, tt::TellReply* reply) {
+grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt::TellRequest* request, tt::TellReply* reply) {
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
@@ -22,7 +22,7 @@ grpc::Status TTBroadcasterServiceChat::Tell(grpc::ServerContext* context, const 
     return grpc::Status(grpc::StatusCode::UNKNOWN, "Failed to handle request!");
 }
 
-grpc::Status TTBroadcasterServiceChat::Narrate(grpc::ServerContext* context, grpc::ServerReader<tt::NarrateRequest>* stream, tt::NarrateReply* reply) {
+grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc::ServerReader<tt::NarrateRequest>* stream, tt::NarrateReply* reply) {
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");

@@ -2,19 +2,8 @@
 #include "TerminalTeams.grpc.pb.h"
 #include <grpcpp/grpcpp.h>
 
-using tt::NeighborsChat;
-using tt::TellRequest;
-using tt::TellReply;
-using tt::NarrateRequest;
-using tt::NarrateReply;
-using tt::NeighborsDiscovery;
-using tt::GreetRequest;
-using tt::GreetReply;
-using tt::HeartbeatRequest;
-using tt::HeartbeatReply;
-
-using TTNeighborsChatStubIf = NeighborsChat::StubInterface;
-using TTNeighborsDiscoveryStubIf = NeighborsDiscovery::StubInterface;
+using TTNeighborsChatStubIf = tt::NeighborsChat::StubInterface;
+using TTNeighborsDiscoveryStubIf = tt::NeighborsDiscovery::StubInterface;
 using TTUniqueChatStub = std::unique_ptr<TTNeighborsChatStubIf>;
 using TTUniqueDiscoveryStub = std::unique_ptr<TTNeighborsDiscoveryStubIf>;
 

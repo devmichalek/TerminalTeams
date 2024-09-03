@@ -104,8 +104,8 @@ add_library(${TT_ENGINE_LIB}
   "${TT_ENGINE_SRC_DIRECTORY}/TTEngineSettings.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterChat.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterDiscovery.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterServiceChat.cpp"
-  "${TT_ENGINE_SRC_DIRECTORY}/TTBroadcasterServiceDiscovery.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceChat.cpp"
+  "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsServiceDiscovery.cpp"
   "${TT_ENGINE_SRC_DIRECTORY}/TTNeighborsStub.cpp"
 )
 target_include_directories(${TT_ENGINE_LIB} PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")

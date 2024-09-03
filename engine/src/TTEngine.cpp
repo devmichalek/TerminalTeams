@@ -1,6 +1,6 @@
 #include "TTEngine.hpp"
-#include "TTBroadcasterServiceChat.hpp"
-#include "TTBroadcasterServiceDiscovery.hpp"
+#include "TTNeighborsServiceChat.hpp"
+#include "TTNeighborsServiceDiscovery.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
@@ -106,8 +106,8 @@ void TTEngine::server(std::promise<void> promise) {
     LOG_INFO("Listening on {} without any authentication mechanism...", mBroadcasterDiscovery->getIpAddressAndPort());
     builder.AddListeningPort(mBroadcasterDiscovery->getIpAddressAndPort(), grpc::InsecureServerCredentials());
     LOG_INFO("Registering synchronous services...");
-    TTBroadcasterServiceChat neighborsServiceChat(*mBroadcasterChat);
-    TTBroadcasterServiceDiscovery neighborsServiceDiscovery(*mBroadcasterDiscovery);
+    TTNeighborsServiceChat neighborsServiceChat(*mBroadcasterChat);
+    TTNeighborsServiceDiscovery neighborsServiceDiscovery(*mBroadcasterDiscovery);
     builder.RegisterService(&neighborsServiceChat);
     builder.RegisterService(&neighborsServiceDiscovery);
     LOG_INFO("Assembling the server and waiting for the server to shutdown...");

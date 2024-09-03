@@ -4,7 +4,7 @@
 TTUniqueChatStub TTNeighborsStub::createChatStub(const std::string& ipAddressAndPort) const {
     try {
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
-        return NeighborsChat::NewStub(channel);
+        return tt::NeighborsChat::NewStub(channel);
     } catch (...) {
         LOG_WARNING("Failed to create chat stub to {}!", ipAddressAndPort);
         return {};
@@ -14,7 +14,7 @@ TTUniqueChatStub TTNeighborsStub::createChatStub(const std::string& ipAddressAnd
 TTUniqueDiscoveryStub TTNeighborsStub::createDiscoveryStub(const std::string& ipAddressAndPort) const {
     try {
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
-        return NeighborsDiscovery::NewStub(channel);
+        return tt::NeighborsDiscovery::NewStub(channel);
     } catch (...) {
         LOG_WARNING("Failed to create discovery stub to {}!", ipAddressAndPort);
         return {};
@@ -23,10 +23,10 @@ TTUniqueDiscoveryStub TTNeighborsStub::createDiscoveryStub(const std::string& ip
 
 TTTellResponse TTNeighborsStub::sendTell(TTNeighborsChatStubIf& stub, const TTTellRequest& rhs) const {
     try {
-        TellRequest request;
+        tt::TellRequest request;
         request.set_identity(rhs.identity);
         request.set_message(rhs.message);
-        TellReply reply;
+        tt::TellReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Tell(&context, request, &reply);
         if (status.ok()) {
@@ -42,10 +42,14 @@ TTTellResponse TTNeighborsStub::sendTell(TTNeighborsChatStubIf& stub, const TTTe
 TTNarrateResponse TTNeighborsStub::sendNarrate(TTNeighborsChatStubIf& stub, const TTNarrateRequest& rhs) const {
     try {
         grpc::ClientContext context;
-        NarrateReply reply;
-        std::unique_ptr<grpc::ClientWriterInterface<NarrateRequest>> writer(stub.Narrate(&context, &reply));
+        tt::NarrateReply reply;
+        std::unique_ptr<grpc::ClientWriterInterface<tt::NarrateRequest>> writer(stub.Narrate(&context, &reply));
+        if (!writer) {
+            LOG_ERROR("Failed to create writer on send narrate!");
+            return {false};
+        }
         for (const auto &message : rhs.messages) {
-            NarrateRequest request;
+            tt::NarrateRequest request;
             request.set_identity(rhs.identity);
             request.set_message(message);
             if (!writer->Write(request)) {
@@ -66,11 +70,11 @@ TTNarrateResponse TTNeighborsStub::sendNarrate(TTNeighborsChatStubIf& stub, cons
 
 TTGreetResponse TTNeighborsStub::sendGreet(TTNeighborsDiscoveryStubIf& stub, const TTGreetRequest& rhs) const {
     try {
-        GreetRequest request;
+        tt::GreetRequest request;
         request.set_nickname(rhs.nickname);
         request.set_identity(rhs.identity);
         request.set_ipaddressandport(rhs.ipAddressAndPort);
-        GreetReply reply;
+        tt::GreetReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Greet(&context, request, &reply);
         if (status.ok()) {
@@ -90,9 +94,9 @@ TTGreetResponse TTNeighborsStub::sendGreet(TTNeighborsDiscoveryStubIf& stub, con
 
 TTHeartbeatResponse TTNeighborsStub::sendHeartbeat(TTNeighborsDiscoveryStubIf& stub, const TTHeartbeatRequest& rhs) const {
     try {
-        HeartbeatRequest request;
+        tt::HeartbeatRequest request;
         request.set_identity(rhs.identity);
-        HeartbeatReply reply;
+        tt::HeartbeatReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Heartbeat(&context, request, &reply);
         if (status.ok()) {

@@ -1,11 +1,11 @@
-#include "TTBroadcasterServiceDiscovery.hpp"
+#include "TTNeighborsServiceDiscovery.hpp"
 #include "TTDiagnosticsLogger.hpp"
 
-TTBroadcasterServiceDiscovery::TTBroadcasterServiceDiscovery(TTBroadcasterDiscovery& handler) : mHandler(handler) {
+TTNeighborsServiceDiscovery::TTNeighborsServiceDiscovery(TTBroadcasterDiscovery& handler) : mHandler(handler) {
     LOG_INFO("Successfully constructed!");
 }
 
-grpc::Status TTBroadcasterServiceDiscovery::Greet(grpc::ServerContext* context, const tt::GreetRequest* request, tt::GreetReply* reply) {
+grpc::Status TTNeighborsServiceDiscovery::Greet(grpc::ServerContext* context, const tt::GreetRequest* request, tt::GreetReply* reply) {
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
@@ -25,7 +25,7 @@ grpc::Status TTBroadcasterServiceDiscovery::Greet(grpc::ServerContext* context, 
     return grpc::Status(grpc::StatusCode::UNKNOWN, "Failed to handle request!");
 }
 
-grpc::Status TTBroadcasterServiceDiscovery::Heartbeat(grpc::ServerContext* context, const tt::HeartbeatRequest* request, tt::HeartbeatReply* reply) {
+grpc::Status TTNeighborsServiceDiscovery::Heartbeat(grpc::ServerContext* context, const tt::HeartbeatRequest* request, tt::HeartbeatReply* reply) {
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");

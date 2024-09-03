@@ -22,6 +22,7 @@ set(TT_ENGINE_UNIT_TESTS
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/Main.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTEngineSettingsTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTBroadcasterChatTest.cpp"
+  "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTNeighborsStubTest.cpp"
 )
 set(TT_ENGINE_UNIT_TESTS_SCRIPTS "tteams-engine-unittests.sh")
 set(TT_ENGINE_DST "unittests")
