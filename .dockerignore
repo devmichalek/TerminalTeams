@@ -1,0 +1,11 @@
+**/install
+**/build
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/c_cpp_properties.json
+venv
+__pycache__
+*_pb2*.*

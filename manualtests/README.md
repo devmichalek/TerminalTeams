@@ -11,13 +11,13 @@ sudo apt-get install virtualbox
    ```
    virtualbox &> /dev/null &
    ```
-3. Click on "New" and start creating new virtual machine (<a href="./Resources/4.19.1.png">screenshoot</a>).
-4. Enter virtual machine name, directory. Select "Linux" type and version "Red Hat (64-bit)" (<a href="./Resources/4.19.2.png">screenshoot</a>).
-5. Choose how much RAM will be dedicated to the virtual machine (<a href="./Resources/4.19.3.png">screenshoot</a>).
-6. Create virtual hard drive (dynamic VDI) and select an already existing one (<a href="./Resources/4.19.4.png">screenshoot</a>).
+3. Click on "New" and start creating new virtual machine (<a href="./doc/4.19.1.png">screenshoot</a>).
+4. Enter virtual machine name, directory. Select "Linux" type and version "Red Hat (64-bit)" (<a href="./doc/4.19.2.png">screenshoot</a>).
+5. Choose how much RAM will be dedicated to the virtual machine (<a href="./doc/4.19.3.png">screenshoot</a>).
+6. Create virtual hard drive (dynamic VDI) and select an already existing one (<a href="./doc/4.19.4.png">screenshoot</a>).
    In case of creating new one it is better to choose dynamic VDI type with at least 20GB of memory.
-7. At this point virtual machine is created. Go to the "Settings" of newly created VM (<a href="./Resources/4.19.5.png">screenshoot</a>).
-8. Go to "Storage". Under "Storage Drives" section, select the disc "Empty" item and choose downloaded ISO file to be opened (<a href="./Resources/4.19.6.png">screenshoot</a>).
+7. At this point virtual machine is created. Go to the "Settings" of newly created VM (<a href="./doc/4.19.5.png">screenshoot</a>).
+8. Go to "Storage". Under "Storage Drives" section, select the disc "Empty" item and choose downloaded ISO file to be opened (<a href="./doc/4.19.6.png">screenshoot</a>).
    From this point forward ISO is now mounted.
 9. Start newly created VM and complete all the steps during system installation (it differs among systems). Once you've completed all the steps, the installer will prompt you to reboot the machine. Decline and stop the VM by yourself. Now go to the "Storage" -> "Storage Devices" and remove previously added ISO file. Save the settings and enjoy the installed system. ISO file is needed only at the beginning and that`s the reason why we should remove it after system installation.
 

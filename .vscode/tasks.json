@@ -42,6 +42,27 @@
 		},
 		{
 			"type": "shell",
+			"label": "Build Docker Image",
+			"command": "docker",
+			"args": [
+				"build",
+				"-t",
+				"private/terminalteams",
+				"-f",
+				"./e2etests/Dockerfile",
+				"."
+			],
+			"group": "build",
+			"icon": {
+				"id": "beaker",
+				"color": "terminal.ansiYellow"
+			},
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"type": "shell",
 			"label": "Install",
 			"command": "cmake --install build --prefix install",
 			"group": "build",

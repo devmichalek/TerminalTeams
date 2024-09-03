@@ -30,6 +30,7 @@ cmake --install build --prefix install
 - [Google Test](https://google.github.io/googletest/)
 - Bash
 - Inter-Process Communication
+- [Docker](https://www.docker.com/)
 - [VirtualBox](https://www.virtualbox.org/)
 - Networking
 - [PlantUML](https://valgrind.org/)
@@ -43,8 +44,9 @@ Use Visual Studio Code (with C/C++ Extension Pack extension) to debug unit tests
 ### Testing
 Application was tested using:
 - Unit tests,
-- Integration tests,
-- Manual tests - using up to four VMs running together in a virtual network.
+- Integration tests - so called auto tests,
+- E2E tests - using up to three docker containers and virtual network,
+- Manual tests - using up to three VMs and virtual network
 
 ### Future extensions and support
 - support for other character encodings
