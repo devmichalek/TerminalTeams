@@ -4,7 +4,6 @@
 
 class TTEngineSettingsMock : public TTEngineSettings {
 public:
-    TTEngineSettingsMock() : TTEngineSettings() {}
     MOCK_METHOD(const TTContactsSettings&, getContactsSettings, (), (const, override));
     MOCK_METHOD(const TTChatSettings&, getChatSettings, (), (const, override));
     MOCK_METHOD(const TTTextBoxSettings&, getTextBoxSettings, (), (const, override));

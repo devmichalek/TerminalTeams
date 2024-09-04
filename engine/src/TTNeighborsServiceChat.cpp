@@ -10,6 +10,14 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
     }
+    if (!request) {
+        LOG_ERROR("Request is null!");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Request is null!");
+    }
+    if (!reply) {
+        LOG_ERROR("Reply is null!");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
+    }
     TTTellRequest message;
     message.identity = request->identity();
     message.message = request->message();
@@ -26,6 +34,14 @@ grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc:
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
+    }
+    if (!stream) {
+        LOG_ERROR("Stream is null!");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Stream is null!");
+    }
+    if (!reply) {
+        LOG_ERROR("Reply is null!");
+        return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
     }
     TTNarrateRequest message;
     tt::NarrateRequest request;

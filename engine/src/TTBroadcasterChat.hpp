@@ -43,7 +43,6 @@ private:
         TTTimestamp timestamp;
         std::deque<std::string> pendingMessages;
     };
-    
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;

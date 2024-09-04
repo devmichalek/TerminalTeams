@@ -7,8 +7,7 @@
 using ::testing::_;
 using ::testing::Return;
 
-TEST(TTNeighborsStubTest, HappyPathSendTell)
-{
+TEST(TTNeighborsStubTest, HappyPathSendTell) {
     TTTellRequest request;
     request.identity = "5ef885a";
     request.message = "Hello world!";
@@ -27,8 +26,7 @@ TEST(TTNeighborsStubTest, HappyPathSendTell)
     EXPECT_TRUE(response.status);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendTell)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendTell) {
     TTTellRequest request;
     request.identity = "5ef885a";
     request.message = "Hello world!";
@@ -56,8 +54,7 @@ MATCHER_P(IsNarrateRequestEqualTo, n, "") {
     return result;
 }
 
-TEST(TTNeighborsStubTest, HappyPathSendNarrate)
-{
+TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
     const std::string identity = "5ef885a";
     const std::string message1 = "Hello ";
     const std::string message2 = "world!";
@@ -96,8 +93,7 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate)
     EXPECT_TRUE(response.status);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToCreateWriter)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToCreateWriter) {
     TTNarrateRequest request;
     TTNeighborsChatStubMock chatStub;
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
@@ -111,8 +107,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToCreateWriter)
     EXPECT_FALSE(response.status);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToWrite)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToWrite) {
     const std::string identity = "5ef885a";
     const std::string message1 = "Hello ";
     const std::string message2 = "world!";
@@ -148,8 +143,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToWrite)
     EXPECT_FALSE(response.status);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
     const std::string identity = "5ef885a";
     const std::string message1 = "Hello ";
     const std::string message2 = "world!";
@@ -188,8 +182,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish)
     EXPECT_FALSE(response.status);
 }
 
-TEST(TTNeighborsStubTest, HappyPathSendGreet)
-{
+TEST(TTNeighborsStubTest, HappyPathSendGreet) {
     TTGreetRequest request;
     request.nickname = "adriqun";
     request.identity = "5ef885a";
@@ -214,8 +207,7 @@ TEST(TTNeighborsStubTest, HappyPathSendGreet)
     EXPECT_EQ(response.ipAddressAndPort, request.ipAddressAndPort);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendGreet)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendGreet) {
     TTGreetRequest request;
     request.nickname = "adriqun";
     request.identity = "5ef885a";
@@ -231,8 +223,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendGreet)
     EXPECT_FALSE(response.status);
 }
 
-TEST(TTNeighborsStubTest, HappyPathSendHeartbeat)
-{
+TEST(TTNeighborsStubTest, HappyPathSendHeartbeat) {
     TTHeartbeatRequest request;
     request.identity = "5ef885a";
     TTNeighborsDiscoveryStubMock discoveryStub;
@@ -251,8 +242,7 @@ TEST(TTNeighborsStubTest, HappyPathSendHeartbeat)
     EXPECT_EQ(response.identity, request.identity);
 }
 
-TEST(TTNeighborsStubTest, UnhappyPathSendHeartbeat)
-{
+TEST(TTNeighborsStubTest, UnhappyPathSendHeartbeat) {
     TTHeartbeatRequest request;
     request.identity = "5ef885a";
     TTNeighborsDiscoveryStubMock discoveryStub;

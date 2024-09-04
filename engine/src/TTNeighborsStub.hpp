@@ -32,6 +32,9 @@ struct TTNarrateResponse {
 };
 
 struct TTGreetRequest {
+    bool operator==(const TTGreetRequest& rhs) const {
+        return nickname == rhs.nickname && identity == rhs.identity && ipAddressAndPort == rhs.ipAddressAndPort;
+    }
     std::string nickname;
     std::string identity;
     std::string ipAddressAndPort;
@@ -46,6 +49,9 @@ struct TTGreetResponse {
 };
 
 struct TTHeartbeatRequest {
+    bool operator==(const TTHeartbeatRequest& rhs) const {
+        return identity == rhs.identity;
+    }
     std::string identity;
 };
 
