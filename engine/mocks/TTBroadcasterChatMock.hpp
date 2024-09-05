@@ -14,7 +14,7 @@ public:
     MOCK_METHOD(bool, handleSend, (const std::string& message), (override));
     MOCK_METHOD(bool, handleReceive, (const TTTellRequest& request), (override));
     MOCK_METHOD(bool, handleReceive, (const TTNarrateRequest& request), (override));
-    MOCK_METHOD(std::string, getNickname, (), (const, override));
+    MOCK_METHOD(std::string, getIdentity, (), (override));
 private:
     TTContactsHandlerMock mContactsHandler;
     TTChatHandlerMock mChatHandler;

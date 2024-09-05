@@ -96,28 +96,31 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatRequest& request) 
     return true;
 }
 
-std::string TTBroadcasterDiscovery::getNickname() const {
+std::string TTBroadcasterDiscovery::getNickname() {
     auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
-        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get nickname!");
+        LOG_ERROR("Failed to get nickname!");
+        stop();
         return {};
     }
     return opt->nickname;
 }
 
-std::string TTBroadcasterDiscovery::getIdentity() const {
+std::string TTBroadcasterDiscovery::getIdentity() {
     auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
-        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get identity!");
+        LOG_ERROR("Failed to get identity!");
+        stop();
         return {};
     }
     return opt->identity;
 }
 
-std::string TTBroadcasterDiscovery::getIpAddressAndPort() const {
+std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
     auto opt = mContactsHandler.get(0);
     if (opt == std::nullopt) {
-        throw std::runtime_error("TTBroadcasterDiscovery: Failed to get IP address and port!");
+        LOG_ERROR("Failed to get IP address and port!");
+        stop();
         return {};
     }
     return opt->ipAddressAndPort;

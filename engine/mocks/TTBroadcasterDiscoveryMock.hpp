@@ -13,9 +13,9 @@ public:
     MOCK_METHOD(bool, stopped, (), (const, override));
     MOCK_METHOD(bool, handleGreet, (const TTGreetRequest& request), (override));
     MOCK_METHOD(bool, handleHeartbeat, (const TTHeartbeatRequest& request), (override));
-    MOCK_METHOD(std::string, getNickname, (), (const, override));
-    MOCK_METHOD(std::string, getIdentity, (), (const, override));
-    MOCK_METHOD(std::string, getIpAddressAndPort, (), (const, override));
+    MOCK_METHOD(std::string, getNickname, (), (override));
+    MOCK_METHOD(std::string, getIdentity, (), (override));
+    MOCK_METHOD(std::string, getIpAddressAndPort, (), (override));
 private:
     TTContactsHandlerMock mContactsHandler;
     TTChatHandlerMock mChatHandler;

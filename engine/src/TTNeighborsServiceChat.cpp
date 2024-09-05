@@ -47,7 +47,8 @@ grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc:
     tt::NarrateRequest request;
     std::set<size_t> uniqueIds;
     std::hash<std::string> hasher;
-    while (stream->Read(&request)) {
+    grpc::ServerReaderInterface<tt::NarrateRequest>* istream = stream;
+    while (istream->Read(&request)) {
         message.identity = request.identity();
         message.messages.push_back(request.message());
         uniqueIds.insert(hasher(message.identity));

@@ -28,11 +28,11 @@ public:
     // Heartbeat request handler
     virtual bool handleHeartbeat(const TTHeartbeatRequest& request);
     // Returns root nickname
-    virtual std::string getNickname() const;
+    virtual std::string getNickname();
     // Returns root identity
-    virtual std::string getIdentity() const;
+    virtual std::string getIdentity();
     // Returns root IP address and port
-    virtual std::string getIpAddressAndPort() const;
+    virtual std::string getIpAddressAndPort();
 private:
     bool addNeighbor(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort);
     struct Neighbor {
