@@ -20,8 +20,10 @@ get_filename_component(TT_ENGINE_UNIT_TESTS_DIRECTORY "." ABSOLUTE)
 
 set(TT_ENGINE_UNIT_TESTS
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/Main.cpp"
+  "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTEngineTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTEngineSettingsTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTBroadcasterChatTest.cpp"
+  "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTBroadcasterDiscoveryTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTNeighborsStubTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTNeighborsServiceDiscoveryTest.cpp"
   "${TT_ENGINE_UNIT_TESTS_DIRECTORY}/TTNeighborsServiceChatTest.cpp"

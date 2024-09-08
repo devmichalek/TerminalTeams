@@ -59,7 +59,8 @@ Application was tested using:
 - std::launder
 - std::once_flag
 - safe cleanup
-- engine unit tests
+- TTEngineTest.cpp unit tests
+- TTBroadcasterDiscoveryTest.cpp unit tests
 - utils unit tests
 - engine auto tests
 - TTConfig.hpp for each module displayed in logs

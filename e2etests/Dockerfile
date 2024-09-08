@@ -5,7 +5,9 @@ RUN apk update && \
     apk add --no-cache \
         make=4.3-r1 \
         g++=12.2.1_git20220924-r4 \
-        cmake=3.24.4-r0
+        cmake=3.24.4-r0 \
+        git=2.38.5-r0 \
+        linux-headers=5.19.5-r0
 
 WORKDIR /tteams
 

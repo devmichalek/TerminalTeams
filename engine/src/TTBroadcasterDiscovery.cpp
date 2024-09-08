@@ -40,30 +40,44 @@ void TTBroadcasterDiscovery::run() {
             std::scoped_lock neighborLock(mNeighborMutex);
             const auto count = mDynamicNeighbors.size();
             for (auto &[id, neighbor] : mDynamicNeighbors) {
+                if (!neighbor.timestamp.expired()) {
+                    const auto remaining = neighbor.timestamp.remaining();
+                    if (remaining < smallest) {
+                        smallest = remaining;
+                    }
+                    continue;
+                }
                 if (neighbor.trials) {
-                    if (neighbor.timestamp.expired()) {
+                    if (!neighbor.stub) {
+                        const auto entryOpt = mContactsHandler.get(id);
+                        if (!entryOpt) {
+                            LOG_ERROR("Failed to get entry using contacts handler!");
+                            stop();
+                            break;
+                        }
+                        const auto entry = entryOpt.value();
+                        neighbor.stub = mNeighborsStub.createDiscoveryStub(entry.ipAddressAndPort);
+                    }
+                    if (neighbor.stub) {
                         const auto heartbeatRequest = TTHeartbeatRequest{getIdentity()};
                         const auto heartbeatResponse = mNeighborsStub.sendHeartbeat(*neighbor.stub, heartbeatRequest);
                         if (heartbeatResponse.status && !heartbeatResponse.identity.empty()) {
-                            neighbor.trials = TIMESTAMP_TRIALS;
+                            neighbor.trials = TIMESTAMP_TRIALS + 1;
                             if (!mContactsHandler.activate(id)) {
+                                LOG_ERROR("Failed to activate using contacts handler!");
                                 stop();
                                 break;
                             }
                         } else {
-                            --neighbor.trials;
                             if (!mContactsHandler.deactivate(id)) {
+                                LOG_ERROR("Failed to deactivate using contacts handler!");
                                 stop();
                                 break;
                             }
                         }
-                        neighbor.timestamp.kick();
-                    } else {
-                        const auto remaining = neighbor.timestamp.remaining();
-                        if (remaining < smallest) {
-                            smallest = remaining;
-                        }
                     }
+                    --neighbor.trials;
+                    neighbor.timestamp.kick();
                 }
             }
         }
@@ -135,6 +149,11 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname, const std:
     std::scoped_lock neighborLock(mNeighborMutex);
     decltype(auto) id = mContactsHandler.get(identity);
     if (id != std::nullopt) {
+        if (!mContactsHandler.activate(id.value())) {
+            LOG_ERROR("Rejecting neighbor (failed to activate)...");
+            stop();
+            return false;
+        }
         LOG_WARNING("Rejecting neighbor (already present)...");
         return true;
     }
@@ -157,6 +176,6 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname, const std:
     mDynamicNeighbors.emplace(std::piecewise_construct,
         std::forward_as_tuple(id.value()),
         std::forward_as_tuple(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub)));
-    LOG_INFO("Successfully added neighbor!");
+    LOG_INFO("Successfully added new neighbor!");
     return true;
 }

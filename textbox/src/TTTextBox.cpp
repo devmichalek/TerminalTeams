@@ -1,6 +1,8 @@
 #include "TTTextBox.hpp"
 #include "TTDiagnosticsLogger.hpp"
 #include <iostream>
+#include <sstream>
+#include <algorithm>
 #include <list>
 #include <fcntl.h>
 #include <charconv>

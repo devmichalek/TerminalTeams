@@ -1,5 +1,6 @@
 #include "TTEngineSettings.hpp"
 #include <string>
+#include <limits>
 #include <charconv>
 #include <iostream>
 #include <arpa/inet.h>
