@@ -32,6 +32,8 @@ struct TTNarrateResponse {
 };
 
 struct TTGreetRequest {
+    TTGreetRequest(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort) :
+        nickname(nickname), identity(identity), ipAddressAndPort(ipAddressAndPort) {}
     bool operator==(const TTGreetRequest& rhs) const {
         return nickname == rhs.nickname && identity == rhs.identity && ipAddressAndPort == rhs.ipAddressAndPort;
     }
@@ -41,7 +43,8 @@ struct TTGreetRequest {
 };
 
 struct TTGreetResponse {
-    TTGreetResponse() = default;
+    TTGreetResponse(bool status, const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort) :
+        status(status), nickname(nickname), identity(identity), ipAddressAndPort(ipAddressAndPort) {}
     bool status;
     std::string nickname;
     std::string identity;
@@ -49,6 +52,7 @@ struct TTGreetResponse {
 };
 
 struct TTHeartbeatRequest {
+    TTHeartbeatRequest(const std::string& identity) : identity(identity) {}
     bool operator==(const TTHeartbeatRequest& rhs) const {
         return identity == rhs.identity;
     }
@@ -56,6 +60,7 @@ struct TTHeartbeatRequest {
 };
 
 struct TTHeartbeatResponse {
+    TTHeartbeatResponse(bool status, const std::string& identity) : status(status), identity(identity) {}
     bool status;
     std::string identity;
 };

@@ -1,32 +1,31 @@
 #pragma once
 #include <chrono>
 
-class TTTimestamp final {
+class TTUtilsTimer {
 public:
-    TTTimestamp(std::chrono::milliseconds threshold) :
+    TTUtilsTimer(std::chrono::milliseconds threshold) :
         mThreshold{threshold}, mTimestamp{std::chrono::steady_clock::now()} {}
-    TTTimestamp() = default;
-    ~TTTimestamp() = default;
-    TTTimestamp(const TTTimestamp&) = default;
-    TTTimestamp(TTTimestamp&&) = default;
-    TTTimestamp& operator=(const TTTimestamp&) = default;
-    TTTimestamp& operator=(TTTimestamp&&) = default;
-    bool expired() const {
+    TTUtilsTimer() = default;
+    virtual ~TTUtilsTimer() = default;
+    TTUtilsTimer(const TTUtilsTimer&) = default;
+    TTUtilsTimer(TTUtilsTimer&&) = default;
+    TTUtilsTimer& operator=(const TTUtilsTimer&) = default;
+    TTUtilsTimer& operator=(TTUtilsTimer&&) = default;
+    virtual bool expired() const {
         return remaining() >= mThreshold;
     }
-    void expire() {
+    virtual void expire() {
         mTimestamp = std::chrono::time_point<std::chrono::steady_clock>(std::chrono::milliseconds(0));
     }
-    std::chrono::milliseconds remaining() const {
+    virtual std::chrono::milliseconds remaining() const {
         const auto end = std::chrono::steady_clock::now();
         const auto difference = std::chrono::duration_cast<std::chrono::milliseconds>(end - mTimestamp);
         return difference;
     }
-    void kick() {
+    virtual void kick() {
         mTimestamp = std::chrono::steady_clock::now();
     }
 private:
     std::chrono::milliseconds mThreshold;
     std::chrono::time_point<std::chrono::steady_clock> mTimestamp;
 };
-

@@ -11,7 +11,12 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
         mInterface(interface),
-        mStaticNeighbors(neighbors) {
+        mInactivityTimerFactory(std::chrono::milliseconds(5000), std::chrono::milliseconds(6000)),
+        mDiscoveryTimerFactory(std::chrono::milliseconds(100), std::chrono::milliseconds(1000)) {
+    for (const auto &neighbor : neighbors) {
+        mStaticNeighbors.emplace_back(mDiscoveryTimerFactory.create(), neighbor);
+        mStaticNeighbors.back().timer.expire();
+    }
     LOG_INFO("Successfully constructed!");
 }
 
@@ -23,65 +28,13 @@ TTBroadcasterDiscovery::~TTBroadcasterDiscovery() {
 
 void TTBroadcasterDiscovery::run() {
     LOG_INFO("Started broadcasting discovery");
-    for (const auto& neighbor : mStaticNeighbors) {
-        if (stopped()) {
-            break;
-        }
-        auto stub = mNeighborsStub.createDiscoveryStub(neighbor);
-        auto greetRequest = TTGreetRequest{getNickname(), getIdentity(), getIpAddressAndPort()};
-        auto greetResponse = mNeighborsStub.sendGreet(*stub, greetRequest);
-        if (greetResponse.status) {
-            addNeighbor(greetResponse.nickname, greetResponse.identity, greetResponse.ipAddressAndPort);
-        }
+    auto staticNeighborsResult = std::async(std::launch::async, std::bind(&TTBroadcasterDiscovery::resolveStaticNeighbors, this));
+    auto dynamicNeighborsResult = std::async(std::launch::async, std::bind(&TTBroadcasterDiscovery::resolveDynamicNeighbors, this));
+    if (staticNeighborsResult.valid()) {
+        staticNeighborsResult.wait();
     }
-    while (!stopped()) {
-        std::chrono::milliseconds smallest = TIMESTAMP_TIMEOUT;
-        {
-            std::scoped_lock neighborLock(mNeighborMutex);
-            const auto count = mDynamicNeighbors.size();
-            for (auto &[id, neighbor] : mDynamicNeighbors) {
-                if (!neighbor.timestamp.expired()) {
-                    const auto remaining = neighbor.timestamp.remaining();
-                    if (remaining < smallest) {
-                        smallest = remaining;
-                    }
-                    continue;
-                }
-                if (neighbor.trials) {
-                    if (!neighbor.stub) {
-                        const auto entryOpt = mContactsHandler.get(id);
-                        if (!entryOpt) {
-                            LOG_ERROR("Failed to get entry using contacts handler!");
-                            stop();
-                            break;
-                        }
-                        const auto entry = entryOpt.value();
-                        neighbor.stub = mNeighborsStub.createDiscoveryStub(entry.ipAddressAndPort);
-                    }
-                    if (neighbor.stub) {
-                        const auto heartbeatRequest = TTHeartbeatRequest{getIdentity()};
-                        const auto heartbeatResponse = mNeighborsStub.sendHeartbeat(*neighbor.stub, heartbeatRequest);
-                        if (heartbeatResponse.status && !heartbeatResponse.identity.empty()) {
-                            neighbor.trials = TIMESTAMP_TRIALS + 1;
-                            if (!mContactsHandler.activate(id)) {
-                                LOG_ERROR("Failed to activate using contacts handler!");
-                                stop();
-                                break;
-                            }
-                        } else {
-                            if (!mContactsHandler.deactivate(id)) {
-                                LOG_ERROR("Failed to deactivate using contacts handler!");
-                                stop();
-                                break;
-                            }
-                        }
-                    }
-                    --neighbor.trials;
-                    neighbor.timestamp.kick();
-                }
-            }
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(smallest));
+    if (dynamicNeighborsResult.valid()) {
+        dynamicNeighborsResult.wait();
     }
     LOG_INFO("Stopped broadcasting discovery");
 }
@@ -97,16 +50,21 @@ bool TTBroadcasterDiscovery::stopped() const {
 
 bool TTBroadcasterDiscovery::handleGreet(const TTGreetRequest& request) {
     LOG_INFO("Handling greet, new contact id={}", request.identity);
-    return addNeighbor(request.nickname, request.identity, request.ipAddressAndPort);
+    return addNeighbor(request.nickname, request.identity, request.ipAddressAndPort, nullptr);
 }
 
 bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatRequest& request) {
     decltype(auto) id = mContactsHandler.get(request.identity);
     if (id == std::nullopt) {
-        LOG_INFO("Handling heartbeat, ignoring not existing contact id={}", request.identity);
+        LOG_WARNING("Handling heartbeat, ignoring not existing contact id={}", request.identity);
         return false;
     }
     LOG_INFO("Handling heartbeat, existing contact id={}", request.identity);
+    if (!mContactsHandler.activate(id.value())) {
+        LOG_ERROR("Handle heartbeat error (failed to activate)...");
+        stop();
+        return false;
+    }
     return true;
 }
 
@@ -140,7 +98,92 @@ std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
     return opt->ipAddressAndPort;
 }
 
-bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort) {
+void TTBroadcasterDiscovery::resolveStaticNeighbors() {
+    bool resolved = true;
+    do {
+        auto smallest = mDiscoveryTimerFactory.max();
+        for (auto& neighbor : mStaticNeighbors) {
+            if (stopped()) {
+                break;
+            }
+            if (neighbor.trials > 0) {
+                resolved = false;
+                if (neighbor.timer.expired()) {
+                    --neighbor.trials;
+                    auto stub = mNeighborsStub.createDiscoveryStub(neighbor.ipAddressAndPort);
+                    auto greetRequest = TTGreetRequest{getNickname(), getIdentity(), getIpAddressAndPort()};
+                    auto greetResponse = mNeighborsStub.sendGreet(*stub, greetRequest);
+                    if (greetResponse.status) {
+                        addNeighbor(greetResponse.nickname, greetResponse.identity, greetResponse.ipAddressAndPort, std::move(stub));
+                    }
+                } else {
+                    const auto remaining = neighbor.timer.remaining();
+                    if (remaining < smallest) {
+                        smallest = remaining;
+                    }
+                }
+            }
+        }
+    } while (!resolved);
+}
+
+void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
+    while (!stopped()) {
+        auto smallest = mInactivityTimerFactory.max();
+        {
+            std::scoped_lock neighborLock(mNeighborMutex);
+            for (auto &[id, neighbor] : mDynamicNeighbors) {
+                if (stopped()) {
+                    break;
+                }
+                if (!neighbor.timer.expired()) {
+                    const auto remaining = neighbor.timer.remaining();
+                    if (remaining < smallest) {
+                        smallest = remaining;
+                    }
+                }
+                else if (neighbor.trials) {
+                    if (!neighbor.stub) {
+                        const auto entryOpt = mContactsHandler.get(id);
+                        if (!entryOpt) {
+                            LOG_ERROR("Failed to get entry using contacts handler!");
+                            stop();
+                            break;
+                        }
+                        const auto entry = entryOpt.value();
+                        neighbor.stub = mNeighborsStub.createDiscoveryStub(entry.ipAddressAndPort);
+                    }
+                    if (neighbor.stub) {
+                        const auto heartbeatRequest = TTHeartbeatRequest{getIdentity()};
+                        const auto heartbeatResponse = mNeighborsStub.sendHeartbeat(*neighbor.stub, heartbeatRequest);
+                        if (heartbeatResponse.status && !heartbeatResponse.identity.empty()) {
+                            neighbor.trials = DynamicNeighbor::inactivityTrials + 1;
+                            if (!mContactsHandler.activate(id)) {
+                                LOG_ERROR("Failed to activate using contacts handler!");
+                                stop();
+                                break;
+                            }
+                        } else {
+                            if (!mContactsHandler.deactivate(id)) {
+                                LOG_ERROR("Failed to deactivate using contacts handler!");
+                                stop();
+                                break;
+                            }
+                        }
+                    }
+                    --neighbor.trials;
+                    neighbor.timer.kick();
+                }
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(smallest));
+    }
+}
+
+bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname,
+    const std::string& identity,
+    const std::string& ipAddressAndPort,
+    TTUniqueDiscoveryStub stub) {
     LOG_INFO("Adding neighbor...");
     if (nickname.empty() || identity.empty() || ipAddressAndPort.empty()) {
         LOG_WARNING("Rejecting neighbor (incomplete data)...");
@@ -172,10 +215,11 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname, const std:
         stop();
         return false;
     }
-    auto stub = mNeighborsStub.createDiscoveryStub(ipAddressAndPort);
+    auto timer = mInactivityTimerFactory.create();
+    timer.expire();
     mDynamicNeighbors.emplace(std::piecewise_construct,
         std::forward_as_tuple(id.value()),
-        std::forward_as_tuple(TIMESTAMP_TIMEOUT, TIMESTAMP_TRIALS, std::move(stub)));
+        std::forward_as_tuple(timer, std::move(stub)));
     LOG_INFO("Successfully added new neighbor!");
     return true;
 }

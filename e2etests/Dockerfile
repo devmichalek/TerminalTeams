@@ -11,6 +11,7 @@ RUN apk update && \
 
 WORKDIR /tteams
 
+COPY ./autotests ./autotests
 COPY ./chat ./chat
 COPY ./contacts ./contacts
 COPY ./diagnostics ./diagnostics

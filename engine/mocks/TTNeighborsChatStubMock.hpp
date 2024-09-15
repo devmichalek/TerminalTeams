@@ -4,6 +4,11 @@
 
 class TTNeighborsChatStubMock : public TTNeighborsChatStubIf {
 public:
+    TTNeighborsChatStubMock(const std::string& ipAddressAndPort) :
+        ipAddressAndPort(ipAddressAndPort)
+    {
+        // Nothing to be done
+    }
     MOCK_METHOD(::grpc::Status,
         Tell,
         (::grpc::ClientContext* context, const ::tt::TellRequest& request, ::tt::TellReply* response), (override));
@@ -22,4 +27,5 @@ public:
     MOCK_METHOD(::grpc::ClientAsyncWriterInterface< ::tt::NarrateRequest>*,
         PrepareAsyncNarrateRaw,
         (::grpc::ClientContext* context, ::tt::NarrateReply* response, ::grpc::CompletionQueue* cq), (override));
+    std::string ipAddressAndPort;
 };

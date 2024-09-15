@@ -4,6 +4,11 @@
 
 class TTNeighborsDiscoveryStubMock : public TTNeighborsDiscoveryStubIf {
 public:
+    TTNeighborsDiscoveryStubMock(const std::string& ipAddressAndPort) :
+        ipAddressAndPort(ipAddressAndPort)
+    {
+        // Nothing to be done
+    }
     MOCK_METHOD(::grpc::Status,
         Greet,
         (::grpc::ClientContext* context, const ::tt::GreetRequest& request, ::tt::GreetReply* response), (override));
@@ -22,4 +27,5 @@ public:
     MOCK_METHOD(::grpc::ClientAsyncResponseReaderInterface< ::tt::HeartbeatReply>*,
         PrepareAsyncHeartbeatRaw,
         (::grpc::ClientContext* context, const ::tt::HeartbeatRequest& request, ::grpc::CompletionQueue* cq), (override));
+    std::string ipAddressAndPort;
 };

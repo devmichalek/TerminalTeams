@@ -13,6 +13,7 @@ struct TTContactsHandlerEntry final {
         nickname(nickname), identity(identity),
         ipAddressAndPort(ipAddressAndPort), sentMessages(0), receivedMessages(0),
         state(TTContactsState::ACTIVE) {}
+    TTContactsHandlerEntry() = default;
     ~TTContactsHandlerEntry() = default;
     TTContactsHandlerEntry(const TTContactsHandlerEntry&) = default;
     TTContactsHandlerEntry(TTContactsHandlerEntry&&) = default;

@@ -2,7 +2,7 @@
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTNetworkInterface.hpp"
-#include "TTTimestamp.hpp"
+#include "TTUtilsTimerFactory.hpp"
 #include "TTNeighborsStub.hpp"
 
 class TTBroadcasterDiscovery {
@@ -34,27 +34,46 @@ public:
     // Returns root IP address and port
     virtual std::string getIpAddressAndPort();
 private:
-    bool addNeighbor(const std::string& nickname, const std::string& identity, const std::string& ipAddressAndPort);
-    struct Neighbor {
-        Neighbor(TTTimestamp timestamp, size_t trials, TTUniqueDiscoveryStub stub) :
-            timestamp(timestamp), trials(trials), stub(std::move(stub)) {}
-        ~Neighbor() = default;
-        Neighbor(const Neighbor&) = default;
-        Neighbor(Neighbor&&) = default;
-        Neighbor& operator=(const Neighbor&) = default;
-        Neighbor& operator=(Neighbor&&) = default;
-        TTTimestamp timestamp;
+    void resolveStaticNeighbors();
+    void resolveDynamicNeighbors();
+    bool addNeighbor(const std::string& nickname,
+        const std::string& identity,
+        const std::string& ipAddressAndPort,
+        TTUniqueDiscoveryStub stub);
+    struct StaticNeighbor {
+        StaticNeighbor(TTUtilsTimer timer, std::string ipAddressAndPort) :
+            timer(timer), trials(discoveryTrials), ipAddressAndPort(ipAddressAndPort) {}
+        ~StaticNeighbor() = default;
+        StaticNeighbor(const StaticNeighbor&) = default;
+        StaticNeighbor(StaticNeighbor&&) = default;
+        StaticNeighbor& operator=(const StaticNeighbor&) = default;
+        StaticNeighbor& operator=(StaticNeighbor&&) = default;
+        TTUtilsTimer timer;
+        size_t trials;
+        std::string ipAddressAndPort;
+        const static inline size_t discoveryTrials = 3;
+    };
+    struct DynamicNeighbor {
+        DynamicNeighbor(TTUtilsTimer timer, TTUniqueDiscoveryStub stub) :
+            timer(timer), trials(inactivityTrials), stub(std::move(stub)) {}
+        ~DynamicNeighbor() = default;
+        DynamicNeighbor(const DynamicNeighbor&) = default;
+        DynamicNeighbor(DynamicNeighbor&&) = default;
+        DynamicNeighbor& operator=(const DynamicNeighbor&) = default;
+        DynamicNeighbor& operator=(DynamicNeighbor&&) = default;
+        TTUtilsTimer timer;
         size_t trials;
         TTUniqueDiscoveryStub stub;
+        const static inline size_t inactivityTrials = 5;
     };
     std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNeighborsStub& mNeighborsStub;
     TTNetworkInterface mInterface;
-    std::deque<std::string> mStaticNeighbors;
-    std::map<size_t, Neighbor> mDynamicNeighbors;
+    std::deque<StaticNeighbor> mStaticNeighbors;
+    std::map<size_t, DynamicNeighbor> mDynamicNeighbors;
     mutable std::shared_mutex mNeighborMutex;
-    static inline std::chrono::milliseconds TIMESTAMP_TIMEOUT{3000};
-    static inline size_t TIMESTAMP_TRIALS{5};
+    TTUtilsTimerFactory mInactivityTimerFactory;
+    TTUtilsTimerFactory mDiscoveryTimerFactory;
 };

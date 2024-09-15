@@ -11,7 +11,7 @@ TEST(TTNeighborsStubTest, HappyPathSendTell) {
     TTTellRequest request;
     request.identity = "5ef885a";
     request.message = "Hello world!";
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, Tell(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::TellRequest& request, ::tt::TellReply* response){
@@ -30,7 +30,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendTell) {
     TTTellRequest request;
     request.identity = "5ef885a";
     request.message = "Hello world!";
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, Tell(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::TellRequest& request, ::tt::TellReply* response){
@@ -78,7 +78,7 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
     EXPECT_CALL(*cwinr, Finish())
         .Times(1)
         .WillOnce(Return(grpc::Status()));
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, ::tt::NarrateReply* response){
@@ -95,7 +95,7 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
 
 TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToCreateWriter) {
     TTNarrateRequest request;
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, ::tt::NarrateReply* response){
@@ -128,7 +128,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToWrite) {
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request2), _))
         .Times(1)
         .WillOnce(Return(false));
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, ::tt::NarrateReply* response){
@@ -167,7 +167,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
     EXPECT_CALL(*cwinr, Finish())
         .Times(1)
         .WillOnce(Return(grpc::Status(grpc::UNKNOWN, "?")));
-    TTNeighborsChatStubMock chatStub;
+    TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, ::tt::NarrateReply* response){
@@ -183,11 +183,8 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
 }
 
 TEST(TTNeighborsStubTest, HappyPathSendGreet) {
-    TTGreetRequest request;
-    request.nickname = "adriqun";
-    request.identity = "5ef885a";
-    request.ipAddressAndPort = "192.168.1.8:88";
-    TTNeighborsDiscoveryStubMock discoveryStub;
+    TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
+    TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Greet(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::GreetRequest& request, ::tt::GreetReply* response){
@@ -208,11 +205,8 @@ TEST(TTNeighborsStubTest, HappyPathSendGreet) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendGreet) {
-    TTGreetRequest request;
-    request.nickname = "adriqun";
-    request.identity = "5ef885a";
-    request.ipAddressAndPort = "192.168.1.8:88";
-    TTNeighborsDiscoveryStubMock discoveryStub;
+    TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
+    TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Greet(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::GreetRequest& request, ::tt::GreetReply* response){
@@ -224,9 +218,8 @@ TEST(TTNeighborsStubTest, UnhappyPathSendGreet) {
 }
 
 TEST(TTNeighborsStubTest, HappyPathSendHeartbeat) {
-    TTHeartbeatRequest request;
-    request.identity = "5ef885a";
-    TTNeighborsDiscoveryStubMock discoveryStub;
+    TTHeartbeatRequest request("5ef885a");
+    TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Heartbeat(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::HeartbeatRequest& request, ::tt::HeartbeatReply* response){
@@ -243,9 +236,8 @@ TEST(TTNeighborsStubTest, HappyPathSendHeartbeat) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendHeartbeat) {
-    TTHeartbeatRequest request;
-    request.identity = "5ef885a";
-    TTNeighborsDiscoveryStubMock discoveryStub;
+    TTHeartbeatRequest request("5ef885a");
+    TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Heartbeat(_, _, _))
         .Times(1)
         .WillOnce([&](::grpc::ClientContext* context, const ::tt::HeartbeatRequest& request, ::tt::HeartbeatReply* response){

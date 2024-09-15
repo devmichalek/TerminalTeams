@@ -5,6 +5,7 @@
 struct TTContactsEntry final {
     TTContactsEntry(size_t identity, TTContactsState state, const std::string& nickname) :
         identity(identity), state(state), nickname(nickname) {}
+    TTContactsEntry() = default;
     ~TTContactsEntry() = default;
     TTContactsEntry(const TTContactsEntry&) = default;
     TTContactsEntry(TTContactsEntry&&) = default;

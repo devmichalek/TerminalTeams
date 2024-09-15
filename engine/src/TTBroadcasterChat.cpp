@@ -11,8 +11,7 @@ TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler,
         mNeighborsStub(neighborsStub),
         mInterface(interface),
         mNeighborsFlag{false},
-        mRandomNumberGenerator(mRandomDevice()),
-        mInactivityDistribution(INACTIVITY_TIMEOUT_MIN, INACTIVITY_TIMEOUT_MAX) {
+        mInactivityTimerFactory(std::chrono::milliseconds(3000), std::chrono::milliseconds(6000)){
     LOG_INFO("Successfully constructed!");
 }
 
@@ -27,17 +26,17 @@ void TTBroadcasterChat::run() {
     while (!stopped()) {
         mNeighborsFlag.store(false);
         std::unique_lock<std::mutex> lock(mNeighborsMutex);
-        const bool predicate = mNeighborsCondition.wait_for(lock, std::chrono::milliseconds(NEIGHBORS_FLAG_TIMEOUT), [this]() {
+        const bool predicate = mNeighborsCondition.wait_for(lock, mInactivityTimerFactory.min(), [this]() {
             return mNeighborsFlag.load() || stopped();
         });
-        if (stopped()) {
-            break;
-        }
         for (auto &[id, neighbor] : mNeighbors) {
-            if (!neighbor.timestamp.expired()) {
+            if (stopped()) {
+                break;
+            }
+            if (!neighbor.timer.expired()) {
                 continue;
             }
-            neighbor.timestamp.kick();
+            neighbor.timer.kick();
             const auto neighborsEntry = mContactsHandler.get(id).value();
             if (neighborsEntry.state.isInactive()) {
                 continue;
@@ -126,8 +125,8 @@ bool TTBroadcasterChat::handleSend(const std::string& message) {
     {
         auto newNeighbor = std::pair{contactsCurrentId, Neighbor{}};
         newNeighbor.second.stub = mNeighborsStub.createChatStub(requestedIpAddress);
-        newNeighbor.second.timestamp = TTTimestamp(std::chrono::milliseconds(mInactivityDistribution(mRandomNumberGenerator)));
-        newNeighbor.second.timestamp.expire();
+        newNeighbor.second.timer = mInactivityTimerFactory.create();
+        newNeighbor.second.timer.expire();
         newNeighbor.second.pendingMessages.push_back(message);
         mNeighbors.insert(lb, std::move(newNeighbor));
         LOG_INFO("Success, inserted new neighbor to the map, inserted new message!");

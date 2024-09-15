@@ -78,18 +78,13 @@ TTGreetResponse TTNeighborsStub::sendGreet(TTNeighborsDiscoveryStubIf& stub, con
         grpc::ClientContext context;
         grpc::Status status = stub.Greet(&context, request, &reply);
         if (status.ok()) {
-            TTGreetResponse result;
-            result.status = true;
-            result.nickname = reply.nickname();
-            result.identity = reply.identity();
-            result.ipAddressAndPort = reply.ipaddressandport();
-            return result;
+            return TTGreetResponse(true, reply.nickname(), reply.identity(), reply.ipaddressandport());
         }
         LOG_ERROR("Error status received on send greet!");
     } catch (...) {
         LOG_ERROR("Exception occurred while sending greet!");
     }
-    return {};
+    return {{}, {}, {}, {}};
 }
 
 TTHeartbeatResponse TTNeighborsStub::sendHeartbeat(TTNeighborsDiscoveryStubIf& stub, const TTHeartbeatRequest& rhs) const {
@@ -100,14 +95,11 @@ TTHeartbeatResponse TTNeighborsStub::sendHeartbeat(TTNeighborsDiscoveryStubIf& s
         grpc::ClientContext context;
         grpc::Status status = stub.Heartbeat(&context, request, &reply);
         if (status.ok()) {
-            TTHeartbeatResponse result;
-            result.status = true;
-            result.identity = reply.identity();
-            return result;
+            return TTHeartbeatResponse(true, reply.identity());
         }
         LOG_ERROR("Error status received on send heartbeat!");
     } catch (...) {
         LOG_ERROR("Exception occurred while sending greet!");
     }
-    return {};
+    return {{}, {}};
 }

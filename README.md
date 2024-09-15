@@ -61,6 +61,7 @@ Application was tested using:
 - safe cleanup
 - TTEngineTest.cpp unit tests
 - TTBroadcasterDiscoveryTest.cpp unit tests
+- TTHeartbeatRequest and other, add operators and constructors and cout operators
 - utils unit tests
 - engine auto tests
 - TTConfig.hpp for each module displayed in logs

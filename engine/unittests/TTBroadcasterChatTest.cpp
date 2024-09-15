@@ -317,7 +317,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
             .WillOnce(Return(ByMove(nullptr)));
         EXPECT_CALL(*mNeighborsStub, createChatStub(entry.ipAddressAndPort))
             .Times(1)
-            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>())));
+            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>(entry.ipAddressAndPort))));
         EXPECT_CALL(*mNeighborsStub, sendTell(_, expectedRequest))
             .Times(1)
             .WillOnce(Return(TTTellResponse{true}));
@@ -328,7 +328,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
     EXPECT_TRUE(mBroadcaster->handleSend(message));
     EXPECT_FALSE(mBroadcaster->stopped());
     // Expect consumer to react
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    std::this_thread::sleep_for(std::chrono::milliseconds{4000});
     mBroadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
     loop.join();
@@ -406,7 +406,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
             .WillRepeatedly([&](){return std::unique_ptr<TTNeighborsChatStubMock>(nullptr); });
         EXPECT_CALL(*mNeighborsStub, createChatStub(neighborEntry.ipAddressAndPort))
             .Times(1)
-            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>())));
+            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>(neighborEntry.ipAddressAndPort))));
         EXPECT_CALL(*mNeighborsStub, sendTell(_, expectedRequest))
             .Times(1)
             .WillOnce(Return(TTTellResponse{true}));
@@ -467,7 +467,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendNarrateImmediateStubCreationFailed) {
             .WillRepeatedly([&](){return std::unique_ptr<TTNeighborsChatStubMock>(nullptr); });
         EXPECT_CALL(*mNeighborsStub, createChatStub(neighborEntry.ipAddressAndPort))
             .Times(1)
-            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>())));
+            .WillOnce(Return(ByMove(std::make_unique<TTNeighborsChatStubMock>(neighborEntry.ipAddressAndPort))));
         EXPECT_CALL(*mNeighborsStub, sendNarrate(_, expectedRequest))
             .Times(1)
             .WillOnce(Return(TTNarrateResponse{true}));
