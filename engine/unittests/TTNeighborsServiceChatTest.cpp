@@ -15,9 +15,7 @@ TEST(TTNeighborsServiceChatTest, HappyPathTell) {
     tt::TellRequest request;
     request.set_identity(identity1);
     request.set_message(message1);
-    TTTellRequest expectedRequest;
-    expectedRequest.identity = identity1;
-    expectedRequest.message = message1;
+    const TTTellRequest expectedRequest(identity1, message1);
     tt::TellReply reply;
     TTBroadcasterChatMock handler;
     EXPECT_CALL(handler, handleReceive(expectedRequest))
@@ -62,9 +60,7 @@ TEST(TTNeighborsServiceChatTest, UnhappyPathTellHandlerFailed) {
     tt::TellRequest request;
     request.set_identity(identity1);
     request.set_message(message1);
-    TTTellRequest expectedRequest;
-    expectedRequest.identity = identity1;
-    expectedRequest.message = message1;
+    const TTTellRequest expectedRequest(identity1, message1);
     tt::TellReply reply;
     TTBroadcasterChatMock handler;
     EXPECT_CALL(handler, handleReceive(expectedRequest))
@@ -106,10 +102,7 @@ TEST(TTNeighborsServiceChatTest, HappyPathNarrate) {
                 return false;
             }
         });
-    TTNarrateRequest expectedRequest;
-    expectedRequest.identity = identity1;
-    expectedRequest.messages.push_back(message1);
-    expectedRequest.messages.push_back(message2);
+    const TTNarrateRequest expectedRequest(identity1, {message1, message2});
     tt::NarrateReply reply;
     TTBroadcasterChatMock handler;
     EXPECT_CALL(handler, handleReceive(expectedRequest))
@@ -174,10 +167,7 @@ TEST(TTNeighborsServiceChatTest, UnhappyPathNarrateHandlerFailed) {
                 return false;
             }
         });
-    TTNarrateRequest expectedRequest;
-    expectedRequest.identity = identity1;
-    expectedRequest.messages.push_back(message1);
-    expectedRequest.messages.push_back(message2);
+    const TTNarrateRequest expectedRequest(identity1, {message1, message2});
     tt::NarrateReply reply;
     TTBroadcasterChatMock handler;
     EXPECT_CALL(handler, handleReceive(expectedRequest))
@@ -212,10 +202,7 @@ TEST(TTNeighborsServiceChatTest, UnhappyPathNarrateManyUniqueIds) {
                 return false;
             }
         });
-    TTNarrateRequest expectedRequest;
-    expectedRequest.identity = identity1;
-    expectedRequest.messages.push_back(message1);
-    expectedRequest.messages.push_back(message2);
+    const TTNarrateRequest expectedRequest(identity1, {message1, message2});
     tt::NarrateReply reply;
     TTBroadcasterChatMock handler;
     TTNeighborsServiceChat service(handler);

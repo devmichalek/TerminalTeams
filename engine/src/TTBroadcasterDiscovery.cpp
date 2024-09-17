@@ -99,9 +99,9 @@ std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
 }
 
 void TTBroadcasterDiscovery::resolveStaticNeighbors() {
-    bool resolved = true;
     do {
         auto smallest = mDiscoveryTimerFactory.max();
+        bool resolved = true;
         for (auto& neighbor : mStaticNeighbors) {
             if (stopped()) {
                 break;
@@ -111,11 +111,16 @@ void TTBroadcasterDiscovery::resolveStaticNeighbors() {
                 if (neighbor.timer.expired()) {
                     --neighbor.trials;
                     auto stub = mNeighborsStub.createDiscoveryStub(neighbor.ipAddressAndPort);
-                    auto greetRequest = TTGreetRequest{getNickname(), getIdentity(), getIpAddressAndPort()};
-                    auto greetResponse = mNeighborsStub.sendGreet(*stub, greetRequest);
-                    if (greetResponse.status) {
-                        addNeighbor(greetResponse.nickname, greetResponse.identity, greetResponse.ipAddressAndPort, std::move(stub));
+                    if (stub) {
+                        auto greetRequest = TTGreetRequest{getNickname(), getIdentity(), getIpAddressAndPort()};
+                        auto greetResponse = mNeighborsStub.sendGreet(*stub, greetRequest);
+                        if (greetResponse.status) {
+                            if (addNeighbor(greetResponse.nickname, greetResponse.identity, greetResponse.ipAddressAndPort, std::move(stub))) {
+                                neighbor.trials = 0;
+                            }
+                        }
                     }
+                    neighbor.timer.kick();
                 } else {
                     const auto remaining = neighbor.timer.remaining();
                     if (remaining < smallest) {
@@ -124,7 +129,10 @@ void TTBroadcasterDiscovery::resolveStaticNeighbors() {
                 }
             }
         }
-    } while (!resolved);
+        if (resolved) {
+            break;
+        }
+    } while (!stopped());
 }
 
 void TTBroadcasterDiscovery::resolveDynamicNeighbors() {

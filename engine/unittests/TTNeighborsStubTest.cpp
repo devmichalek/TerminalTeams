@@ -8,9 +8,7 @@ using ::testing::_;
 using ::testing::Return;
 
 TEST(TTNeighborsStubTest, HappyPathSendTell) {
-    TTTellRequest request;
-    request.identity = "5ef885a";
-    request.message = "Hello world!";
+    const TTTellRequest request("5ef885a", "Hello world!");
     TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, Tell(_, _, _))
         .Times(1)
@@ -27,9 +25,7 @@ TEST(TTNeighborsStubTest, HappyPathSendTell) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendTell) {
-    TTTellRequest request;
-    request.identity = "5ef885a";
-    request.message = "Hello world!";
+    const TTTellRequest request("5ef885a", "Hello world!");
     TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, Tell(_, _, _))
         .Times(1)
@@ -64,10 +60,7 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
     tt::NarrateRequest request2;
     request2.set_identity(identity);
     request2.set_message(message2);
-    TTNarrateRequest request;
-    request.identity = identity;
-    request.messages.push_back(message1);
-    request.messages.push_back(message2);
+    const TTNarrateRequest request(identity, {message1, message2});
     auto cwinr = std::make_unique<ClientWriterInterfaceNarrateRequest>();
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request1), _))
         .Times(1)
@@ -94,7 +87,7 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToCreateWriter) {
-    TTNarrateRequest request;
+    const TTNarrateRequest request;
     TTNeighborsChatStubMock chatStub({});
     EXPECT_CALL(chatStub, NarrateRaw(_, _))
         .Times(1)
@@ -117,10 +110,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToWrite) {
     tt::NarrateRequest request2;
     request2.set_identity(identity);
     request2.set_message(message2);
-    TTNarrateRequest request;
-    request.identity = identity;
-    request.messages.push_back(message1);
-    request.messages.push_back(message2);
+    const TTNarrateRequest request(identity, {message1, message2});
     auto cwinr = std::make_unique<ClientWriterInterfaceNarrateRequest>();
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request1), _))
         .Times(1)
@@ -153,10 +143,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
     tt::NarrateRequest request2;
     request2.set_identity(identity);
     request2.set_message(message2);
-    TTNarrateRequest request;
-    request.identity = identity;
-    request.messages.push_back(message1);
-    request.messages.push_back(message2);
+    const TTNarrateRequest request(identity, {message1, message2});
     auto cwinr = std::make_unique<ClientWriterInterfaceNarrateRequest>();
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request1), _))
         .Times(1)
@@ -183,7 +170,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
 }
 
 TEST(TTNeighborsStubTest, HappyPathSendGreet) {
-    TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
+    const TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
     TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Greet(_, _, _))
         .Times(1)
@@ -205,7 +192,7 @@ TEST(TTNeighborsStubTest, HappyPathSendGreet) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendGreet) {
-    TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
+    const TTGreetRequest request("adriqun", "5ef885a", "192.168.1.8:88");
     TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Greet(_, _, _))
         .Times(1)
@@ -218,7 +205,7 @@ TEST(TTNeighborsStubTest, UnhappyPathSendGreet) {
 }
 
 TEST(TTNeighborsStubTest, HappyPathSendHeartbeat) {
-    TTHeartbeatRequest request("5ef885a");
+    const TTHeartbeatRequest request("5ef885a");
     TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Heartbeat(_, _, _))
         .Times(1)
@@ -236,7 +223,7 @@ TEST(TTNeighborsStubTest, HappyPathSendHeartbeat) {
 }
 
 TEST(TTNeighborsStubTest, UnhappyPathSendHeartbeat) {
-    TTHeartbeatRequest request("5ef885a");
+    const TTHeartbeatRequest request("5ef885a");
     TTNeighborsDiscoveryStubMock discoveryStub({});
     EXPECT_CALL(discoveryStub, Heartbeat(_, _, _))
         .Times(1)

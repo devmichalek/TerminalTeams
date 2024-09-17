@@ -18,7 +18,7 @@ TEST(TTNeighborsServiceDiscoveryTest, HappyPathGreet) {
     request.set_nickname(nickname1);
     request.set_identity(identity1);
     request.set_ipaddressandport(ipAddressAndPort1);
-    TTGreetRequest expectedRequest(nickname1, identity1, ipAddressAndPort1);
+    const TTGreetRequest expectedRequest(nickname1, identity1, ipAddressAndPort1);
     tt::GreetReply reply;
     TTBroadcasterDiscoveryMock handler;
     EXPECT_CALL(handler, handleGreet(expectedRequest))
@@ -73,7 +73,7 @@ TEST(TTNeighborsServiceDiscoveryTest, UnhappyPathGreetHandlerFailed) {
     request.set_nickname(nickname1);
     request.set_identity(identity1);
     request.set_ipaddressandport(ipAddressAndPort1);
-    TTGreetRequest expectedRequest(nickname1, identity1, ipAddressAndPort1);
+    const TTGreetRequest expectedRequest(nickname1, identity1, ipAddressAndPort1);
     tt::GreetReply reply;
     TTBroadcasterDiscoveryMock handler;
     EXPECT_CALL(handler, handleGreet(expectedRequest))
@@ -89,7 +89,7 @@ TEST(TTNeighborsServiceDiscoveryTest, HappyPathHeartbeat) {
     grpc::ServerContext context;
     tt::HeartbeatRequest request;
     request.set_identity(identity1);
-    TTHeartbeatRequest expectedRequest(identity1);
+    const TTHeartbeatRequest expectedRequest(identity1);
     tt::HeartbeatReply reply;
     TTBroadcasterDiscoveryMock handler;
     EXPECT_CALL(handler, handleHeartbeat(expectedRequest))
@@ -132,7 +132,7 @@ TEST(TTNeighborsServiceDiscoveryTest, UnhappyPathHeartbeatHandlerFailed) {
     grpc::ServerContext context;
     tt::HeartbeatRequest request;
     request.set_identity(identity1);
-    TTHeartbeatRequest expectedRequest(identity1);
+    const TTHeartbeatRequest expectedRequest(identity1);
     tt::HeartbeatReply reply;
     TTBroadcasterDiscoveryMock handler;
     EXPECT_CALL(handler, handleHeartbeat(expectedRequest))

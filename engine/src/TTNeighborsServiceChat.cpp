@@ -18,9 +18,7 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
         LOG_ERROR("Reply is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
     }
-    TTTellRequest message;
-    message.identity = request->identity();
-    message.message = request->message();
+    const TTTellRequest message(request->identity(), request->message());
     if (mHandler.handleReceive(message)) {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");

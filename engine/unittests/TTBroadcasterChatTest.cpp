@@ -40,9 +40,7 @@ protected:
 };
 
 TEST_F(TTBroadcasterChatTest, HappyPathReceiveTellRequest) {
-    TTTellRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.message = "Hello world!";
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -57,9 +55,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathReceiveTellRequest) {
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestNoIdentity) {
-    TTTellRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.message = "Hello world!";
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(std::nullopt));
@@ -67,9 +63,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestNoIdentity) {
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestContactsHandlerFailed) {
-    TTTellRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.message = "Hello world!";
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -81,9 +75,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestContactsHandlerFailed
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestChatHandlerFailed) {
-    TTTellRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.message = "Hello world!";
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -98,9 +90,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestChatHandlerFailed) {
 }
 
 TEST_F(TTBroadcasterChatTest, HappyPathReceiveNarrateRequest) {
-    TTNarrateRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.messages = { "a", "b", "c" };
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -117,9 +107,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathReceiveNarrateRequest) {
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestNoIdentity) {
-    TTNarrateRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.messages = { "a", "b", "c" };
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(std::nullopt));
@@ -127,9 +115,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestNoIdentity) {
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestContactsHandlerFailed) {
-    TTNarrateRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.messages = { "a", "b", "c" };
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -141,9 +127,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestContactsHandlerFai
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestChatHandlerFailed) {
-    TTNarrateRequest request;
-    request.identity = "312382290f4f71e7fb7f00449fb529fce3b8ec95";
-    request.messages = { "a", "b", "c" };
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
@@ -287,9 +271,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
     const std::string message = "foo";
     const std::string neighborIdentity = "f71e7fb";
     const std::string hostIdentity = "888992ef";
-    TTTellRequest expectedRequest;
-    expectedRequest.message = message;
-    expectedRequest.identity = hostIdentity;
+    const TTTellRequest expectedRequest(hostIdentity, message);
     const TTContactsHandlerEntry entry("neighbor", neighborIdentity, "192.168.1.80:8879");
     const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
@@ -376,9 +358,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
     const std::string message = "foo";
     const std::string neighborIdentity = "f71e7fb";
     const std::string hostIdentity = "888992ef";
-    TTTellRequest expectedRequest;
-    expectedRequest.message = message;
-    expectedRequest.identity = hostIdentity;
+    const TTTellRequest expectedRequest(hostIdentity, message);
     const TTContactsHandlerEntry neighborEntry("neighbor", neighborIdentity, "192.168.1.80:8879");
     const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
@@ -426,18 +406,14 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
 TEST_F(TTBroadcasterChatTest, HappyPathSendNarrateImmediateStubCreationFailed) {
     // Setup
     const size_t currentId = 1;
-    const std::vector<std::string> messages{
+    const std::deque<std::string> messages{
         "foo",
         "boo",
         "lazy"
     };
     const std::string neighborIdentity = "f71e7fb";
     const std::string hostIdentity = "888992ef";
-    TTNarrateRequest expectedRequest;
-    expectedRequest.identity = hostIdentity;
-    for (const auto& message : messages) {
-        expectedRequest.messages.push_back(message);
-    }
+    const TTNarrateRequest expectedRequest(hostIdentity, messages);
     const TTContactsHandlerEntry neighborEntry("neighbor", neighborIdentity, "192.168.1.80:8879");
     const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
