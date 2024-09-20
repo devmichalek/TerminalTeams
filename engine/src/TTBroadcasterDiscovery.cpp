@@ -4,13 +4,13 @@
 TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                                                TTChatHandler& chatHandler,
                                                TTNeighborsStub& neighborsStub,
-                                               TTNetworkInterface interface,
-                                               std::deque<std::string> neighbors) :
+                                               TTNetworkInterface networkInterface,
+                                               const std::deque<std::string>& neighbors) :
         mStopped{false},
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
-        mInterface(interface),
+        mNetworkInterface(networkInterface),
         mInactivityTimerFactory(std::chrono::milliseconds(5000), std::chrono::milliseconds(6000)),
         mDiscoveryTimerFactory(std::chrono::milliseconds(100), std::chrono::milliseconds(1000)) {
     for (const auto &neighbor : neighbors) {

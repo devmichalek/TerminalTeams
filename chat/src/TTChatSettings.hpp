@@ -5,10 +5,10 @@ class TTChatSettings {
 public:
     explicit TTChatSettings(int argc, const char* const* argv);
     virtual ~TTChatSettings() {}
-    TTChatSettings(const TTChatSettings&) = delete;
-    TTChatSettings(TTChatSettings&&) = delete;
-    TTChatSettings& operator=(const TTChatSettings&) = delete;
-    TTChatSettings& operator=(TTChatSettings&&) = delete;
+    TTChatSettings(const TTChatSettings&) = default;
+    TTChatSettings(TTChatSettings&&) = default;
+    TTChatSettings& operator=(const TTChatSettings&) = default;
+    TTChatSettings& operator=(TTChatSettings&&) = default;
     virtual size_t getTerminalWidth() const { return mWidth; }
     virtual size_t getTerminalHeight() const { return mHeight; }
     virtual std::shared_ptr<TTUtilsMessageQueue> getPrimaryMessageQueue() const;

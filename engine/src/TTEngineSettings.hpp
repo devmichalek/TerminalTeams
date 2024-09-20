@@ -1,9 +1,9 @@
 #pragma once
+#include "TTAbstractFactory.hpp"
 #include "TTContactsSettings.hpp"
 #include "TTChatSettings.hpp"
 #include "TTTextBoxSettings.hpp"
 #include "TTNetworkInterface.hpp"
-#include <deque>
 
 class TTEngineSettings {
 public:
@@ -13,13 +13,11 @@ public:
     TTEngineSettings(TTEngineSettings&&) = delete;
     TTEngineSettings& operator=(const TTEngineSettings&) = delete;
     TTEngineSettings& operator=(TTEngineSettings&&) = delete;
-    virtual const TTContactsSettings& getContactsSettings() const { return *mContactsSettings; }
-    virtual const TTChatSettings& getChatSettings() const { return *mChatSettings; }
-    virtual const TTTextBoxSettings& getTextBoxSettings() const { return *mTextBoxSettings; }
     virtual const std::string& getNickname() const { return mNickname; }
     virtual const std::string& getIdentity() const { return mIdentity; }
-    virtual const TTNetworkInterface& getInterface() const { return mInterface; }
+    virtual const TTNetworkInterface& getNetworkInterface() const { return mNetworkInterface; }
     virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
+    virtual const TTAbstractFactory& getAbstractFactory() const { return *mAbstractFactory; }
 protected:
     TTEngineSettings() = default;
 private:
@@ -27,10 +25,12 @@ private:
     std::unique_ptr<TTContactsSettings> mContactsSettings;
     std::unique_ptr<TTChatSettings> mChatSettings;
     std::unique_ptr<TTTextBoxSettings> mTextBoxSettings;
+    // Abstract factory
+    std::unique_ptr<TTAbstractFactory> mAbstractFactory;
     // Other settings
     std::string mNickname;
     std::string mIdentity;
-    TTNetworkInterface mInterface;
+    TTNetworkInterface mNetworkInterface;
     std::deque<std::string> mNeighbors;
     static inline constexpr int MIN_ARGC = 9;
 };

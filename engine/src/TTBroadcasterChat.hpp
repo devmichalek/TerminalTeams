@@ -10,7 +10,7 @@ public:
     TTBroadcasterChat(TTContactsHandler& contactsHandler,
                       TTChatHandler& chatHandler,
                       TTNeighborsStub& neighborsStub,
-                      TTNetworkInterface interface);
+                      TTNetworkInterface networkInterface);
     virtual ~TTBroadcasterChat();
     TTBroadcasterChat(const TTBroadcasterChat&) = delete;
     TTBroadcasterChat(TTBroadcasterChat&&) = delete;
@@ -46,7 +46,7 @@ private:
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNeighborsStub& mNeighborsStub;
-    TTNetworkInterface mInterface;
+    TTNetworkInterface mNetworkInterface;
     std::mutex mNeighborsMutex;
     std::condition_variable mNeighborsCondition;
     std::map<size_t, Neighbor> mNeighbors;

@@ -3,7 +3,7 @@
 #include "TTBroadcasterChat.hpp"
 #include "TerminalTeams.grpc.pb.h"
 
-class TTNeighborsServiceChat final : public tt::NeighborsChat::Service {
+class TTNeighborsServiceChat : public tt::NeighborsChat::Service {
 public:
     TTNeighborsServiceChat(TTBroadcasterChat& handler);
     ~TTNeighborsServiceChat() = default;
@@ -16,5 +16,3 @@ public:
 private:
     TTBroadcasterChat& mHandler;
 };
-
-

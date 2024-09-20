@@ -4,12 +4,12 @@
 TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler,
                                      TTChatHandler& chatHandler,
                                      TTNeighborsStub& neighborsStub,
-                                     TTNetworkInterface interface) :
+                                     TTNetworkInterface networkInterface) :
         mStopped{false},
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
-        mInterface(interface),
+        mNetworkInterface(networkInterface),
         mNeighborsFlag{false},
         mInactivityTimerFactory(std::chrono::milliseconds(3000), std::chrono::milliseconds(6000)){
     LOG_INFO("Successfully constructed!");
@@ -110,7 +110,7 @@ bool TTBroadcasterChat::handleSend(const std::string& message) {
         return false;
     }
     const auto requestedIpAddress = contactsCurrentEntryOpt.value().ipAddressAndPort;
-    if (requestedIpAddress == mInterface.getIpAddressAndPort()) {
+    if (requestedIpAddress == mNetworkInterface.getIpAddressAndPort()) {
         LOG_INFO("Success, nothing to be send (host IP address match)!");
         return true;
     }

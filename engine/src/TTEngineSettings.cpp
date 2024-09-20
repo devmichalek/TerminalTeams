@@ -40,6 +40,9 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         mTextBoxSettings = std::make_unique<TTTextBoxSettings>(args.size(), args.data());
     }
 
+    // Set up abstract factory
+    mAbstractFactory = std::make_unique<TTAbstractFactory>(*mContactsSettings, *mChatSettings, *mTextBoxSettings);
+
     {
         mNickname = argv[4];
         mIdentity = argv[5];
@@ -60,7 +63,7 @@ TTEngineSettings::TTEngineSettings(int argc, const char* const* argv) {
         if (port > static_cast<size_t>(std::numeric_limits<uint16_t>::max())) {
             throw std::runtime_error(std::string("TTEngineSettings: Invalid (out of range) port=") + argv[8]);
         }
-        mInterface = TTNetworkInterface(name, ipAddress, argv[8]);
+        mNetworkInterface = TTNetworkInterface(name, ipAddress, argv[8]);
     }
 
     for (int i = MIN_ARGC; i < argc; ++i) {

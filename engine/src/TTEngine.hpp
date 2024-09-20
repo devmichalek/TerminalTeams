@@ -1,11 +1,5 @@
 #pragma once
 #include "TTEngineSettings.hpp"
-#include "TTBroadcasterChat.hpp"
-#include "TTBroadcasterDiscovery.hpp"
-#include "TTContactsHandler.hpp"
-#include "TTChatHandler.hpp"
-#include "TTTextBoxHandler.hpp"
-#include <grpcpp/grpcpp.h>
 
 class TTEngine {
 public:
@@ -30,18 +24,20 @@ private:
     // Callback functions
     void mailbox(const std::string& message);
     void switcher(size_t message);
+    // Concurrent communication
+    std::atomic<bool> mStopped;
+    std::deque<std::thread> mThreads;
+    std::deque<std::future<void>> mBlockers;
     // Handlers, IPC communication
     std::unique_ptr<TTContactsHandler> mContacts;
     std::unique_ptr<TTChatHandler> mChat;
     std::unique_ptr<TTTextBoxHandler> mTextBox;
     std::mutex mExternalCallsMutex;
+    std::mutex mLoopMutex;
+    std::condition_variable mLoopCondition;
     // Node data
     std::unique_ptr<grpc::Server> mServer;
     std::unique_ptr<TTNeighborsStub> mNeighborsStub;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;
     std::unique_ptr<TTBroadcasterDiscovery> mBroadcasterDiscovery;
-    // Concurrent communication
-    std::atomic<bool> mStopped;
-    std::deque<std::thread> mThreads;
-    std::deque<std::future<void>> mBlockers;
 };

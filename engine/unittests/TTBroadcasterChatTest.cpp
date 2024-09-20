@@ -17,7 +17,7 @@ using ::testing::ByMove;
 
 class TTBroadcasterChatTest : public Test {
 protected:
-    TTBroadcasterChatTest() : mInterface("eno1", "192.168.1.1", "1777") {
+    TTBroadcasterChatTest() : mNetworkInterface("eno1", "192.168.1.1", "1777") {
         mContactsHandler = std::make_shared<TTContactsHandlerMock>();
         mChatHandler = std::make_shared<TTChatHandlerMock>();
         mNeighborsStub = std::make_shared<TTNeighborsStubMock>();
@@ -26,13 +26,13 @@ protected:
     }
     // Called after constructor, before each test
     virtual void SetUp() override {
-        mBroadcaster = std::make_unique<TTBroadcasterChat>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mInterface);
+        mBroadcaster = std::make_unique<TTBroadcasterChat>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface);
     }
     // Called before destructor, after each test
     virtual void TearDown() override {
         mBroadcaster.reset();
     }
-    TTNetworkInterface mInterface;
+    TTNetworkInterface mNetworkInterface;
     std::shared_ptr<TTContactsHandlerMock> mContactsHandler;
     std::shared_ptr<TTChatHandlerMock> mChatHandler;
     std::shared_ptr<TTNeighborsStubMock> mNeighborsStub;
@@ -245,7 +245,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerGetFailed) {
 TEST_F(TTBroadcasterChatTest, HappyPathSendHostMatch) {
     const size_t currentId = 1;
     const std::string message = "foo";
-    const TTContactsHandlerEntry entry("host", "312382290f4f71e7fb7f00449fb529fce3b8ec95", mInterface.getIpAddressAndPort());
+    const TTContactsHandlerEntry entry("host", "312382290f4f71e7fb7f00449fb529fce3b8ec95", mNetworkInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
         .Times(1)
         .WillOnce(Return(currentId));
@@ -273,7 +273,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
     const std::string hostIdentity = "888992ef";
     const TTTellRequest expectedRequest(hostIdentity, message);
     const TTContactsHandlerEntry entry("neighbor", neighborIdentity, "192.168.1.80:8879");
-    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
+    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mNetworkInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
         .Times(AtLeast(1))
         .WillRepeatedly(Return(currentId));
@@ -360,7 +360,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
     const std::string hostIdentity = "888992ef";
     const TTTellRequest expectedRequest(hostIdentity, message);
     const TTContactsHandlerEntry neighborEntry("neighbor", neighborIdentity, "192.168.1.80:8879");
-    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
+    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mNetworkInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
         .Times(AtLeast(1))
         .WillRepeatedly(Return(currentId));
@@ -415,7 +415,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendNarrateImmediateStubCreationFailed) {
     const std::string hostIdentity = "888992ef";
     const TTNarrateRequest expectedRequest(hostIdentity, messages);
     const TTContactsHandlerEntry neighborEntry("neighbor", neighborIdentity, "192.168.1.80:8879");
-    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mInterface.getIpAddressAndPort());
+    const TTContactsHandlerEntry hostEntry("host", hostIdentity, mNetworkInterface.getIpAddressAndPort());
     EXPECT_CALL(*mContactsHandler, current())
         .Times(AtLeast(1))
         .WillRepeatedly(Return(currentId));

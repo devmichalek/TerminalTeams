@@ -1,30 +1,30 @@
 #include "TTEngine.hpp"
-#include "TTNeighborsServiceChat.hpp"
-#include "TTNeighborsServiceDiscovery.hpp"
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/health_check_service_interface.h>
 
 TTEngine::TTEngine(const TTEngineSettings& settings) {
     LOG_INFO("Constructing...");
+    mStopped.store(false);
     using namespace std::placeholders;
-    mContacts = std::make_unique<TTContactsHandler>(settings.getContactsSettings());
-    mChat = std::make_unique<TTChatHandler>(settings.getChatSettings());
-    mTextBox = std::make_unique<TTTextBoxHandler>(settings.getTextBoxSettings(),
-        std::bind(&TTEngine::mailbox, this, _1),
-        std::bind(&TTEngine::switcher, this, _1));
+    const auto& abstractFactory = settings.getAbstractFactory();
+    mContacts = abstractFactory.createContactsHandler();
+    mChat = abstractFactory.createChatHandler();
+    mTextBox = abstractFactory.createTextBoxHandler(std::bind(&TTEngine::mailbox, this, _1), std::bind(&TTEngine::switcher, this, _1));
     LOG_INFO("Creating first contact and broadcasters...");
     {
-        const auto i = settings.getInterface();
-        mContacts->create(settings.getNickname(), settings.getIdentity(), i.getIpAddressAndPort());
+        const auto networkInterface = settings.getNetworkInterface();
+        mContacts->create(settings.getNickname(), settings.getIdentity(), networkInterface.getIpAddressAndPort());
         mContacts->select(0);
         mChat->create(0);
         mChat->select(0);
-        mNeighborsStub = std::make_unique<TTNeighborsStub>();
-        mBroadcasterChat = std::make_unique<TTBroadcasterChat>(*mContacts, *mChat, *mNeighborsStub, settings.getInterface());
-        mBroadcasterDiscovery = std::make_unique<TTBroadcasterDiscovery>(*mContacts, *mChat, *mNeighborsStub, settings.getInterface(), settings.getNeighbors());
+        mNeighborsStub = abstractFactory.createNeighborsStub();
+        mBroadcasterChat = abstractFactory.createBroadcasterChat(*mContacts, *mChat, *mNeighborsStub, networkInterface);
+        mBroadcasterDiscovery = abstractFactory.createBroadcasterDiscovery(*mContacts, *mChat, *mNeighborsStub, networkInterface, settings.getNeighbors());
     }
     LOG_INFO("Setting server thread...");
     {
+        const auto networkInterface = settings.getNetworkInterface();
+        auto neighborsServiceChat = abstractFactory.createNeighborsServiceChat(*mBroadcasterChat);
+        auto neighborsServiceDiscovery = abstractFactory.createNeighborsServiceDiscovery(*mBroadcasterDiscovery);
+        mServer = abstractFactory.createServer(networkInterface.getIpAddressAndPort(), *neighborsServiceChat, *neighborsServiceDiscovery);
         std::promise<void> serverPromise;
         mBlockers.push_back(serverPromise.get_future());
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
@@ -58,8 +58,16 @@ TTEngine::~TTEngine() {
 
 void TTEngine::run() {
     LOG_INFO("Started main loop");
+    size_t counter = 0;
     while (!stopped()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        LOG_INFO("Loop counter: {}", counter++);
+        std::unique_lock<std::mutex> lock(mLoopMutex);
+        const bool predicate = mLoopCondition.wait_for(lock, std::chrono::milliseconds(5000), [this]() {
+            return stopped();
+        });
+        if (predicate) {
+            break;
+        }
     }
     LOG_INFO("Stopped main loop");
 }
@@ -98,21 +106,6 @@ bool TTEngine::stopped() const {
 }
 
 void TTEngine::server(std::promise<void> promise) {
-    // Setup
-    LOG_INFO("Setting up server...");
-    grpc::EnableDefaultHealthCheckService(true);
-    grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-    grpc::ServerBuilder builder;
-    LOG_INFO("Listening on {} without any authentication mechanism...", mBroadcasterDiscovery->getIpAddressAndPort());
-    builder.AddListeningPort(mBroadcasterDiscovery->getIpAddressAndPort(), grpc::InsecureServerCredentials());
-    LOG_INFO("Registering synchronous services...");
-    TTNeighborsServiceChat neighborsServiceChat(*mBroadcasterChat);
-    TTNeighborsServiceDiscovery neighborsServiceDiscovery(*mBroadcasterDiscovery);
-    builder.RegisterService(&neighborsServiceChat);
-    builder.RegisterService(&neighborsServiceDiscovery);
-    LOG_INFO("Assembling the server and waiting for the server to shutdown...");
-    mServer = std::unique_ptr<grpc::Server>(builder.BuildAndStart());
-    // Start
     LOG_INFO("Started server loop");
     mServer->Wait();
     stop();

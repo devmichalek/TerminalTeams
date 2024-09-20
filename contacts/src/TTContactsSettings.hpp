@@ -5,10 +5,10 @@ class TTContactsSettings {
 public:
     explicit TTContactsSettings(int argc, const char* const* argv);
     virtual ~TTContactsSettings() {}
-    TTContactsSettings(const TTContactsSettings&) = delete;
-    TTContactsSettings(TTContactsSettings&&) = delete;
-    TTContactsSettings& operator=(const TTContactsSettings&) = delete;
-    TTContactsSettings& operator=(TTContactsSettings&&) = delete;
+    TTContactsSettings(const TTContactsSettings&) = default;
+    TTContactsSettings(TTContactsSettings&&) = default;
+    TTContactsSettings& operator=(const TTContactsSettings&) = default;
+    TTContactsSettings& operator=(TTContactsSettings&&) = default;
     virtual size_t getTerminalWidth() const { return mWidth; }
     virtual size_t getTerminalHeight() const { return mHeight; }
     virtual std::shared_ptr<TTUtilsSharedMem> getSharedMemory() const;

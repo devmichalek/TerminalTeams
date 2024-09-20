@@ -9,7 +9,7 @@ using ::testing::NotNull;
 TEST(TTEngineSettingsTest, HappyPathNoNeighbors) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.15");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -21,24 +21,24 @@ TEST(TTEngineSettingsTest, HappyPathNoNeighbors) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str()
     };
     const TTEngineSettings settings(argc, argv);
     EXPECT_EQ(settings.getNickname(), nickname);
     EXPECT_EQ(settings.getIdentity(), identity);
-    EXPECT_EQ(settings.getInterface().getName(), interface);
-    EXPECT_EQ(settings.getInterface().getIpAddress(), hostIpAddress);
-    EXPECT_EQ(settings.getInterface().getPort(), hostPort);
-    EXPECT_EQ(settings.getInterface().getIpAddressAndPort(), hostIpAddressAndPort);
+    EXPECT_EQ(settings.getNetworkInterface().getName(), name);
+    EXPECT_EQ(settings.getNetworkInterface().getIpAddress(), hostIpAddress);
+    EXPECT_EQ(settings.getNetworkInterface().getPort(), hostPort);
+    EXPECT_EQ(settings.getNetworkInterface().getIpAddressAndPort(), hostIpAddressAndPort);
     EXPECT_EQ(settings.getNeighbors().size(), 0);
 }
 
 TEST(TTEngineSettingsTest, HappyPathFewNeighbors) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.15");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -53,7 +53,7 @@ TEST(TTEngineSettingsTest, HappyPathFewNeighbors) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str(),
         neighbor1IpAddress.c_str(),
@@ -63,10 +63,10 @@ TEST(TTEngineSettingsTest, HappyPathFewNeighbors) {
     const TTEngineSettings settings(argc, argv);
     EXPECT_EQ(settings.getNickname(), nickname);
     EXPECT_EQ(settings.getIdentity(), identity);
-    EXPECT_EQ(settings.getInterface().getName(), interface);
-    EXPECT_EQ(settings.getInterface().getIpAddress(), hostIpAddress);
-    EXPECT_EQ(settings.getInterface().getPort(), hostPort);
-    EXPECT_EQ(settings.getInterface().getIpAddressAndPort(), hostIpAddressAndPort);
+    EXPECT_EQ(settings.getNetworkInterface().getName(), name);
+    EXPECT_EQ(settings.getNetworkInterface().getIpAddress(), hostIpAddress);
+    EXPECT_EQ(settings.getNetworkInterface().getPort(), hostPort);
+    EXPECT_EQ(settings.getNetworkInterface().getIpAddressAndPort(), hostIpAddressAndPort);
     EXPECT_EQ(settings.getNeighbors().size(), 3);
     EXPECT_EQ(settings.getNeighbors()[0], neighbor1IpAddress);
     EXPECT_EQ(settings.getNeighbors()[1], neighbor2IpAddress);
@@ -83,7 +83,7 @@ TEST(TTEngineSettingsTest, UnhappyPathNotEnoughArguments) {
 TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors1) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("blahblahblah");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -95,7 +95,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors1) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str()
     };
@@ -106,7 +106,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors1) {
 TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors2) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.1234");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -118,7 +118,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors2) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str()
     };
@@ -129,7 +129,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostIpAddressNoNeighbors2) {
 TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress1) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.15");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -142,7 +142,7 @@ TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress1) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str(),
         neighbor1IpAddress.c_str()
@@ -154,7 +154,7 @@ TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress1) {
 TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress2) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.15");
     const std::string hostPort("158");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -167,7 +167,7 @@ TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress2) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str(),
         neighbor1IpAddress.c_str()
@@ -179,7 +179,7 @@ TEST(TTEngineSettingsTest, HappyPathInvalidNeighborIpAddress2) {
 TEST(TTEngineSettingsTest, UnhappyPathInvalidHostPortNoNeighbors1) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.18");
     const std::string hostPort("blahblah");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -191,7 +191,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostPortNoNeighbors1) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str()
     };
@@ -202,7 +202,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostPortNoNeighbors1) {
 TEST(TTEngineSettingsTest, UnhappyPathInvalidHostPortNoNeighbors2) {
     const std::string nickname("nickname");
     const std::string identity("identity");
-    const std::string interface("interface");
+    const std::string name("eno1");
     const std::string hostIpAddress("192.168.1.18");
     const std::string hostPort("66666");
     const std::string hostIpAddressAndPort = hostIpAddress + ":" + hostPort;
@@ -214,7 +214,7 @@ TEST(TTEngineSettingsTest, UnhappyPathInvalidHostPortNoNeighbors2) {
         "textbox",
         nickname.c_str(),
         identity.c_str(),
-        interface.c_str(),
+        name.c_str(),
         hostIpAddress.c_str(),
         hostPort.c_str()
     };

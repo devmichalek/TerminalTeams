@@ -10,8 +10,8 @@ public:
     TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                            TTChatHandler& chatHandler,
                            TTNeighborsStub& neighborsStub,
-                           TTNetworkInterface interface,
-                           std::deque<std::string> neighbors);
+                           TTNetworkInterface networkInterface,
+                           const std::deque<std::string>& neighbors);
     virtual ~TTBroadcasterDiscovery();
     TTBroadcasterDiscovery(const TTBroadcasterDiscovery&) = delete;
     TTBroadcasterDiscovery(TTBroadcasterDiscovery&&) = delete;
@@ -70,7 +70,7 @@ private:
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNeighborsStub& mNeighborsStub;
-    TTNetworkInterface mInterface;
+    TTNetworkInterface mNetworkInterface;
     std::deque<StaticNeighbor> mStaticNeighbors;
     std::map<size_t, DynamicNeighbor> mDynamicNeighbors;
     mutable std::shared_mutex mNeighborMutex;
