@@ -6,16 +6,15 @@
 #include "TTContactsHandler.hpp"
 #include "TTChatHandler.hpp"
 #include "TTTextBoxHandler.hpp"
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/ext/proto_server_reflection_plugin.h>
-#include <grpcpp/health_check_service_interface.h>
+#include "TTServer.hpp"
 
 class TTAbstractFactory
 {
 public:
-    TTAbstractFactory(const TTContactsSettings& contactsSettings,
-        const TTChatSettings& chatSettings,
-        const TTTextBoxSettings& textBoxSettings) :
+    TTAbstractFactory(
+        TTContactsSettings& contactsSettings,
+        TTChatSettings& chatSettings,
+        TTTextBoxSettings& textBoxSettings) :
             mContactsSettings(contactsSettings),
             mChatSettings(chatSettings),
             mTextBoxSettings(textBoxSettings) {}
@@ -43,14 +42,16 @@ public:
         return std::make_unique<TTNeighborsStub>();
     }
 
-    virtual std::unique_ptr<TTBroadcasterChat> createBroadcasterChat(TTContactsHandler& contactsHandler,
+    virtual std::unique_ptr<TTBroadcasterChat> createBroadcasterChat(
+            TTContactsHandler& contactsHandler,
             TTChatHandler& chatHandler,
             TTNeighborsStub& neighborsStub,
             TTNetworkInterface networkInterface) const {
         return std::make_unique<TTBroadcasterChat>(contactsHandler, chatHandler, neighborsStub, networkInterface);
     }
 
-    virtual std::unique_ptr<TTBroadcasterDiscovery> createBroadcasterDiscovery(TTContactsHandler& contactsHandler,
+    virtual std::unique_ptr<TTBroadcasterDiscovery> createBroadcasterDiscovery(
+            TTContactsHandler& contactsHandler,
             TTChatHandler& chatHandler,
             TTNeighborsStub& neighborsStub,
             TTNetworkInterface networkInterface,
@@ -58,26 +59,25 @@ public:
         return std::make_unique<TTBroadcasterDiscovery>(contactsHandler, chatHandler, neighborsStub, networkInterface, neighbors);
     }
 
-    virtual std::unique_ptr<TTNeighborsServiceChat> createNeighborsServiceChat(TTBroadcasterChat& chat) const {
+    virtual std::unique_ptr<TTNeighborsServiceChat> createNeighborsServiceChat(
+            TTBroadcasterChat& chat) const {
         return std::make_unique<TTNeighborsServiceChat>(chat);
     }
 
-    virtual std::unique_ptr<TTNeighborsServiceDiscovery> createNeighborsServiceDiscovery(TTBroadcasterDiscovery& discovery) const {
+    virtual std::unique_ptr<TTNeighborsServiceDiscovery> createNeighborsServiceDiscovery(
+            TTBroadcasterDiscovery& discovery) const {
         return std::make_unique<TTNeighborsServiceDiscovery>(discovery);
     }
 
-    virtual std::unique_ptr<grpc::Server> createServer(const std::string& ipAddressAndPort,
-            TTNeighborsServiceChat& chat, TTNeighborsServiceDiscovery& discovery) const {
-        grpc::EnableDefaultHealthCheckService(true);
-        grpc::reflection::InitProtoReflectionServerBuilderPlugin();
-        grpc::ServerBuilder builder;
-        builder.AddListeningPort(ipAddressAndPort, grpc::InsecureServerCredentials());
-        builder.RegisterService(&chat);
-        builder.RegisterService(&discovery);
-        return std::unique_ptr<grpc::Server>(builder.BuildAndStart());
+    virtual std::unique_ptr<TTServer> createServer(
+            const std::string& ipAddressAndPort,
+            TTNeighborsServiceChat& chat,
+            TTNeighborsServiceDiscovery& discovery) const {
+        return std::make_unique<TTServer>(ipAddressAndPort, chat, discovery);
     }
+
 private:
-    TTContactsSettings mContactsSettings;
-    TTChatSettings mChatSettings;
-    TTTextBoxSettings mTextBoxSettings;
+    TTContactsSettings& mContactsSettings;
+    TTChatSettings& mChatSettings;
+    TTTextBoxSettings& mTextBoxSettings;
 };

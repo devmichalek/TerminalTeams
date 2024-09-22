@@ -15,8 +15,8 @@ public:
 protected:
     TTContactsSettings() = default;
 private:
-    size_t mWidth;
-    size_t mHeight;
+    size_t mWidth = 0;
+    size_t mHeight = 0;
     std::string mSharedMemoryName;
     static inline constexpr int MAX_ARGC = 4;
 };

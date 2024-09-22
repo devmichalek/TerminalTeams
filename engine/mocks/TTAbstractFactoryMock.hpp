@@ -27,7 +27,7 @@ public:
         const std::deque<std::string>& neighbors), (const, override));
     MOCK_METHOD(std::unique_ptr<TTNeighborsServiceChat>, createNeighborsServiceChat, (TTBroadcasterChat& chat), (const, override));
     MOCK_METHOD(std::unique_ptr<TTNeighborsServiceDiscovery>, createNeighborsServiceDiscovery, (TTBroadcasterDiscovery& discovery), (const, override));
-    MOCK_METHOD(std::unique_ptr<grpc::Server>, createServer, (
+    MOCK_METHOD(std::unique_ptr<TTServer>, createServer, (
         const std::string& ipAddressAndPort,
         TTNeighborsServiceChat& chat,
         TTNeighborsServiceDiscovery& discovery), (const, override));

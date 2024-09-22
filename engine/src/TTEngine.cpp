@@ -5,26 +5,49 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
     mStopped.store(false);
     using namespace std::placeholders;
     const auto& abstractFactory = settings.getAbstractFactory();
+    LOG_INFO("Creating handlers...");
     mContacts = abstractFactory.createContactsHandler();
     mChat = abstractFactory.createChatHandler();
     mTextBox = abstractFactory.createTextBoxHandler(std::bind(&TTEngine::mailbox, this, _1), std::bind(&TTEngine::switcher, this, _1));
-    LOG_INFO("Creating first contact and broadcasters...");
+    if (!mContacts || !mChat || !mTextBox) {
+        throw std::runtime_error("TTEngine: Failed to create handlers!");
+    }
+    LOG_INFO("Creating first contact...");
     {
         const auto networkInterface = settings.getNetworkInterface();
         mContacts->create(settings.getNickname(), settings.getIdentity(), networkInterface.getIpAddressAndPort());
         mContacts->select(0);
         mChat->create(0);
         mChat->select(0);
+    }
+    LOG_INFO("Creating neighbors stub and broadcasters...");
+    {
+        const auto networkInterface = settings.getNetworkInterface();
         mNeighborsStub = abstractFactory.createNeighborsStub();
+        if (!mNeighborsStub) {
+            throw std::runtime_error("TTEngine: Failed to create neighbors stub!");
+        }
         mBroadcasterChat = abstractFactory.createBroadcasterChat(*mContacts, *mChat, *mNeighborsStub, networkInterface);
         mBroadcasterDiscovery = abstractFactory.createBroadcasterDiscovery(*mContacts, *mChat, *mNeighborsStub, networkInterface, settings.getNeighbors());
+        if (!mBroadcasterChat || !mBroadcasterDiscovery) {
+            throw std::runtime_error("TTEngine: Failed to create broadcasters!");
+        }
     }
-    LOG_INFO("Setting server thread...");
+    LOG_INFO("Creating gRPC server...");
     {
         const auto networkInterface = settings.getNetworkInterface();
         auto neighborsServiceChat = abstractFactory.createNeighborsServiceChat(*mBroadcasterChat);
         auto neighborsServiceDiscovery = abstractFactory.createNeighborsServiceDiscovery(*mBroadcasterDiscovery);
+        if (!neighborsServiceChat || !neighborsServiceDiscovery) {
+            throw std::runtime_error("TTEngine: Failed to create services!");
+        }
         mServer = abstractFactory.createServer(networkInterface.getIpAddressAndPort(), *neighborsServiceChat, *neighborsServiceDiscovery);
+        if (!mServer) {
+            throw std::runtime_error("TTEngine: Failed to create gRPC server!");
+        }
+    }
+    LOG_INFO("Setting server thread...");
+    {
         std::promise<void> serverPromise;
         mBlockers.push_back(serverPromise.get_future());
         mThreads.push_back(std::thread(&TTEngine::server, this, std::move(serverPromise)));
@@ -58,16 +81,8 @@ TTEngine::~TTEngine() {
 
 void TTEngine::run() {
     LOG_INFO("Started main loop");
-    size_t counter = 0;
     while (!stopped()) {
-        LOG_INFO("Loop counter: {}", counter++);
-        std::unique_lock<std::mutex> lock(mLoopMutex);
-        const bool predicate = mLoopCondition.wait_for(lock, std::chrono::milliseconds(5000), [this]() {
-            return stopped();
-        });
-        if (predicate) {
-            break;
-        }
+        std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
     LOG_INFO("Stopped main loop");
 }
@@ -76,7 +91,7 @@ void TTEngine::stop() {
     LOG_WARNING("Forced stop...");
     mStopped.store(true);
     if (mServer) {
-        mServer->Shutdown();
+        mServer->stop();
     }
     if (mContacts) {
         mContacts->stop();
@@ -97,17 +112,18 @@ void TTEngine::stop() {
 
 bool TTEngine::stopped() const {
     bool result = mStopped.load();
-    result |= (mContacts && mContacts->stopped());
-    result |= (mChat && mChat->stopped());
-    result |= (mTextBox && mTextBox->stopped());
-    result |= (mBroadcasterChat && mBroadcasterChat->stopped());
-    result |= (mBroadcasterDiscovery && mBroadcasterDiscovery->stopped());
+    result |= (!mServer || mServer->stopped());
+    result |= (!mContacts || mContacts->stopped());
+    result |= (!mChat || mChat->stopped());
+    result |= (!mTextBox || mTextBox->stopped());
+    result |= (!mBroadcasterChat || mBroadcasterChat->stopped());
+    result |= (!mBroadcasterDiscovery || mBroadcasterDiscovery->stopped());
     return result;
 }
 
 void TTEngine::server(std::promise<void> promise) {
     LOG_INFO("Started server loop");
-    mServer->Wait();
+    mServer->run();
     stop();
     promise.set_value();
     LOG_INFO("Completed server loop");
@@ -131,37 +147,24 @@ void TTEngine::discovery(std::promise<void> promise) {
 
 void TTEngine::mailbox(const std::string& message) {
     LOG_INFO("Received callback - message sent");
-    if (mContacts && mChat && mBroadcasterChat) {
-        std::scoped_lock lock(mExternalCallsMutex);
-        if (!mContacts->current() || !mChat->current()) {
-            LOG_ERROR("Received callback - failed to get current value!");
-            stop();
-        } else if (!mBroadcasterChat->handleSend(message)) {
-            LOG_ERROR("Received callback - failed to sent message!");
-            stop();
-        }
-    } else {
-        LOG_ERROR("Received callback - failed to sent message to uninitialized instances!");
+    std::scoped_lock lock(mExternalCallsMutex);
+    if (!mBroadcasterChat->handleSend(message)) {
+        LOG_ERROR("Received callback - failed to sent message!");
         stop();
     }
 }
 
 void TTEngine::switcher(size_t message) {
     LOG_INFO("Received callback - contacts switch");
-    if (mContacts && mChat) {
-        if (message < mContacts->size()) {
-            std::scoped_lock lock(mExternalCallsMutex);
-            bool result = mContacts->select(message);
-            result &= mChat->select(message);
-            if (!result) {
-                LOG_ERROR("Received callback - failed to switch contact!");
-                stop();
-            }
-        } else {
-            LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
+    if (message < mContacts->size()) {
+        std::scoped_lock lock(mExternalCallsMutex);
+        bool result = mContacts->select(message);
+        result &= mChat->select(message);
+        if (!result) {
+            LOG_ERROR("Received callback - failed to switch contact!");
+            stop();
         }
     } else {
-        LOG_ERROR("Received callback - failed to sent message to uninitialized instances!");
-        stop();
+        LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
     }
 }

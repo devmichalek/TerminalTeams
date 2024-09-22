@@ -33,10 +33,8 @@ private:
     std::unique_ptr<TTChatHandler> mChat;
     std::unique_ptr<TTTextBoxHandler> mTextBox;
     std::mutex mExternalCallsMutex;
-    std::mutex mLoopMutex;
-    std::condition_variable mLoopCondition;
     // Node data
-    std::unique_ptr<grpc::Server> mServer;
+    std::unique_ptr<TTServer> mServer;
     std::unique_ptr<TTNeighborsStub> mNeighborsStub;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;
     std::unique_ptr<TTBroadcasterDiscovery> mBroadcasterDiscovery;

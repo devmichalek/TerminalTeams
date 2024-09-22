@@ -1,10 +1,9 @@
 #pragma once
 #include <gmock/gmock.h>
-#include <grpcpp/grpcpp.h>
 
-class TTServerMock : public grpc::Server {
+class TTServerMock : public TTServer {
 public:
-    TTServerMock() : grpc::Server(&mChannelArgs, nullptr, 0, 0, 0, {}) {}
-private:
-    grpc::ChannelArguments mChannelArgs;
+    MOCK_METHOD(void, run, (), (override));
+    MOCK_METHOD(void, stop, (), (override));
+    MOCK_METHOD(bool, stopped, (), (const, override));
 };

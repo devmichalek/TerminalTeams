@@ -7,7 +7,7 @@
             "request": "launch",
             "program": "${fileDirname}/install/unittests/tteams-${input:componentType}-unittests",
             "args": [
-                "--gtest_filter=${fileBasenameNoExtension}.*${selectedText}"
+                "--gtest_filter=${fileBasenameNoExtension}.*${selectedText}*"
             ],
             "miDebuggerPath": "/usr/bin/gdb",
             "MIMode": "gdb",
