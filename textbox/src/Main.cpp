@@ -1,7 +1,7 @@
 #include "TTTextBox.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include "TTConfig.hpp"
 #include <signal.h>
-#include <memory>
 
 std::unique_ptr<TTTextBox> application;
 LOG_DECLARE("tteams-textbox");
@@ -14,6 +14,7 @@ void signalInterruptHandler(int) {
 }
 
 int main(int argc, char** argv) {
+    LOG_INFO("{}", VERSION_STRING);
     try {
         // Signal handling
         struct sigaction signalAction;
@@ -29,7 +30,7 @@ int main(int argc, char** argv) {
         TTUtilsOutputStream outputStream;
         TTUtilsInputStream inputStream;
         application = std::make_unique<TTTextBox>(settings, outputStream, inputStream);
-        LOG_INFO("Textbox initialized");
+        LOG_INFO("TextBox initialized");
         try {
             if (!application->stopped()) {
                 application->run();

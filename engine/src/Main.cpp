@@ -1,5 +1,6 @@
 #include "TTEngine.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include "TTConfig.hpp"
 #include <signal.h>
 
 // Application
@@ -14,6 +15,7 @@ void signalInterruptHandler(int) {
 }
 
 int main(int argc, char** argv) {
+    LOG_INFO("{}", VERSION_STRING);
     try {
         // Signal handling
         struct sigaction signalAction;

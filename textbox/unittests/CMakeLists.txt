@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(TerminalTeamsTextboxUnittests VERSION 1.0)
+project(TerminalTeamsTextBoxUnittests VERSION 1.0)
 
 # Set literals
 set(CMAKE_CXX_STANDARD 20)

@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
         // Run main app
         const TTTextBoxSettings settings(argc, argv);
         handler = std::make_unique<TTTextBoxHandler>(settings, &messageSent, &contactsSwitch);
-        LOG_INFO("Textbox handler initialized");
+        LOG_INFO("TextBox handler initialized");
         while (!handler->stopped()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }

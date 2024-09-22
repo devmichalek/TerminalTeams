@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(TerminalTeamsTextboxAutotests VERSION 1.0)
+project(TerminalTeamsTextBoxAutotests VERSION 1.0)
 
 # Set literals
 set(CMAKE_CXX_STANDARD 20)

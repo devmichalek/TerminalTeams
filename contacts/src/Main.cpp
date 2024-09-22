@@ -1,8 +1,7 @@
 #include "TTContacts.hpp"
-#include "TTUtilsOutputStream.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include "TTConfig.hpp"
 #include <signal.h>
-#include <atomic>
 
 // Application
 std::unique_ptr<TTContacts> application;
@@ -16,6 +15,7 @@ void signalInterruptHandler(int) {
 }
 
 int main(int argc, char** argv) {
+    LOG_INFO("{}", VERSION_STRING);
     try {
         // Set signal handling
         struct sigaction signalAction;
