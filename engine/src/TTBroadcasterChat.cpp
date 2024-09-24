@@ -45,7 +45,7 @@ void TTBroadcasterChat::run() {
                 const auto ipAddressAndPort = neighborsEntry.ipAddressAndPort;
                 neighbor.stub = mNeighborsStub.createChatStub(ipAddressAndPort);
             }
-            if (!neighbor.stub) {
+            if (!neighbor.stub) [[unlikely]] {
                 continue;
             }
             if (neighbor.pendingMessages.size() > 1) {
@@ -75,36 +75,36 @@ bool TTBroadcasterChat::stopped() const {
 
 bool TTBroadcasterChat::handleSend(const std::string& message) {
     const auto contactsCurrentIdOpt = mContactsHandler.current();
-    if (!contactsCurrentIdOpt) {
+    if (!contactsCurrentIdOpt) [[unlikely]] {
         LOG_ERROR("Failed to handle send (cannot get current identity from contacts handler)!");
         stop();
         return false;
     }
     const auto chatCurrentIdOpt = mChatHandler.current();
-    if (!chatCurrentIdOpt) {
+    if (!chatCurrentIdOpt) [[unlikely]] {
         LOG_ERROR("Failed to handle send (cannot get current identity from chat handler)!");
         stop();
         return false;
     }
     const auto contactsCurrentId = contactsCurrentIdOpt.value();
     const auto chatCurrentId = chatCurrentIdOpt.value();
-    if (chatCurrentIdOpt != contactsCurrentIdOpt) {
+    if (chatCurrentIdOpt != contactsCurrentIdOpt) [[unlikely]] {
         LOG_ERROR("Failed to handle send (id mismatch)!");
         stop();
         return false;
     }
-    if (!mContactsHandler.send(contactsCurrentId)) {
+    if (!mContactsHandler.send(contactsCurrentId)) [[unlikely]] {
         LOG_ERROR("Failed to handle send (contacts handler send failure)!");
         stop();
         return false;
     }
-    if (!mChatHandler.send(chatCurrentId, message, std::chrono::system_clock::now())) {
+    if (!mChatHandler.send(chatCurrentId, message, std::chrono::system_clock::now())) [[unlikely]] {
         LOG_ERROR("Failed to handle send (contacts handler send failure)!");
         stop();
         return false;
     }
     const auto contactsCurrentEntryOpt = mContactsHandler.get(contactsCurrentId);
-    if (!contactsCurrentEntryOpt) {
+    if (!contactsCurrentEntryOpt) [[unlikely]] {
         LOG_ERROR("Failed to handle send (contacts handler get failure)!");
         stop();
         return false;
@@ -143,12 +143,12 @@ bool TTBroadcasterChat::handleReceive(const TTTellRequest& request) {
         LOG_WARNING("Failed to handle reception, no such identity={}", request.identity);
         return false;
     }
-    if (!mContactsHandler.receive(id.value())) {
+    if (!mContactsHandler.receive(id.value())) [[unlikely]] {
         LOG_ERROR("Failed to handle reception on contacts receive");
         stop();
         return false;
     }
-    if (!mChatHandler.receive(id.value(), request.message, std::chrono::system_clock::now())) {
+    if (!mChatHandler.receive(id.value(), request.message, std::chrono::system_clock::now())) [[unlikely]] {
         LOG_ERROR("Failed to handle reception on chat receive");
         stop();
         return false;

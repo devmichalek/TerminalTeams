@@ -9,11 +9,11 @@ public:
     TTChatSettings(TTChatSettings&&) = default;
     TTChatSettings& operator=(const TTChatSettings&) = default;
     TTChatSettings& operator=(TTChatSettings&&) = default;
-    virtual size_t getTerminalWidth() const { return mWidth; }
-    virtual size_t getTerminalHeight() const { return mHeight; }
-    virtual std::shared_ptr<TTUtilsMessageQueue> getPrimaryMessageQueue() const;
-    virtual std::shared_ptr<TTUtilsMessageQueue> getSecondaryMessageQueue() const;
-    virtual double getRatio() const { return 0.7; }
+    [[nodiscard]] virtual size_t getTerminalWidth() const { return mWidth; }
+    [[nodiscard]] virtual size_t getTerminalHeight() const { return mHeight; }
+    [[nodiscard]] virtual std::shared_ptr<TTUtilsMessageQueue> getPrimaryMessageQueue() const;
+    [[nodiscard]] virtual std::shared_ptr<TTUtilsMessageQueue> getSecondaryMessageQueue() const;
+    [[nodiscard]] virtual double getRatio() const { return 0.7; }
 protected:
     TTChatSettings() = default;
 private:

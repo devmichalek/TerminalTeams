@@ -36,9 +36,9 @@ public:
     constexpr bool operator!=(const TTContactsState& rhs) const { return mValue != rhs.mValue; }
     constexpr bool operator==(const Value& rhs) const { return mValue == rhs; }
     constexpr bool operator!=(const Value& rhs) const { return mValue != rhs; }
-    constexpr bool isActive() const { return mValue == ACTIVE || mValue == SELECTED_ACTIVE || mValue == UNREAD_MSG_ACTIVE; }
-    constexpr bool isInactive() const { return !isActive(); }
-    constexpr bool isSelected() const { return mValue == SELECTED_ACTIVE || mValue == SELECTED_INACTIVE || mValue == SELECTED_PENDING_MSG_INACTIVE; }
+    [[nodiscard]] constexpr bool isActive() const { return mValue == ACTIVE || mValue == SELECTED_ACTIVE || mValue == UNREAD_MSG_ACTIVE; }
+    [[nodiscard]] constexpr bool isInactive() const { return !isActive(); }
+    [[nodiscard]] constexpr bool isSelected() const { return mValue == SELECTED_ACTIVE || mValue == SELECTED_INACTIVE || mValue == SELECTED_PENDING_MSG_INACTIVE; }
 private:
     Value mValue;
 };

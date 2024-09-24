@@ -19,7 +19,7 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
     }
     const TTTellRequest message(request->identity(), request->message());
-    if (mHandler.handleReceive(message)) {
+    if (mHandler.handleReceive(message)) [[likely]] {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;
@@ -54,7 +54,7 @@ grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc:
     if (uniqueIds.size() != 1) {
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Wrong number of unique ids!");
     }
-    if (mHandler.handleReceive(message)) {
+    if (mHandler.handleReceive(message)) [[likely]] {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;

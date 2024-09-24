@@ -13,11 +13,11 @@ public:
     TTEngineSettings(TTEngineSettings&&) = delete;
     TTEngineSettings& operator=(const TTEngineSettings&) = delete;
     TTEngineSettings& operator=(TTEngineSettings&&) = delete;
-    virtual const std::string& getNickname() const { return mNickname; }
-    virtual const std::string& getIdentity() const { return mIdentity; }
-    virtual const TTNetworkInterface& getNetworkInterface() const { return mNetworkInterface; }
-    virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
-    virtual const TTAbstractFactory& getAbstractFactory() const { return *mAbstractFactory; }
+    [[nodiscard]] virtual const std::string& getNickname() const { return mNickname; }
+    [[nodiscard]] virtual const std::string& getIdentity() const { return mIdentity; }
+    [[nodiscard]] virtual const TTNetworkInterface& getNetworkInterface() const { return mNetworkInterface; }
+    [[nodiscard]] virtual const std::deque<std::string>& getNeighbors() const { return mNeighbors; }
+    [[nodiscard]] virtual const TTAbstractFactory& getAbstractFactory() const { return *mAbstractFactory; }
 protected:
     TTEngineSettings() = default;
 private:

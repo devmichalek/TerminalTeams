@@ -115,7 +115,7 @@ bool TTChat::handle(const TTChatMessage& message) {
         case TTChatMessageType::SENDER:
         {
             LOG_INFO("Received sender message");
-            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::SENDER_CHUNK) {
+            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::SENDER_CHUNK) [[unlikely]] {
                 LOG_ERROR("Received sender chunk message that doesn't match previous chunk!");
                 return false;
             }
@@ -130,7 +130,7 @@ bool TTChat::handle(const TTChatMessage& message) {
         }
         case TTChatMessageType::SENDER_CHUNK:
             LOG_INFO("Received sender chunk message");
-            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) {
+            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) [[unlikely]] {
                 LOG_ERROR("Received sender chunk message that doesn't match previous chunk!");
                 return false;
             }
@@ -139,7 +139,7 @@ bool TTChat::handle(const TTChatMessage& message) {
         case TTChatMessageType::RECEIVER:
         {
             LOG_INFO("Received receiver message");
-            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::RECEIVER_CHUNK) {
+            if (!mChunks.empty() && mChunks.back().getType() != TTChatMessageType::RECEIVER_CHUNK) [[unlikely]] {
                 LOG_ERROR("Received receiver chunk message that doesn't match previous chunk!");
                 return false;
             }
@@ -154,7 +154,7 @@ bool TTChat::handle(const TTChatMessage& message) {
         }
         case TTChatMessageType::RECEIVER_CHUNK:
             LOG_INFO("Received receiver chunk message");
-            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) {
+            if (!mChunks.empty() && mChunks.back().getType() != message.getType()) [[unlikely]] {
                 LOG_ERROR("Received receiver chunk message that doesn't match previous chunk!");
                 return false;
             }

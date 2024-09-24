@@ -24,25 +24,25 @@ public:
     TTAbstractFactory& operator=(const TTAbstractFactory&) = default;
     TTAbstractFactory& operator=(TTAbstractFactory&&) = default;
 
-    virtual std::unique_ptr<TTContactsHandler> createContactsHandler() const {
+    [[nodiscard]] virtual std::unique_ptr<TTContactsHandler> createContactsHandler() const {
         return std::make_unique<TTContactsHandler>(mContactsSettings);
     }
 
-    virtual std::unique_ptr<TTChatHandler> createChatHandler() const {
+    [[nodiscard]] virtual std::unique_ptr<TTChatHandler> createChatHandler() const {
         return std::make_unique<TTChatHandler>(mChatSettings);
     }
 
-    virtual std::unique_ptr<TTTextBoxHandler> createTextBoxHandler(
+    [[nodiscard]] virtual std::unique_ptr<TTTextBoxHandler> createTextBoxHandler(
             TTTextBoxCallbackMessageSent callbackMessageSent,
             TTTextBoxCallbackContactSwitch callbackContactsSwitch) const {
         return std::make_unique<TTTextBoxHandler>(mTextBoxSettings, callbackMessageSent, callbackContactsSwitch);
     }
 
-    virtual std::unique_ptr<TTNeighborsStub> createNeighborsStub() const {
+    [[nodiscard]] virtual std::unique_ptr<TTNeighborsStub> createNeighborsStub() const {
         return std::make_unique<TTNeighborsStub>();
     }
 
-    virtual std::unique_ptr<TTBroadcasterChat> createBroadcasterChat(
+    [[nodiscard]] virtual std::unique_ptr<TTBroadcasterChat> createBroadcasterChat(
             TTContactsHandler& contactsHandler,
             TTChatHandler& chatHandler,
             TTNeighborsStub& neighborsStub,
@@ -50,7 +50,7 @@ public:
         return std::make_unique<TTBroadcasterChat>(contactsHandler, chatHandler, neighborsStub, networkInterface);
     }
 
-    virtual std::unique_ptr<TTBroadcasterDiscovery> createBroadcasterDiscovery(
+    [[nodiscard]] virtual std::unique_ptr<TTBroadcasterDiscovery> createBroadcasterDiscovery(
             TTContactsHandler& contactsHandler,
             TTChatHandler& chatHandler,
             TTNeighborsStub& neighborsStub,
@@ -59,17 +59,17 @@ public:
         return std::make_unique<TTBroadcasterDiscovery>(contactsHandler, chatHandler, neighborsStub, networkInterface, neighbors);
     }
 
-    virtual std::unique_ptr<TTNeighborsServiceChat> createNeighborsServiceChat(
+    [[nodiscard]] virtual std::unique_ptr<TTNeighborsServiceChat> createNeighborsServiceChat(
             TTBroadcasterChat& chat) const {
         return std::make_unique<TTNeighborsServiceChat>(chat);
     }
 
-    virtual std::unique_ptr<TTNeighborsServiceDiscovery> createNeighborsServiceDiscovery(
+    [[nodiscard]] virtual std::unique_ptr<TTNeighborsServiceDiscovery> createNeighborsServiceDiscovery(
             TTBroadcasterDiscovery& discovery) const {
         return std::make_unique<TTNeighborsServiceDiscovery>(discovery);
     }
 
-    virtual std::unique_ptr<TTServer> createServer(
+    [[nodiscard]] virtual std::unique_ptr<TTServer> createServer(
             const std::string& ipAddressAndPort,
             TTNeighborsServiceChat& chat,
             TTNeighborsServiceDiscovery& discovery) const {

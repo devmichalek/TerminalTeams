@@ -19,7 +19,7 @@ grpc::Status TTNeighborsServiceDiscovery::Greet(grpc::ServerContext* context, co
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
     }
     TTGreetRequest message(request->nickname(), request->identity(), request->ipaddressandport());
-    if (mHandler.handleGreet(message)) {
+    if (mHandler.handleGreet(message)) [[likely]] {
         reply->set_nickname(mHandler.getNickname());
         reply->set_identity(mHandler.getIdentity());
         reply->set_ipaddressandport(mHandler.getIpAddressAndPort());
@@ -44,7 +44,7 @@ grpc::Status TTNeighborsServiceDiscovery::Heartbeat(grpc::ServerContext* context
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Reply is null!");
     }
     const TTHeartbeatRequest message(request->identity());
-    if (mHandler.handleHeartbeat(message)) {
+    if (mHandler.handleHeartbeat(message)) [[likely]] {
         reply->set_identity(mHandler.getIdentity());
         LOG_INFO("Successfully handled request!");
         return grpc::Status::OK;

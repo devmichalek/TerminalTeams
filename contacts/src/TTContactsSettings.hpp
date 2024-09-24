@@ -9,9 +9,9 @@ public:
     TTContactsSettings(TTContactsSettings&&) = default;
     TTContactsSettings& operator=(const TTContactsSettings&) = default;
     TTContactsSettings& operator=(TTContactsSettings&&) = default;
-    virtual size_t getTerminalWidth() const { return mWidth; }
-    virtual size_t getTerminalHeight() const { return mHeight; }
-    virtual std::shared_ptr<TTUtilsSharedMem> getSharedMemory() const;
+    [[nodiscard]] virtual size_t getTerminalWidth() const { return mWidth; }
+    [[nodiscard]] virtual size_t getTerminalHeight() const { return mHeight; }
+    [[nodiscard]] virtual std::shared_ptr<TTUtilsSharedMem> getSharedMemory() const;
 protected:
     TTContactsSettings() = default;
 private:

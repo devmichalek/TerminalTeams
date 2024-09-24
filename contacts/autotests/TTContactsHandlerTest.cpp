@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
                 tokens.push_back(line);
             }
 
-            if (tokens.size() == 2) {
+            if (tokens.size() == 2) [[likely]] {
                 const std::string& command = tokens[0];
                 if (command == "create") {
                     handler.create(tokens[1], "", "");

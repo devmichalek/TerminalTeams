@@ -19,7 +19,7 @@ public:
     // Stops applications
     virtual void stop();
     // Returns true if application is stopped
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTChat() = default;
 private:

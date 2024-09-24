@@ -25,10 +25,10 @@ public:
         memset(&mData[0], 0, TTCONTACTS_DATA_MAX_LENGTH);
         memcpy(&mData[0], nickname.c_str(), mDataLength);
     }
-    TTContactsStatus getStatus() const { return mStatus; };
-    TTContactsState getState() const { return mState; }
-    size_t getIdentity() const { return mIdentity; }
-    std::string getNickname() const { return std::string(mData, mData + mDataLength); }
+    [[nodiscard]] TTContactsStatus getStatus() const { return mStatus; };
+    [[nodiscard]] TTContactsState getState() const { return mState; }
+    [[nodiscard]] size_t getIdentity() const { return mIdentity; }
+    [[nodiscard]] std::string getNickname() const { return std::string(mData, mData + mDataLength); }
 private:
     TTContactsStatus mStatus;
     TTContactsState mState;

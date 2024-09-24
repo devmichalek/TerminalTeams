@@ -60,7 +60,7 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatRequest& request) 
         return false;
     }
     LOG_INFO("Handling heartbeat, existing contact id={}", request.identity);
-    if (!mContactsHandler.activate(id.value())) {
+    if (!mContactsHandler.activate(id.value())) [[unlikely]] {
         LOG_ERROR("Handle heartbeat error (failed to activate)...");
         stop();
         return false;
@@ -70,7 +70,7 @@ bool TTBroadcasterDiscovery::handleHeartbeat(const TTHeartbeatRequest& request) 
 
 std::string TTBroadcasterDiscovery::getNickname() {
     auto opt = mContactsHandler.get(0);
-    if (opt == std::nullopt) {
+    if (opt == std::nullopt) [[unlikely]] {
         LOG_ERROR("Failed to get nickname!");
         stop();
         return {};
@@ -80,7 +80,7 @@ std::string TTBroadcasterDiscovery::getNickname() {
 
 std::string TTBroadcasterDiscovery::getIdentity() {
     auto opt = mContactsHandler.get(0);
-    if (opt == std::nullopt) {
+    if (opt == std::nullopt) [[unlikely]] {
         LOG_ERROR("Failed to get identity!");
         stop();
         return {};
@@ -90,7 +90,7 @@ std::string TTBroadcasterDiscovery::getIdentity() {
 
 std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
     auto opt = mContactsHandler.get(0);
-    if (opt == std::nullopt) {
+    if (opt == std::nullopt) [[unlikely]] {
         LOG_ERROR("Failed to get IP address and port!");
         stop();
         return {};
@@ -153,7 +153,7 @@ void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
                 else if (neighbor.trials) {
                     if (!neighbor.stub) {
                         const auto entryOpt = mContactsHandler.get(id);
-                        if (!entryOpt) {
+                        if (!entryOpt) [[unlikely]] {
                             LOG_ERROR("Failed to get entry using contacts handler!");
                             stop();
                             break;
@@ -166,13 +166,13 @@ void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
                         const auto heartbeatResponse = mNeighborsStub.sendHeartbeat(*neighbor.stub, heartbeatRequest);
                         if (heartbeatResponse.status && !heartbeatResponse.identity.empty()) {
                             neighbor.trials = DynamicNeighbor::inactivityTrials + 1;
-                            if (!mContactsHandler.activate(id)) {
+                            if (!mContactsHandler.activate(id)) [[unlikely]] {
                                 LOG_ERROR("Failed to activate using contacts handler!");
                                 stop();
                                 break;
                             }
                         } else {
-                            if (!mContactsHandler.deactivate(id)) {
+                            if (!mContactsHandler.deactivate(id)) [[unlikely]] {
                                 LOG_ERROR("Failed to deactivate using contacts handler!");
                                 stop();
                                 break;
@@ -200,7 +200,7 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname,
     std::scoped_lock neighborLock(mNeighborMutex);
     decltype(auto) id = mContactsHandler.get(identity);
     if (id != std::nullopt) {
-        if (!mContactsHandler.activate(id.value())) {
+        if (!mContactsHandler.activate(id.value())) [[unlikely]] {
             LOG_ERROR("Rejecting neighbor (failed to activate)...");
             stop();
             return false;
@@ -208,17 +208,17 @@ bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname,
         LOG_WARNING("Rejecting neighbor (already present)...");
         return true;
     }
-    if (!mContactsHandler.create(nickname, identity, ipAddressAndPort)) {
+    if (!mContactsHandler.create(nickname, identity, ipAddressAndPort)) [[unlikely]] {
         LOG_WARNING("Rejecting neighbor (failed to create)...");
         return false;
     }
     id = mContactsHandler.get(identity);
-    if (id == std::nullopt) {
+    if (id == std::nullopt) [[unlikely]] {
         LOG_ERROR("Rejecting neighbor (cannot find new identity)...");
         stop();
         return false;
     }
-    if (!mChatHandler.create(id.value())) {
+    if (!mChatHandler.create(id.value())) [[unlikely]] {
         LOG_ERROR("Rejecting neighbor (cannot proceed with creation)...");
         stop();
         return false;

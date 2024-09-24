@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
                 }
                 tokens = getTokens(line);
             }
-            if (!tokens.empty()) {
+            if (!tokens.empty()) [[likely]] {
                 const std::string& command = tokens[0];
                 const auto id = std::stoi(tokens[1]);
                 // Send command

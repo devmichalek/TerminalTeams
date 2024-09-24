@@ -22,17 +22,17 @@ public:
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
     // Greet request handler
     virtual bool handleGreet(const TTGreetRequest& request);
     // Heartbeat request handler
     virtual bool handleHeartbeat(const TTHeartbeatRequest& request);
     // Returns root nickname
-    virtual std::string getNickname();
+    [[nodiscard]] virtual std::string getNickname();
     // Returns root identity
-    virtual std::string getIdentity();
+    [[nodiscard]] virtual std::string getIdentity();
     // Returns root IP address and port
-    virtual std::string getIpAddressAndPort();
+    [[nodiscard]] virtual std::string getIpAddressAndPort();
 private:
     void resolveStaticNeighbors();
     void resolveDynamicNeighbors();

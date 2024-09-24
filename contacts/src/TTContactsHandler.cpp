@@ -51,7 +51,7 @@ bool TTContactsHandler::create(const std::string& nickname, const std::string& i
 bool TTContactsHandler::send(size_t id) {
     LOG_INFO("Called send ID={}", id);
     std::scoped_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return false;
     }
 
@@ -71,7 +71,7 @@ bool TTContactsHandler::send(size_t id) {
     }
 
     mContacts[id].sentMessages++;
-    if (previousState != mContacts[id].state) {
+    if (previousState != mContacts[id].state) [[likely]] {
         TTContactsMessage message;
         message.setStatus(TTContactsStatus::STATE);
         message.setState(mContacts[id].state);
@@ -85,7 +85,7 @@ bool TTContactsHandler::send(size_t id) {
 bool TTContactsHandler::receive(size_t id) {
     LOG_INFO("Called receive ID={}", id);
     std::scoped_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return false;
     }
 
@@ -105,7 +105,7 @@ bool TTContactsHandler::receive(size_t id) {
     }
 
     mContacts[id].receivedMessages++;
-    if (previousState != mContacts[id].state) {
+    if (previousState != mContacts[id].state) [[likely]] {
         TTContactsMessage message;
         message.setStatus(TTContactsStatus::STATE);
         message.setState(mContacts[id].state);
@@ -119,7 +119,7 @@ bool TTContactsHandler::receive(size_t id) {
 bool TTContactsHandler::activate(size_t id) {
     LOG_INFO("Called activate ID={}", id);
     std::scoped_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return false;
     }
 
@@ -138,7 +138,7 @@ bool TTContactsHandler::activate(size_t id) {
             return false;
     }
 
-    if (previousState != mContacts[id].state) {
+    if (previousState != mContacts[id].state) [[likely]] {
         TTContactsMessage message;
         message.setStatus(TTContactsStatus::STATE);
         message.setState(mContacts[id].state);
@@ -152,7 +152,7 @@ bool TTContactsHandler::activate(size_t id) {
 bool TTContactsHandler::deactivate(size_t id) {
     LOG_INFO("Called deactivate ID={}", id);
     std::scoped_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return false;
     }
 
@@ -171,7 +171,7 @@ bool TTContactsHandler::deactivate(size_t id) {
             return false;
     }
 
-    if (previousState != mContacts[id].state) {
+    if (previousState != mContacts[id].state) [[likely]] {
         TTContactsMessage message;
         message.setStatus(TTContactsStatus::STATE);
         message.setState(mContacts[id].state);
@@ -185,7 +185,7 @@ bool TTContactsHandler::deactivate(size_t id) {
 bool TTContactsHandler::select(size_t id) {
     LOG_INFO("Called select ID={}", id);
     std::scoped_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return false;
     }
 
@@ -242,7 +242,7 @@ bool TTContactsHandler::select(size_t id) {
 std::optional<TTContactsHandlerEntry> TTContactsHandler::get(size_t id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
-    if (id >= mContacts.size()) {
+    if (id >= mContacts.size()) [[unlikely]] {
         return std::nullopt;
     }
     return {mContacts[id]};
@@ -252,7 +252,7 @@ std::optional<size_t> TTContactsHandler::get(const std::string& id) const {
     LOG_INFO("Called get ID={}", id);
     std::shared_lock contactsLock(mContactsMutex);
     decltype(auto) result = mIdentityMap.find(id);
-    if (result == mIdentityMap.end()) {
+    if (result == mIdentityMap.end()) [[unlikely]] {
         return std::nullopt;
     }
     return {result->second};

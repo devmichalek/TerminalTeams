@@ -29,12 +29,12 @@ public:
     virtual bool activate(size_t id);
     virtual bool deactivate(size_t id);
     virtual bool select(size_t id);
-    virtual std::optional<TTContactsHandlerEntry> get(size_t id) const;
-    virtual std::optional<size_t> get(const std::string& id) const;
-    virtual std::optional<size_t> current() const;
-    virtual size_t size() const;
+    [[nodiscard]] virtual std::optional<TTContactsHandlerEntry> get(size_t id) const;
+    [[nodiscard]] virtual std::optional<size_t> get(const std::string& id) const;
+    [[nodiscard]] virtual std::optional<size_t> current() const;
+    [[nodiscard]] virtual size_t size() const;
     virtual void stop();
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTContactsHandler() = default;
 private:

@@ -11,10 +11,10 @@ public:
     TTNetworkInterface(TTNetworkInterface&&) = default;
     TTNetworkInterface& operator=(const TTNetworkInterface&) = default;
     TTNetworkInterface& operator=(TTNetworkInterface&&) = default;
-    virtual std::string getName() const { return mName; }
-    virtual std::string getIpAddress() const { return mIpAddress; }
-    virtual std::string getPort() const { return mPort; }
-    virtual std::string getIpAddressAndPort() const { return mIpAddress + ":" + mPort; }
+    [[nodiscard]] virtual std::string getName() const { return mName; }
+    [[nodiscard]] virtual std::string getIpAddress() const { return mIpAddress; }
+    [[nodiscard]] virtual std::string getPort() const { return mPort; }
+    [[nodiscard]] virtual std::string getIpAddressAndPort() const { return mIpAddress + ":" + mPort; }
 private:
     std::string mName;
     std::string mIpAddress;

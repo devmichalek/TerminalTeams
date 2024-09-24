@@ -21,7 +21,7 @@ public:
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
     // Handles message (send)
     virtual bool handleSend(const std::string& message);
     // Handles request (receive)
@@ -29,7 +29,7 @@ public:
     // Handles request (receive)
     virtual bool handleReceive(const TTNarrateRequest& request);
     // Returns root nickname
-    virtual std::string getIdentity();
+    [[nodiscard]] virtual std::string getIdentity();
 private:
     struct Neighbor {
         Neighbor() = default;

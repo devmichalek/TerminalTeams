@@ -1,5 +1,6 @@
 #pragma once
 #include "TTEngineSettings.hpp"
+#include "TTUtilsStopper.hpp"
 
 class TTEngine {
 public:
@@ -14,18 +15,22 @@ public:
     // Stops application
     virtual void stop();
     // Returns true if application is stopped
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
 private:
     // Server thread
     void server(std::promise<void> promise);
-    // Broadcasters threads
+    // Broadcaster chat thread
     void chat(std::promise<void> promise);
+    // Broadcaster discovery thread
     void discovery(std::promise<void> promise);
-    // Callback functions
+    // Callback mailbox function
     void mailbox(const std::string& message);
+    // Callback switcher function (contacts selection)
     void switcher(size_t message);
+    // Stops application (internal function)
+    virtual void stopInternal();
     // Concurrent communication
-    std::atomic<bool> mStopped;
+    TTUtilsStopper mStopper;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
     // Handlers, IPC communication

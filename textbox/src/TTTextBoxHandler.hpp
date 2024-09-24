@@ -22,7 +22,7 @@ public:
     TTTextBoxHandler& operator=(const TTTextBoxHandler&) = delete;
     TTTextBoxHandler& operator=(TTTextBoxHandler&&) = delete;
     virtual void stop();
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTTextBoxHandler() = default;
 private:

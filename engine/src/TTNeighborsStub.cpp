@@ -29,7 +29,7 @@ TTTellResponse TTNeighborsStub::sendTell(TTNeighborsChatStubIf& stub, const TTTe
         tt::TellReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Tell(&context, request, &reply);
-        if (status.ok()) {
+        if (status.ok()) [[likely]] {
             return {true};
         }
         LOG_ERROR("Error status received on send tell!");
@@ -58,7 +58,7 @@ TTNarrateResponse TTNeighborsStub::sendNarrate(TTNeighborsChatStubIf& stub, cons
             }
         }
         grpc::Status status = writer->Finish();
-        if (status.ok()) {
+        if (status.ok()) [[likely]] {
             return {true};
         }
         LOG_ERROR("Error status received on send narrate!");
@@ -77,7 +77,7 @@ TTGreetResponse TTNeighborsStub::sendGreet(TTNeighborsDiscoveryStubIf& stub, con
         tt::GreetReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Greet(&context, request, &reply);
-        if (status.ok()) {
+        if (status.ok()) [[likely]] {
             return TTGreetResponse(true, reply.nickname(), reply.identity(), reply.ipaddressandport());
         }
         LOG_ERROR("Error status received on send greet!");
@@ -94,7 +94,7 @@ TTHeartbeatResponse TTNeighborsStub::sendHeartbeat(TTNeighborsDiscoveryStubIf& s
         tt::HeartbeatReply reply;
         grpc::ClientContext context;
         grpc::Status status = stub.Heartbeat(&context, request, &reply);
-        if (status.ok()) {
+        if (status.ok()) [[likely]] {
             return TTHeartbeatResponse(true, reply.identity());
         }
         LOG_ERROR("Error status received on send heartbeat!");

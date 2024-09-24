@@ -1,8 +1,7 @@
 #include "TTEngine.hpp"
 
-TTEngine::TTEngine(const TTEngineSettings& settings) {
+TTEngine::TTEngine(const TTEngineSettings& settings) : mStopper(std::bind(&TTEngine::stopInternal, this)) {
     LOG_INFO("Constructing...");
-    mStopped.store(false);
     using namespace std::placeholders;
     const auto& abstractFactory = settings.getAbstractFactory();
     LOG_INFO("Creating handlers...");
@@ -89,29 +88,11 @@ void TTEngine::run() {
 
 void TTEngine::stop() {
     LOG_WARNING("Forced stop...");
-    mStopped.store(true);
-    if (mServer) {
-        mServer->stop();
-    }
-    if (mContacts) {
-        mContacts->stop();
-    }
-    if (mChat) {
-        mChat->stop();
-    }
-    if (mTextBox) {
-        mTextBox->stop();
-    }
-    if (mBroadcasterChat) {
-        mBroadcasterChat->stop();
-    }
-    if (mBroadcasterDiscovery) {
-        mBroadcasterDiscovery->stop();
-    }
+    mStopper.stop();
 }
 
 bool TTEngine::stopped() const {
-    bool result = mStopped.load();
+    bool result = static_cast<bool>(mStopper);
     result |= (!mServer || mServer->stopped());
     result |= (!mContacts || mContacts->stopped());
     result |= (!mChat || mChat->stopped());
@@ -148,7 +129,7 @@ void TTEngine::discovery(std::promise<void> promise) {
 void TTEngine::mailbox(const std::string& message) {
     LOG_INFO("Received callback - message sent");
     std::scoped_lock lock(mExternalCallsMutex);
-    if (!mBroadcasterChat->handleSend(message)) {
+    if (!mBroadcasterChat->handleSend(message)) [[unlikely]] {
         LOG_ERROR("Received callback - failed to sent message!");
         stop();
     }
@@ -160,11 +141,33 @@ void TTEngine::switcher(size_t message) {
         std::scoped_lock lock(mExternalCallsMutex);
         bool result = mContacts->select(message);
         result &= mChat->select(message);
-        if (!result) {
+        if (!result) [[unlikely]] {
             LOG_ERROR("Received callback - failed to switch contact!");
             stop();
         }
     } else {
         LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
+    }
+}
+
+void TTEngine::stopInternal() {
+    LOG_WARNING("Forced internal stop...");
+    if (mServer) {
+        mServer->stop();
+    }
+    if (mContacts) {
+        mContacts->stop();
+    }
+    if (mChat) {
+        mChat->stop();
+    }
+    if (mTextBox) {
+        mTextBox->stop();
+    }
+    if (mBroadcasterChat) {
+        mBroadcasterChat->stop();
+    }
+    if (mBroadcasterDiscovery) {
+        mBroadcasterDiscovery->stop();
     }
 }

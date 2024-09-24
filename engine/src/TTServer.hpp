@@ -32,7 +32,7 @@ public:
         mStopped = true; // thread-safe as shutdown has internal mutex
     }
 
-    virtual bool stopped() const {
+    [[nodiscard]] virtual bool stopped() const {
         return mStopped;
     }
 protected:

@@ -51,7 +51,7 @@ bool TTChatHandler::send(size_t id, const std::string& message, TTChatTimestamp 
         LOG_ERROR("Current ID is either null or not matching the ID={} on send!", id);
         return false;
     }
-    if (id >= mMessages.size()) {
+    if (id >= mMessages.size()) [[unlikely]] {
         LOG_ERROR("ID={} out of range on send!", id);
         return false;
     }
@@ -70,7 +70,7 @@ bool TTChatHandler::receive(size_t id, const std::string& message, TTChatTimesta
         return false;
     }
     std::scoped_lock messagesLock(mMessagesMutex);
-    if (id >= mMessages.size()) {
+    if (id >= mMessages.size()) [[unlikely]] {
         LOG_ERROR("ID={} out of range on receive!", id);
         return false;
     }
@@ -91,11 +91,11 @@ bool TTChatHandler::select(size_t id) {
         return false;
     }
     std::scoped_lock messagesLock(mMessagesMutex);
-    if (id >= mMessages.size()) {
+    if (id >= mMessages.size()) [[unlikely]] {
         LOG_ERROR("ID={} out of range on select!", id);
         return false;
     }
-    if (mCurrentId && mCurrentId.value() == id) {
+    if (mCurrentId && mCurrentId.value() == id) [[unlikely]] {
         LOG_WARNING("Current ID={} is matching, no need continue on select!", id);
         return true;
     }
@@ -258,7 +258,7 @@ void TTChatHandler::heartbeat() {
                     LOG_WARNING("Forced exit on secondary (heartbeat) loop");
                     break;
                 }
-                if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&message))) {
+                if (!mSecondaryMessageQueue->receive(reinterpret_cast<char*>(&message))) [[unlikely]] {
                     LOG_ERROR("Failed to receive heartbeat message!");
                     break;
                 }

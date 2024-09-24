@@ -25,10 +25,10 @@ public:
     virtual bool select(size_t id);
     virtual bool create(size_t id);
     virtual bool size() const;
-    virtual std::optional<TTChatEntries> get(size_t id) const;
-    virtual std::optional<size_t> current() const;
+    [[nodiscard]] virtual std::optional<TTChatEntries> get(size_t id) const;
+    [[nodiscard]] virtual std::optional<size_t> current() const;
     virtual void stop();
-    virtual bool stopped() const;
+    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTChatHandler() = default;
 private:

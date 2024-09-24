@@ -28,9 +28,9 @@ public:
         mDataLength = data.size();
         memcpy(mData, data.data(), data.size());
     }
-    TTChatMessageType getType() const { return mType; }
-    TTChatTimestamp getTimestamp() const { return mTimestamp; }
-    std::string getData() const { return std::string(mData, mDataLength); }
+    [[nodiscard]] TTChatMessageType getType() const { return mType; }
+    [[nodiscard]] TTChatTimestamp getTimestamp() const { return mTimestamp; }
+    [[nodiscard]] std::string getData() const { return std::string(mData, mDataLength); }
     static constexpr unsigned int MAX_DATA_LENGTH = 2048;
 private:
     TTChatMessageType mType;

@@ -16,10 +16,10 @@ public:
     TTNeighborsStub(TTNeighborsStub&&) = delete;
     TTNeighborsStub& operator=(const TTNeighborsStub&) = delete;
     TTNeighborsStub& operator=(TTNeighborsStub&&) = delete;
-    virtual TTUniqueChatStub createChatStub(const std::string& ipAddressAndPort) const;
-    virtual TTUniqueDiscoveryStub createDiscoveryStub(const std::string& ipAddressAndPort) const;
-    virtual TTTellResponse sendTell(TTNeighborsChatStubIf& stub, const TTTellRequest& rhs) const;
-    virtual TTNarrateResponse sendNarrate(TTNeighborsChatStubIf& stub, const TTNarrateRequest& rhs) const;
-    virtual TTGreetResponse sendGreet(TTNeighborsDiscoveryStubIf& stub, const TTGreetRequest& rhs) const;
-    virtual TTHeartbeatResponse sendHeartbeat(TTNeighborsDiscoveryStubIf& stub, const TTHeartbeatRequest& rhs) const;
+    [[nodiscard]] virtual TTUniqueChatStub createChatStub(const std::string& ipAddressAndPort) const;
+    [[nodiscard]] virtual TTUniqueDiscoveryStub createDiscoveryStub(const std::string& ipAddressAndPort) const;
+    [[nodiscard]] virtual TTTellResponse sendTell(TTNeighborsChatStubIf& stub, const TTTellRequest& rhs) const;
+    [[nodiscard]] virtual TTNarrateResponse sendNarrate(TTNeighborsChatStubIf& stub, const TTNarrateRequest& rhs) const;
+    [[nodiscard]] virtual TTGreetResponse sendGreet(TTNeighborsDiscoveryStubIf& stub, const TTGreetRequest& rhs) const;
+    [[nodiscard]] virtual TTHeartbeatResponse sendHeartbeat(TTNeighborsDiscoveryStubIf& stub, const TTHeartbeatRequest& rhs) const;
 };
