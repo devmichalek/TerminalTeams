@@ -8,7 +8,6 @@
 TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
         mPrimaryMessageQueue(settings.getPrimaryMessageQueue()),
         mSecondaryMessageQueue(settings.getSecondaryMessageQueue()),
-        mStopped{false},
         mHeartbeatResult{},
         mHandlerResult{},
         mCurrentId(std::nullopt) {
@@ -42,7 +41,7 @@ TTChatHandler::~TTChatHandler() {
 }
 
 bool TTChatHandler::send(size_t id, const std::string& message, TTChatTimestamp timestamp) {
-    if (stopped()) {
+    if (isStopped()) {
         LOG_WARNING("Forced exit on send!");
         return false;
     }
@@ -65,7 +64,7 @@ bool TTChatHandler::send(size_t id, const std::string& message, TTChatTimestamp 
 }
 
 bool TTChatHandler::receive(size_t id, const std::string& message, TTChatTimestamp timestamp) {
-    if (stopped()) {
+    if (isStopped()) {
         LOG_WARNING("Forced exit on receive!");
         return false;
     }
@@ -86,7 +85,7 @@ bool TTChatHandler::receive(size_t id, const std::string& message, TTChatTimesta
 }
 
 bool TTChatHandler::select(size_t id) {
-    if (stopped()) {
+    if (isStopped()) {
         LOG_WARNING("Forced exit on select!");
         return false;
     }
@@ -116,7 +115,7 @@ bool TTChatHandler::select(size_t id) {
 }
 
 bool TTChatHandler::create(size_t id) {
-    if (stopped()) {
+    if (isStopped()) {
         LOG_WARNING("Forced exit on create!");
         return false;
     }
@@ -150,19 +149,13 @@ std::optional<size_t> TTChatHandler::current() const {
     return mCurrentId;
 }
 
-void TTChatHandler::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
+void TTChatHandler::onStop() {
     mQueueCondition.notify_one();
-}
-
-bool TTChatHandler::stopped() const {
-    return mStopped.load();
 }
 
 bool TTChatHandler::send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp) {
     LOG_INFO("Started preparing messages to be queued");
-    if (stopped()) {
+    if (isStopped()) {
         LOG_WARNING("Forced exit at generic message type!");
         return false;
     }
@@ -213,10 +206,10 @@ std::list<std::unique_ptr<TTChatMessage>> TTChatHandler::dequeue() {
         {
             std::unique_lock<std::mutex> lock(mQueueMutex);
             predicate = mQueueCondition.wait_for(lock, mHeartbeatTimeout, [this]() {
-                return !mQueuedMessages.empty() || stopped();
+                return !mQueuedMessages.empty() || isStopped();
             });
 
-            if (stopped()) {
+            if (isStopped()) {
                 LOG_WARNING("Forced exit on dequeue");
                 throw std::runtime_error({});
             }
@@ -254,7 +247,7 @@ void TTChatHandler::heartbeat() {
         try {
             TTChatMessage message;
             while (true) {
-                if (stopped()) {
+                if (isStopped()) {
                     LOG_WARNING("Forced exit on secondary (heartbeat) loop");
                     break;
                 }
@@ -286,7 +279,7 @@ void TTChatHandler::main() {
                 decltype(auto) messages = dequeue();
                 for (auto &message : messages) {
                     auto& refMessage = *message.get();
-                    if (stopped()) {
+                    if (isStopped()) {
                         LOG_WARNING("Forced exit on primary loop");
                         exit = true;
                         break;

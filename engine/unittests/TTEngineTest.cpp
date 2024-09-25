@@ -184,12 +184,12 @@ protected:
         mBroadcasterChatStopFlag.store(false);
         mBroadcasterDiscoveryStopFlag.store(false);
         mServerStopFlag.store(false);
-        ON_CALL(*mContactsHandler, stopped()).WillByDefault([&](){ return mContactsStopFlag.load(); });
-        ON_CALL(*mChatHandler, stopped()).WillByDefault([&](){ return mChatStopFlag.load(); });
-        ON_CALL(*mTextBoxHandler, stopped()).WillByDefault([&](){ return mTextBoxStopFlag.load(); });
-        ON_CALL(*mBroadcasterChat, stopped()).WillByDefault([&](){ return mBroadcasterChatStopFlag.load(); });
-        ON_CALL(*mBroadcasterDiscovery, stopped()).WillByDefault([&](){ return mBroadcasterDiscoveryStopFlag.load(); });
-        ON_CALL(*mServer, stopped()).WillByDefault([&](){ return mServerStopFlag.load(); });
+        ON_CALL(*mContactsHandler, isStopped()).WillByDefault([&](){ return mContactsStopFlag.load(); });
+        ON_CALL(*mChatHandler, isStopped()).WillByDefault([&](){ return mChatStopFlag.load(); });
+        ON_CALL(*mTextBoxHandler, isStopped()).WillByDefault([&](){ return mTextBoxStopFlag.load(); });
+        ON_CALL(*mBroadcasterChat, isStopped()).WillByDefault([&](){ return mBroadcasterChatStopFlag.load(); });
+        ON_CALL(*mBroadcasterDiscovery, isStopped()).WillByDefault([&](){ return mBroadcasterDiscoveryStopFlag.load(); });
+        ON_CALL(*mServer, isStopped()).WillByDefault([&](){ return mServerStopFlag.load(); });
         ON_CALL(*mContactsHandler, stop()).WillByDefault([&](){ mContactsStopFlag.store(true); });
         ON_CALL(*mChatHandler, stop()).WillByDefault([&](){ mChatStopFlag.store(true); });
         ON_CALL(*mTextBoxHandler, stop()).WillByDefault([&](){ mTextBoxStopFlag.store(true); });
@@ -257,94 +257,94 @@ protected:
 TEST_F(TTEngineTest, HappyPathEngineStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathContactsHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mContactsStopFlag.store(true);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathChatHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mChatStopFlag.store(true);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathTextBoxHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mTextBoxStopFlag.store(true);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathBroadcasterChatHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mBroadcasterChatStopFlag.store(true);
     mBroadcasterChatCondition.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathBroadcasterDiscoveryHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mBroadcasterDiscoveryStopFlag.store(true);
     mBroadcasterDiscoveryCondition.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
 TEST_F(TTEngineTest, HappyPathServerHandlerStop) {
     PrepareEngineDependencies();
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mServerStopFlag.store(true);
     mServerCondition.notify_one();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -400,15 +400,15 @@ TEST_F(TTEngineTest, HappyPathMailbox) {
         .Times(1)
         .WillOnce(Return(true));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackMessageSent(message);
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -419,13 +419,13 @@ TEST_F(TTEngineTest, UnhappyPathMailboxBroadcasterChatFailedToHandle) {
         .Times(1)
         .WillOnce(Return(false));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackMessageSent(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -442,15 +442,15 @@ TEST_F(TTEngineTest, HappyPathSwitcher) {
         .Times(1)
         .WillOnce(Return(true));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackContactsSwitch(message);
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -461,15 +461,15 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherIdIsTooLarge) {
         .Times(1)
         .WillOnce(Return(1));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackContactsSwitch(message);
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -486,13 +486,13 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerSelectFailed) {
         .Times(1)
         .WillOnce(Return(true));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackContactsSwitch(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -509,13 +509,13 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherChatHandlerSelectFailed) {
         .Times(1)
         .WillOnce(Return(false));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackContactsSwitch(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
@@ -532,12 +532,12 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerAndChatHandlerSelectFaile
         .Times(1)
         .WillOnce(Return(false));
     CreateEngine();
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
-    EXPECT_FALSE(mEngine->stopped());
+    EXPECT_FALSE(mEngine->isStopped());
     mCallbackContactsSwitch(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
-    EXPECT_TRUE(mEngine->stopped());
+    EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }

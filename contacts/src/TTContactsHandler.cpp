@@ -6,7 +6,6 @@
 
 TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
         mSharedMem(std::move(settings.getSharedMemory())),
-        mStopped{false},
         mHandlerThread{},
         mHeartbeatThread{},
         mCurrentContact(std::nullopt),
@@ -269,18 +268,12 @@ size_t TTContactsHandler::size() const {
     return mContacts.size();
 }
 
-void TTContactsHandler::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
+void TTContactsHandler::onStop() {
     mQueueCondition.notify_one();
 }
 
-bool TTContactsHandler::stopped() const {
-    return mStopped.load();
-}
-
 bool TTContactsHandler::send(const TTContactsMessage& message) {
-    if (stopped()) {
+    if (isStopped()) {
         return false;
     }
     {
@@ -295,7 +288,7 @@ void TTContactsHandler::heartbeat() {
     LOG_INFO("Started heartbeat loop");
     std::scoped_lock heartbeatQuitLock(mHeartbeatQuitMutex);
     try {
-        while (!stopped()) {
+        while (!isStopped()) {
             TTContactsMessage message;
             message.setStatus(TTContactsStatus::HEARTBEAT);
             if (!send(message)) {
@@ -321,10 +314,10 @@ void TTContactsHandler::main() {
             {
                 std::unique_lock<std::mutex> lock(mQueueMutex);
                 mQueueCondition.wait(lock, [this]() {
-                    return !mQueuedMessages.empty() || stopped();
+                    return !mQueuedMessages.empty() || isStopped();
                 });
 
-                if (stopped()) {
+                if (isStopped()) {
                     exit = true;
                     goodbye();
                     break; // Forced exit
@@ -337,7 +330,7 @@ void TTContactsHandler::main() {
             }
 
             for (auto &message : messages) {
-                if (stopped()) {
+                if (isStopped()) {
                     exit = true;
                     goodbye();
                     break; // Forced exit

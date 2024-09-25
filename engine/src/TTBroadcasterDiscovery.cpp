@@ -6,7 +6,6 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
                                                TTNeighborsStub& neighborsStub,
                                                TTNetworkInterface networkInterface,
                                                const std::deque<std::string>& neighbors) :
-        mStopped{false},
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
@@ -37,15 +36,6 @@ void TTBroadcasterDiscovery::run() {
         dynamicNeighborsResult.wait();
     }
     LOG_INFO("Stopped broadcasting discovery");
-}
-
-void TTBroadcasterDiscovery::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
-}
-
-bool TTBroadcasterDiscovery::stopped() const {
-    return mStopped.load();
 }
 
 bool TTBroadcasterDiscovery::handleGreet(const TTGreetRequest& request) {
@@ -103,7 +93,7 @@ void TTBroadcasterDiscovery::resolveStaticNeighbors() {
         auto smallest = mDiscoveryTimerFactory.max();
         bool resolved = true;
         for (auto& neighbor : mStaticNeighbors) {
-            if (stopped()) {
+            if (isStopped()) {
                 break;
             }
             if (neighbor.trials > 0) {
@@ -132,16 +122,16 @@ void TTBroadcasterDiscovery::resolveStaticNeighbors() {
         if (resolved) {
             break;
         }
-    } while (!stopped());
+    } while (!isStopped());
 }
 
 void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
-    while (!stopped()) {
+    while (!isStopped()) {
         auto smallest = mInactivityTimerFactory.max();
         {
             std::scoped_lock neighborLock(mNeighborMutex);
             for (auto &[id, neighbor] : mDynamicNeighbors) {
-                if (stopped()) {
+                if (isStopped()) {
                     break;
                 }
                 if (!neighbor.timer.expired()) {

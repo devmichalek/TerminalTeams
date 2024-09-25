@@ -23,13 +23,13 @@ public:
         TTChatMessage sentMessage;
         std::memcpy(&sentMessage, message, sizeof(sentMessage));
         mSentMessages.push_back(sentMessage);
-        mStoppedStatusOnSend.emplace_back(mChatHandler->stopped());
+        mStoppedStatusOnSend.emplace_back(mChatHandler->isStopped());
     }
 
     void ProvideReceivedMessage(char* dst, const TTChatMessage& src, std::chrono::milliseconds timeout) {
         std::this_thread::sleep_for(timeout);
         std::memcpy(dst, &src, sizeof(src));
-        mStoppedStatusOnReceive.emplace_back(mChatHandler->stopped());
+        mStoppedStatusOnReceive.emplace_back(mChatHandler->isStopped());
     }
 
 protected:
@@ -112,14 +112,14 @@ protected:
     bool StartHandler(std::chrono::milliseconds timeout) {
         mChatHandler.reset(new TTChatHandler(*mSettingsMock));
         std::this_thread::sleep_for(timeout);
-        return !mChatHandler->stopped();
+        return !mChatHandler->isStopped();
     }
 
     bool StopHandler(std::chrono::milliseconds timeout) {
         if (mChatHandler) {
             mChatHandler->stop();
             std::this_thread::sleep_for(timeout);
-            return mChatHandler->stopped();
+            return mChatHandler->isStopped();
         }
         return false;
     }
@@ -231,7 +231,7 @@ TEST_F(TTChatHandlerTest, FailedToReceiveAfterManyReceivedHeartbeats) {
     std::this_thread::sleep_for(std::chrono::milliseconds{2200});
     EXPECT_EQ(mChatHandler->size(), 0);
     EXPECT_EQ(mChatHandler->current(), std::nullopt);
-    EXPECT_TRUE(mChatHandler->stopped());
+    EXPECT_TRUE(mChatHandler->isStopped());
     for (const auto status : mStoppedStatusOnReceive) {
         EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
     }
@@ -290,7 +290,7 @@ TEST_F(TTChatHandlerTest, FailedToReceiveAfterManyReceivedHeartbeatsThenUnknown)
     std::this_thread::sleep_for(std::chrono::milliseconds{2200});
     EXPECT_EQ(mChatHandler->size(), 0);
     EXPECT_EQ(mChatHandler->current(), std::nullopt);
-    EXPECT_TRUE(mChatHandler->stopped());
+    EXPECT_TRUE(mChatHandler->isStopped());
     for (const auto status : mStoppedStatusOnReceive) {
         EXPECT_FALSE(status) << "At some point application was stopped while receiving message!";
     }
@@ -344,7 +344,7 @@ TEST_F(TTChatHandlerTest, FailedToSendAfterManySendHeartbeats) {
     std::this_thread::sleep_for(std::chrono::milliseconds{2500});
     EXPECT_EQ(mChatHandler->size(), 0);
     EXPECT_EQ(mChatHandler->current(), std::nullopt);
-    EXPECT_TRUE(mChatHandler->stopped());
+    EXPECT_TRUE(mChatHandler->isStopped());
     EXPECT_GT(mStoppedStatusOnReceive.size(), 1);
     mStoppedStatusOnReceive.pop_back();
     for (const auto status : mStoppedStatusOnReceive) {
@@ -393,7 +393,7 @@ TEST_F(TTChatHandlerTest, HappyPathAtLeastThreeHeartbeatsAndGoodbye) {
     std::this_thread::sleep_for(std::chrono::milliseconds{2000});
     EXPECT_EQ(mChatHandler->size(), 0);
     EXPECT_EQ(mChatHandler->current(), std::nullopt);
-    EXPECT_FALSE(mChatHandler->stopped());
+    EXPECT_FALSE(mChatHandler->isStopped());
     EXPECT_TRUE(StopHandler(std::chrono::milliseconds{100}));
     EXPECT_GT(mStoppedStatusOnReceive.size(), 1);
     mStoppedStatusOnReceive.pop_back();
@@ -501,7 +501,7 @@ TEST_F(TTChatHandlerTest, HappyAndUnhappyPathCreateSendAndReceive) {
     EXPECT_FALSE(mChatHandler->send(1, "Good, and you?", {}));
     // Some sleep and other checks
     std::this_thread::sleep_for(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS});
-    EXPECT_FALSE(mChatHandler->stopped());
+    EXPECT_FALSE(mChatHandler->isStopped());
     EXPECT_TRUE(StopHandler(std::chrono::milliseconds{100}));
     EXPECT_FALSE(mChatHandler->create(1));
     EXPECT_FALSE(mChatHandler->send(0, "Dummy", {}));
@@ -701,7 +701,7 @@ TEST_F(TTChatHandlerTest, HappyPathCreateSendAndReceiveHugeMessages) {
     EXPECT_EQ(mChatHandler->current().value(), 0);
     // Check stopped status
     std::this_thread::sleep_for(std::chrono::milliseconds{HEARTBEAT_TIMEOUT_MS});
-    EXPECT_FALSE(mChatHandler->stopped());
+    EXPECT_FALSE(mChatHandler->isStopped());
     EXPECT_TRUE(StopHandler(std::chrono::milliseconds{100}));
     // Check entries
     EXPECT_NE(mChatHandler->get(0), std::nullopt);

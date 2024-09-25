@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
         LOG_INFO("Contacts initialized");
         // Run main app
         try {
-            if (!application->stopped()) {
+            if (!application->isStopped()) {
                 application->run();
             } else {
                 LOG_WARNING("Application was shut down out of a sudden");

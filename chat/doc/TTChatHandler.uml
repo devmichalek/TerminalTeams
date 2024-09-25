@@ -16,8 +16,10 @@ package TTDiagnosticsBundle <<Rectangle>> {
 package TTUtilsBundle <<Rectangle>> {
   class TTUtilsSyscall
   class TTUtilsMessageQueue
+  class TTUtilsStopable
 }
 
+TTChatHandler --|> TTUtilsStopable
 TTChatHandler o-- TTChatMessage
 TTChatHandler o-- TTUtilsMessageQueue
 TTChatHandler *-- TTChatEntry

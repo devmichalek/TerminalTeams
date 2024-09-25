@@ -2,6 +2,7 @@
 #include "TTChatMessage.hpp"
 #include "TTChatSettings.hpp"
 #include "TTChatEntry.hpp"
+#include "TTUtilsStopable.hpp"
 #include <memory>
 #include <future>
 #include <queue>
@@ -12,7 +13,7 @@
 
 // Class meant to be embedded into other higher abstract class.
 // Allows to control TTChat process concurrently.
-class TTChatHandler {
+class TTChatHandler : public TTUtilsStopable {
 public:
     explicit TTChatHandler(const TTChatSettings& settings);
     virtual ~TTChatHandler();
@@ -27,10 +28,9 @@ public:
     virtual bool size() const;
     [[nodiscard]] virtual std::optional<TTChatEntries> get(size_t id) const;
     [[nodiscard]] virtual std::optional<size_t> current() const;
-    virtual void stop();
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTChatHandler() = default;
+    virtual void onStop() override;
 private:
     bool send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp);
     std::list<std::unique_ptr<TTChatMessage>> dequeue();
@@ -45,7 +45,6 @@ private:
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
     static inline const std::chrono::milliseconds mHeartbeatTimeout{500};
     // Thread concurrent message communication
-    std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;
     std::future<void> mHandlerResult;
     std::thread mHeartbeatThread;

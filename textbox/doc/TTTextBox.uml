@@ -16,8 +16,10 @@ package TTUtilsBundle <<Rectangle>> {
   class TTUtilsInputStream
   class TTUtilsSyscall
   class TTUtilsNamedPipe
+  class TTUtilsStopable
 }
 
+TTTextBox --|> TTUtilsStopable
 TTTextBox o-- TTUtilsOutputStream
 TTTextBox o-- TTUtilsInputStream
 TTTextBox o-- TTUtilsNamedPipe

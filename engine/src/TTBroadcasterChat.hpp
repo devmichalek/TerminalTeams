@@ -4,8 +4,9 @@
 #include "TTNetworkInterface.hpp"
 #include "TTNeighborsStub.hpp"
 #include "TTUtilsTimerFactory.hpp"
+#include "TTUtilsStopable.hpp"
 
-class TTBroadcasterChat {
+class TTBroadcasterChat : public TTUtilsStopable {
 public:
     TTBroadcasterChat(TTContactsHandler& contactsHandler,
                       TTChatHandler& chatHandler,
@@ -18,10 +19,6 @@ public:
     TTBroadcasterChat& operator=(TTBroadcasterChat&&) = delete;
     // Main loop
     virtual void run();
-    // Stops application
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
     // Handles message (send)
     virtual bool handleSend(const std::string& message);
     // Handles request (receive)
@@ -42,7 +39,6 @@ private:
         TTUtilsTimer timer;
         std::deque<std::string> pendingMessages;
     };
-    std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNeighborsStub& mNeighborsStub;

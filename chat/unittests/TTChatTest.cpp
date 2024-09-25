@@ -23,7 +23,7 @@ public:
     void SetArgPointerInReceiveMessage(char* dst, const TTChatMessage& src, std::chrono::milliseconds timeout) {
         std::this_thread::sleep_for(timeout);
         std::memcpy(dst, &src, sizeof(src));
-        mStoppedStatusOnReceive.emplace_back(mChat->stopped());
+        mStoppedStatusOnReceive.emplace_back(mChat->isStopped());
     }
 
     void GetArgPointerInSendMessage(const char* src, std::chrono::milliseconds timeout) {
@@ -31,7 +31,7 @@ public:
         TTChatMessage dst;
         std::memcpy(&dst, src, sizeof(dst));
         mSendMessages.push_back(dst);
-        mStoppedStatusOnSend.emplace_back(mChat->stopped());
+        mStoppedStatusOnSend.emplace_back(mChat->isStopped());
     }
 protected:
     TTChatTest() {
@@ -77,7 +77,7 @@ protected:
 
     void RestartApplication() {
         mChat = std::make_unique<TTChat>(*mSettingsMock, *mOutputStreamMock);
-        EXPECT_FALSE(mChat->stopped());
+        EXPECT_FALSE(mChat->isStopped());
         mApplicationThread = std::thread{&TTChatTest::StartApplication, this};
     }
 
@@ -89,10 +89,10 @@ protected:
     void VerifyApplicationTimeout(std::chrono::milliseconds timeout) {
         std::unique_lock<std::mutex> lock(mApplicationMutex);
         const bool predicate = mApplicationCv.wait_for(lock, timeout, [this]() {
-            return mChat->stopped();
+            return mChat->isStopped();
         });
         EXPECT_TRUE(predicate); // Check for application timeout
-        EXPECT_TRUE(mChat->stopped());
+        EXPECT_TRUE(mChat->isStopped());
         mApplicationThread.join();
     }
 

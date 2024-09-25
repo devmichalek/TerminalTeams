@@ -1,14 +1,14 @@
 #pragma once
 #include "TTNeighborsServiceChat.hpp"
 #include "TTNeighborsServiceDiscovery.hpp"
+#include "TTUtilsStopable.hpp"
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/health_check_service_interface.h>
 
-class TTServer {
+class TTServer : public TTUtilsStopable {
 public:
     TTServer(const std::string& ipAddressAndPort, TTNeighborsServiceChat& chat, TTNeighborsServiceDiscovery& discovery) {
-        mStopped = false;
         grpc::EnableDefaultHealthCheckService(true);
         grpc::reflection::InitProtoReflectionServerBuilderPlugin();
         grpc::ServerBuilder builder;
@@ -22,22 +22,14 @@ public:
     TTServer(TTServer&&) = default;
     TTServer& operator=(const TTServer&) = default;
     TTServer& operator=(TTServer&&) = default;
-
     virtual void run() {
         mGrpcServer->Wait();
     }
-
-    virtual void stop() {
-        mGrpcServer->Shutdown();
-        mStopped = true; // thread-safe as shutdown has internal mutex
-    }
-
-    [[nodiscard]] virtual bool stopped() const {
-        return mStopped;
-    }
 protected:
     TTServer() = default;
+    virtual void onStop() override {
+        mGrpcServer->Shutdown();
+    }
 private:
-    bool mStopped;
     std::unique_ptr<grpc::Server> mGrpcServer;
 };

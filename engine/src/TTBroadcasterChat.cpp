@@ -5,7 +5,6 @@ TTBroadcasterChat::TTBroadcasterChat(TTContactsHandler& contactsHandler,
                                      TTChatHandler& chatHandler,
                                      TTNeighborsStub& neighborsStub,
                                      TTNetworkInterface networkInterface) :
-        mStopped{false},
         mContactsHandler(contactsHandler),
         mChatHandler(chatHandler),
         mNeighborsStub(neighborsStub),
@@ -23,14 +22,14 @@ TTBroadcasterChat::~TTBroadcasterChat() {
 
 void TTBroadcasterChat::run() {
     LOG_INFO("Started broadcasting chat");
-    while (!stopped()) {
+    while (!isStopped()) {
         mNeighborsFlag.store(false);
         std::unique_lock<std::mutex> lock(mNeighborsMutex);
         const bool predicate = mNeighborsCondition.wait_for(lock, mInactivityTimerFactory.min(), [this]() {
-            return mNeighborsFlag.load() || stopped();
+            return mNeighborsFlag.load() || isStopped();
         });
         for (auto &[id, neighbor] : mNeighbors) {
-            if (stopped()) {
+            if (isStopped()) {
                 break;
             }
             if (!neighbor.timer.expired()) {
@@ -62,15 +61,6 @@ void TTBroadcasterChat::run() {
         }
     }
     LOG_INFO("Stopped broadcasting chat");
-}
-
-void TTBroadcasterChat::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
-}
-
-bool TTBroadcasterChat::stopped() const {
-    return mStopped.load();
 }
 
 bool TTBroadcasterChat::handleSend(const std::string& message) {

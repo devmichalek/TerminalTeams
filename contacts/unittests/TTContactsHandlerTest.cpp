@@ -101,14 +101,14 @@ protected:
     bool StartHandler(std::chrono::milliseconds timeout) {
         mContactsHandler.reset(new TTContactsHandler(*mSettingsMock));
         std::this_thread::sleep_for(timeout);
-        return !mContactsHandler->stopped();
+        return !mContactsHandler->isStopped();
     }
 
     bool StopHandler() {
         if (mContactsHandler) {
             mContactsHandler->stop();
             std::this_thread::sleep_for(std::chrono::milliseconds(TTCONTACTS_HEARTBEAT_TIMEOUT_MS));
-            return mContactsHandler->stopped();
+            return mContactsHandler->isStopped();
         }
         return false;
     }

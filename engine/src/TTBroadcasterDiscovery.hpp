@@ -4,8 +4,9 @@
 #include "TTNetworkInterface.hpp"
 #include "TTUtilsTimerFactory.hpp"
 #include "TTNeighborsStub.hpp"
+#include "TTUtilsStopable.hpp"
 
-class TTBroadcasterDiscovery {
+class TTBroadcasterDiscovery : public TTUtilsStopable {
 public:
     TTBroadcasterDiscovery(TTContactsHandler& contactsHandler,
                            TTChatHandler& chatHandler,
@@ -19,10 +20,6 @@ public:
     TTBroadcasterDiscovery& operator=(TTBroadcasterDiscovery&&) = delete;
     // Main loop
     virtual void run();
-    // Stops application
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
     // Greet request handler
     virtual bool handleGreet(const TTGreetRequest& request);
     // Heartbeat request handler
@@ -66,7 +63,6 @@ private:
         TTUniqueDiscoveryStub stub;
         const static inline size_t inactivityTrials = 5;
     };
-    std::atomic<bool> mStopped;
     TTContactsHandler& mContactsHandler;
     TTChatHandler& mChatHandler;
     TTNeighborsStub& mNeighborsStub;

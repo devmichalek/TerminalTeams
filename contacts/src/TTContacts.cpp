@@ -18,7 +18,7 @@ TTContacts::~TTContacts() {
 
 void TTContacts::run() {
     LOG_INFO("Started contacts loop");
-    while (!stopped() && mSharedMem->alive()) {
+    while (!isStopped() && mSharedMem->alive()) {
         TTContactsMessage newMessage;
         if (!mSharedMem->receive(reinterpret_cast<void*>(&newMessage))) {
             LOG_WARNING("Failed to receive message!");
@@ -30,15 +30,6 @@ void TTContacts::run() {
     }
     stop();
     LOG_INFO("Completed contacts loop");
-}
-
-void TTContacts::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
-}
-
-bool TTContacts::stopped() const {
-    return mStopped.load();
 }
 
 bool TTContacts::handle(const TTContactsMessage& message) {

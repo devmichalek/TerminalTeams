@@ -62,4 +62,3 @@ Application was tested using:
 - engine documentation
 - remove IPC files in cpp classes in constructor
 - comment code
-- use TTUtilsStopper instead of raw std::atomic<bool>

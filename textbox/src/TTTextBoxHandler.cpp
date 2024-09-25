@@ -7,8 +7,7 @@ TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
     TTTextBoxCallbackContactSwitch callbackContactsSwitch) :
         mPipe(settings.getNamedPipe()),
         mCallbackMessageSent(callbackMessageSent),
-        mCallbackContactsSwitch(callbackContactsSwitch),
-        mStopped{false} {
+        mCallbackContactsSwitch(callbackContactsSwitch) {
     LOG_INFO("Constructing...");
     // Create pipe
     if (!mPipe->create()) {
@@ -31,15 +30,6 @@ TTTextBoxHandler::~TTTextBoxHandler() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTTextBoxHandler::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
-}
-
-bool TTTextBoxHandler::stopped() const {
-    return mStopped.load();
-}
-
 void TTTextBoxHandler::main(std::promise<void> promise) {
     LOG_INFO("Started textbox handler loop");
     if (!mPipe->alive()) {
@@ -47,7 +37,7 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
     } else {
         try {
             for (auto i = TTTextBoxHandler::RECEIVE_TRY_COUNT; i > 0; --i) {
-                if (stopped()) {
+                if (isStopped()) {
                     break;
                 }
                 TTTextBoxMessage message(TTTextBoxStatus::UNDEFINED, 0, nullptr);

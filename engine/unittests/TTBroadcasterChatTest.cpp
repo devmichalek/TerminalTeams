@@ -161,7 +161,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerCurrentFailed) {
         .Times(1)
         .WillOnce(Return(std::nullopt));
     EXPECT_FALSE(mBroadcaster->handleSend("foo"));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendChatHandlerCurrentFailed) {
@@ -172,7 +172,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendChatHandlerCurrentFailed) {
         .Times(1)
         .WillOnce(Return(std::nullopt));
     EXPECT_FALSE(mBroadcaster->handleSend("foo"));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendIdentityMismatch) {
@@ -183,7 +183,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendIdentityMismatch) {
         .Times(1)
         .WillOnce(Return(2));
     EXPECT_FALSE(mBroadcaster->handleSend("foo"));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerSendFailed) {
@@ -198,7 +198,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerSendFailed) {
         .Times(1)
         .WillOnce(Return(false));
     EXPECT_FALSE(mBroadcaster->handleSend("foo"));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendChatHandlerSendFailed) {
@@ -217,7 +217,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendChatHandlerSendFailed) {
         .Times(1)
         .WillOnce(Return(false));
     EXPECT_FALSE(mBroadcaster->handleSend(message));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerGetFailed) {
@@ -239,7 +239,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendContactsHandlerGetFailed) {
         .Times(1)
         .WillOnce(Return(std::nullopt));
     EXPECT_FALSE(mBroadcaster->handleSend(message));
-    EXPECT_TRUE(mBroadcaster->stopped());
+    EXPECT_TRUE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, HappyPathSendHostMatch) {
@@ -262,7 +262,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendHostMatch) {
         .Times(1)
         .WillOnce(Return(entry));
     EXPECT_TRUE(mBroadcaster->handleSend(message));
-    EXPECT_FALSE(mBroadcaster->stopped());
+    EXPECT_FALSE(mBroadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
@@ -308,7 +308,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellImmediateStubCreationFailed) {
     std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
     // Send message
     EXPECT_TRUE(mBroadcaster->handleSend(message));
-    EXPECT_FALSE(mBroadcaster->stopped());
+    EXPECT_FALSE(mBroadcaster->isStopped());
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{4000});
     mBroadcaster->stop();
@@ -344,7 +344,7 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathSendTellLazyStubCreationFailed) {
     std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
     // Send message
     EXPECT_TRUE(mBroadcaster->handleSend(message));
-    EXPECT_FALSE(mBroadcaster->stopped());
+    EXPECT_FALSE(mBroadcaster->isStopped());
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{8000});
     mBroadcaster->stop();
@@ -395,7 +395,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendTellImmediateStubCreationFailed) {
     std::thread loop(std::bind(&TTBroadcasterChat::run, mBroadcaster.get()));
     // Send message
     EXPECT_TRUE(mBroadcaster->handleSend(message));
-    EXPECT_FALSE(mBroadcaster->stopped());
+    EXPECT_FALSE(mBroadcaster->isStopped());
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{20000}); // max inactivity timeout (6s)
     mBroadcaster->stop();
@@ -454,7 +454,7 @@ TEST_F(TTBroadcasterChatTest, HappyPathSendNarrateImmediateStubCreationFailed) {
     for (const auto& message : messages) {
         EXPECT_TRUE(mBroadcaster->handleSend(message));
     }
-    EXPECT_FALSE(mBroadcaster->stopped());
+    EXPECT_FALSE(mBroadcaster->isStopped());
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{20000});
     mBroadcaster->stop();

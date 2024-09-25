@@ -124,17 +124,17 @@ protected:
     void RestartApplication(std::chrono::milliseconds timeout) {
         mApplicationTimeout = timeout;
         mTextBox = std::make_unique<TTTextBox>(*mSettingsMock, *mOutputStreamMock, *mInputStreamMock);
-        EXPECT_FALSE(mTextBox->stopped());
+        EXPECT_FALSE(mTextBox->isStopped());
         mApplicationThread = std::thread{&TTTextBoxTest::StartApplication, this};
     }
 
     void VerifyApplicationTimeout() {
         std::unique_lock<std::mutex> lock(mApplicationMutex);
         const bool predicate = mApplicationCv.wait_for(lock, mApplicationTimeout, [this]() {
-            return mTextBox->stopped();
+            return mTextBox->isStopped();
         });
         EXPECT_TRUE(predicate); // Check for application timeout
-        EXPECT_TRUE(mTextBox->stopped());
+        EXPECT_TRUE(mTextBox->isStopped());
         mApplicationThread.join();
     }
 
@@ -167,7 +167,7 @@ TEST_F(TTTextBoxTest, FailedToRunNamedPipeIsNotAlive) {
         .WillRepeatedly(Return(false));
     mTextBox = std::make_unique<TTTextBox>(*mSettingsMock, *mOutputStreamMock, *mInputStreamMock);
     mTextBox->run();
-    EXPECT_TRUE(mTextBox->stopped());
+    EXPECT_TRUE(mTextBox->isStopped());
 }
 
 TEST_F(TTTextBoxTest, SuccessEmptyInput) {
@@ -217,7 +217,7 @@ TEST_F(TTTextBoxTest, FailedEmptyInput) {
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageFalse, this, _1));
     RestartApplication(std::chrono::milliseconds{500});
     std::this_thread::sleep_for(std::chrono::milliseconds{600 * expectedMinNumOfMessages});
-    EXPECT_TRUE(mTextBox->stopped());
+    EXPECT_TRUE(mTextBox->isStopped());
     mInputStreamMock->input("");
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify

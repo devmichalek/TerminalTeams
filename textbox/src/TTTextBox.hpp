@@ -1,14 +1,15 @@
 #pragma once
-#include <queue>
-#include <deque>
-#include <future>
 #include "TTTextBoxSettings.hpp"
 #include "TTTextBoxMessage.hpp"
 #include "TTUtilsNamedPipe.hpp"
 #include "TTUtilsOutputStream.hpp"
 #include "TTUtilsInputStream.hpp"
+#include "TTUtilsStopable.hpp"
+#include <queue>
+#include <deque>
+#include <future>
 
-class TTTextBox {
+class TTTextBox : public TTUtilsStopable {
 public:
     explicit TTTextBox(const TTTextBoxSettings& settings,
         TTUtilsOutputStream& outputStream,
@@ -19,12 +20,9 @@ public:
     TTTextBox& operator=(const TTTextBox&) = delete;
     TTTextBox& operator=(TTTextBox&&) = delete;
     virtual void run();
-    // Stops application
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTTextBox() = default;
+    virtual void onStop() override;
 private:
     // Parses input and returns true if there are no suspicions
     bool parse(const std::string& line);
@@ -49,7 +47,6 @@ private:
     std::queue<std::unique_ptr<TTTextBoxMessage>> mQueuedMessages;
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;
-    std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
 };

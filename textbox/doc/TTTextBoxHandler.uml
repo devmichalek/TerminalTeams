@@ -16,8 +16,10 @@ package TTDiagnosticsBundle <<Rectangle>> {
 package TTUtilsBundle <<Rectangle>> {
   class TTUtilsSyscall
   class TTUtilsNamedPipe
+  class TTUtilsStopable
 }
 
+TTTextBoxHandler --|> TTUtilsStopable
 TTTextBoxHandler o-- TTTextBoxMessage
 TTTextBoxHandler o-- TTUtilsNamedPipe
 TTTextBoxHandler *-- TTTextBoxCallbackMessageSent

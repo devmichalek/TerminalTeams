@@ -2,11 +2,12 @@
 #include "TTChatSettings.hpp"
 #include "TTChatMessage.hpp"
 #include "TTUtilsOutputStream.hpp"
+#include "TTUtilsStopable.hpp"
 #include <future>
 #include <functional>
 #include <deque>
 
-class TTChat {
+class TTChat : public TTUtilsStopable {
 public:
     explicit TTChat(const TTChatSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTChat();
@@ -16,10 +17,6 @@ public:
     TTChat& operator=(TTChat&&) = delete;
     // Receives main data
     virtual void run();
-    // Stops applications
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTChat() = default;
 private:
@@ -34,7 +31,6 @@ private:
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
     static inline const std::chrono::milliseconds mHeartbeatTimeout{500};
     // Thread concurrent message communication
-    std::atomic<bool> mStopped;
     std::future<void> mHeartbeatResult;
     std::thread mHeartbeatThread;
     // Terminal data

@@ -1,6 +1,6 @@
 #include "TTEngine.hpp"
 
-TTEngine::TTEngine(const TTEngineSettings& settings) : mStopper(std::bind(&TTEngine::stopInternal, this)) {
+TTEngine::TTEngine(const TTEngineSettings& settings) {
     LOG_INFO("Constructing...");
     using namespace std::placeholders;
     const auto& abstractFactory = settings.getAbstractFactory();
@@ -80,26 +80,21 @@ TTEngine::~TTEngine() {
 
 void TTEngine::run() {
     LOG_INFO("Started main loop");
-    while (!stopped()) {
+    while (true) {
+        bool stopped = isStopped();
+        stopped |= (!mServer || mServer->isStopped());
+        stopped |= (!mContacts || mContacts->isStopped());
+        stopped |= (!mChat || mChat->isStopped());
+        stopped |= (!mTextBox || mTextBox->isStopped());
+        stopped |= (!mBroadcasterChat || mBroadcasterChat->isStopped());
+        stopped |= (!mBroadcasterDiscovery || mBroadcasterDiscovery->isStopped());
+        if (stopped) {
+            break;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds{100});
     }
+    stop();
     LOG_INFO("Stopped main loop");
-}
-
-void TTEngine::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopper.stop();
-}
-
-bool TTEngine::stopped() const {
-    bool result = static_cast<bool>(mStopper);
-    result |= (!mServer || mServer->stopped());
-    result |= (!mContacts || mContacts->stopped());
-    result |= (!mChat || mChat->stopped());
-    result |= (!mTextBox || mTextBox->stopped());
-    result |= (!mBroadcasterChat || mBroadcasterChat->stopped());
-    result |= (!mBroadcasterDiscovery || mBroadcasterDiscovery->stopped());
-    return result;
 }
 
 void TTEngine::server(std::promise<void> promise) {
@@ -150,7 +145,7 @@ void TTEngine::switcher(size_t message) {
     }
 }
 
-void TTEngine::stopInternal() {
+void TTEngine::onStop() {
     LOG_WARNING("Forced internal stop...");
     if (mServer) {
         mServer->stop();

@@ -41,12 +41,12 @@ protected:
         mHandler = std::make_unique<TTTextBoxHandler>(*mSettingsMock,
             std::bind(&TTTextBoxHandlerTest::MessageReceiver, this, _1),
             std::bind(&TTTextBoxHandlerTest::ContactsSwitchReceiver, this, _1));
-        EXPECT_FALSE(mHandler->stopped());
+        EXPECT_FALSE(mHandler->isStopped());
     }
 
     void VerifyApplicationTimeout(std::chrono::milliseconds timeout) {
         std::this_thread::sleep_for(timeout);
-        EXPECT_TRUE(mHandler->stopped());
+        EXPECT_TRUE(mHandler->isStopped());
         mHandler.reset();
     }
 

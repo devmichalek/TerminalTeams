@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
         application = std::make_unique<TTTextBox>(settings, outputStream, inputStream);
         LOG_INFO("TextBox initialized");
         try {
-            if (!application->stopped()) {
+            if (!application->isStopped()) {
                 application->run();
             } else {
                 LOG_WARNING("Application was shut down out of a sudden");

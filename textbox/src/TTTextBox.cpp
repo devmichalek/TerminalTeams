@@ -12,8 +12,7 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
     TTUtilsInputStream& inputStream) :
         mPipe(settings.getNamedPipe()),
         mOutputStream(outputStream),
-        mInputStream(inputStream),
-        mStopped{false} {
+        mInputStream(inputStream) {
     LOG_INFO("Constructing...");
     // Open pipe
     if (!mPipe->open()) {
@@ -43,7 +42,7 @@ void TTTextBox::run() {
         try {
             mOutputStream.clear();
             mOutputStream.print("Type #help to print a help message").endl();
-            while (!stopped()) {
+            while (!isStopped()) {
                 std::string line;
                 mInputStream.readline(line);
                 if (!parse(line)) {
@@ -58,14 +57,8 @@ void TTTextBox::run() {
     stop();
 }
 
-void TTTextBox::stop() {
-    LOG_WARNING("Forced stop...");
-    mStopped.store(true);
+void TTTextBox::onStop() {
     mQueueCondition.notify_one();
-}
-
-bool TTTextBox::stopped() const {
-    return mStopped.load();
 }
 
 bool TTTextBox::parse(const std::string& line) {
@@ -174,14 +167,14 @@ void TTTextBox::main(std::promise<void> promise) {
         LOG_ERROR("Failed to run, pipe is not alive!");
     } else {
         try {
-            while (!stopped()) {
+            while (!isStopped()) {
                 LOG_INFO("Filling the list of messages...");
                 std::list<std::unique_ptr<TTTextBoxMessage>> messages;
                 {
                     std::unique_lock<std::mutex> lock(mQueueMutex);
                     auto waitTimeMs = std::chrono::milliseconds(TTTextBox::QUEUED_MSG_TIMEOUT_MS);
                     mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
-                        return !mQueuedMessages.empty() || stopped();
+                        return !mQueuedMessages.empty() || isStopped();
                     });
                     if (!mQueuedMessages.empty()) {
                         size_t counter = 0;
@@ -201,7 +194,7 @@ void TTTextBox::main(std::promise<void> promise) {
                 }
                 LOG_INFO("Sending all messages...");
                 for (auto &message : messages) {
-                    if (stopped()) {
+                    if (isStopped()) {
                         break;
                     }
                     if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {

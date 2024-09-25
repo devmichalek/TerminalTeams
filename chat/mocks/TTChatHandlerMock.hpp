@@ -13,5 +13,5 @@ public:
     MOCK_METHOD(std::optional<TTChatEntries>, get, (size_t), (const, override));
     MOCK_METHOD(std::optional<size_t>, current, (), (const, override));
     MOCK_METHOD(void, stop, (), (override));
-    MOCK_METHOD(bool, stopped, (), (const, override));
+    MOCK_METHOD(bool, isStopped, (), (const, override));
 };

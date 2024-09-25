@@ -17,8 +17,10 @@ package TTUtilsBundle <<Rectangle>> {
   class TTUtilsOutputStream
   class TTUtilsSyscall
   class TTUtilsSharedMem
+  class TTUtilsStopable
 }
 
+TTContacts --|> TTUtilsStopable
 TTContacts o-- TTUtilsOutputStream
 TTContacts o-- TTUtilsSharedMem
 TTContacts o-- TTContactsStatus

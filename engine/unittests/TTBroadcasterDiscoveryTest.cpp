@@ -152,10 +152,10 @@ TEST_F(TTBroadcasterDiscoveryTest, HappyPathReceiveGreetRequestNewNeighbor) {
     SetNeighborCall(request.nickname, request.identity, request.ipAddressAndPort);
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_TRUE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathReceiveGreetRequestExistingNeighbor) {
@@ -172,40 +172,40 @@ TEST_F(TTBroadcasterDiscoveryTest, HappyPathReceiveGreetRequestExistingNeighbor)
     }
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_TRUE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborNoNickname) {
     const TTGreetRequest request("", "5e5fe55f", "192.168.1.74:58");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborNoIdentity) {
     const TTGreetRequest request("John", "", "192.168.1.74:58");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborNoIpAddressAndPort) {
     const TTGreetRequest request("John", "5e5fe55f", "");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborContactsHandlerFailedToCreate) {
@@ -222,10 +222,10 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborCont
     }
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborContactsHandlerFailedToGet) {
@@ -246,7 +246,7 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborCont
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborChatHandlerFailedToCreate) {
@@ -270,7 +270,7 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestNewNeighborChat
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestExistingNeighborContactsHandlerFailedToActivate) {
@@ -288,7 +288,7 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveGreetRequestExistingNeighbo
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleGreet(request));
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathReceiveHeartbeatRequestExistingNeighbor) {
@@ -305,10 +305,10 @@ TEST_F(TTBroadcasterDiscoveryTest, HappyPathReceiveHeartbeatRequestExistingNeigh
     }
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_TRUE(broadcaster->handleHeartbeat(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveHeartbeatRequestNonExistingNeighbor) {
@@ -318,10 +318,10 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveHeartbeatRequestNonExisting
         .WillOnce(Return(std::nullopt));
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleHeartbeat(request));
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveHeartbeatRequestExistingNeighborContactsHandlerFailedToActivate) {
@@ -339,17 +339,17 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathReceiveHeartbeatRequestExistingNei
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_FALSE(broadcaster->handleHeartbeat(request));
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathGetNickname) {
     SetHostEntryAndCall("Gabrielle", "6e6e6e6", "192.168.1.74:58");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getNickname(), mHostEntry->nickname);
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetNickname) {
@@ -359,17 +359,17 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetNickname) {
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getNickname(), "");
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathGetIdentity) {
     SetHostEntryAndCall("Gabrielle", "6e6e6e6", "192.168.1.74:58");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getIdentity(), mHostEntry->identity);
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetIdentity) {
@@ -379,17 +379,17 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetIdentity) {
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getIdentity(), "");
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathGetIpAddressAndPort) {
     SetHostEntryAndCall("Gabrielle", "6e6e6e6", "192.168.1.74:58");
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getIpAddressAndPort(), mHostEntry->ipAddressAndPort);
-    EXPECT_FALSE(broadcaster->stopped());
+    EXPECT_FALSE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetIpAddressAndPort) {
@@ -399,7 +399,7 @@ TEST_F(TTBroadcasterDiscoveryTest, UnhappyPathGetIpAddressAndPort) {
     auto broadcaster = std::make_unique<TTBroadcasterDiscovery>(*mContactsHandler, *mChatHandler, *mNeighborsStub, mNetworkInterface, mNeighbors);
     EXPECT_EQ(broadcaster->getIpAddressAndPort(), "");
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
 }
 
 TEST_F(TTBroadcasterDiscoveryTest, HappyPathStaticNeighborsResolvedThenEachIsActive) {
@@ -562,7 +562,7 @@ TEST_F(TTBroadcasterDiscoveryTest, HappyPathStaticNeighborIsResolvedThenContacts
     std::thread loop(std::bind(&TTBroadcasterDiscovery::run, broadcaster.get()));
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{8000});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
     loop.join();
@@ -589,7 +589,7 @@ TEST_F(TTBroadcasterDiscoveryTest, HappyPathStaticNeighborIsResolvedThenContacts
     std::thread loop(std::bind(&TTBroadcasterDiscovery::run, broadcaster.get()));
     // Expect consumer to react
     std::this_thread::sleep_for(std::chrono::milliseconds{8000});
-    EXPECT_TRUE(broadcaster->stopped());
+    EXPECT_TRUE(broadcaster->isStopped());
     broadcaster->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{100});
     loop.join();

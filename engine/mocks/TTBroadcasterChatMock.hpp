@@ -10,7 +10,7 @@ public:
     TTBroadcasterChatMock() : TTBroadcasterChat(mContactsHandler, mChatHandler, mNeighborsStub, {}) {}
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, stop, (), (override));
-    MOCK_METHOD(bool, stopped, (), (const, override));
+    MOCK_METHOD(bool, isStopped, (), (const, override));
     MOCK_METHOD(bool, handleSend, (const std::string& message), (override));
     MOCK_METHOD(bool, handleReceive, (const TTTellRequest& request), (override));
     MOCK_METHOD(bool, handleReceive, (const TTNarrateRequest& request), (override));

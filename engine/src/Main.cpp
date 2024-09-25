@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         application = std::make_unique<TTEngine>(settings);
         // Run main app
         try {
-            if (!application->stopped()) {
+            if (!application->isStopped()) {
                 application->run();
             } else {
                 LOG_WARNING("Application was shut down out of a sudden");

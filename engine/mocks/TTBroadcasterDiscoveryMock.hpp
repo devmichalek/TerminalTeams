@@ -10,7 +10,7 @@ public:
     TTBroadcasterDiscoveryMock() : TTBroadcasterDiscovery(mContactsHandler, mChatHandler, mNeighborsStub, {}, {}) {}
     MOCK_METHOD(void, run, (), (override));
     MOCK_METHOD(void, stop, (), (override));
-    MOCK_METHOD(bool, stopped, (), (const, override));
+    MOCK_METHOD(bool, isStopped, (), (const, override));
     MOCK_METHOD(bool, handleGreet, (const TTGreetRequest& request), (override));
     MOCK_METHOD(bool, handleHeartbeat, (const TTHeartbeatRequest& request), (override));
     MOCK_METHOD(std::string, getNickname, (), (override));

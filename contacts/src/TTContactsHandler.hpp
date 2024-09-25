@@ -3,6 +3,7 @@
 #include "TTContactsHandlerEntry.hpp"
 #include "TTContactsSettings.hpp"
 #include "TTUtilsSharedMem.hpp"
+#include "TTUtilsStopable.hpp"
 #include <queue>
 #include <deque>
 #include <mutex>
@@ -15,7 +16,7 @@
 
 // Class meant to be embedded into other higher abstract class.
 // Allows to control TTContacts process concurrently.
-class TTContactsHandler {
+class TTContactsHandler : public TTUtilsStopable {
 public:
     explicit TTContactsHandler(const TTContactsSettings& settings);
     virtual ~TTContactsHandler();
@@ -33,10 +34,9 @@ public:
     [[nodiscard]] virtual std::optional<size_t> get(const std::string& id) const;
     [[nodiscard]] virtual std::optional<size_t> current() const;
     [[nodiscard]] virtual size_t size() const;
-    virtual void stop();
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTContactsHandler() = default;
+    virtual void onStop() override;
 private:
     // Send generic method
     bool send(const TTContactsMessage& message);
@@ -51,7 +51,6 @@ private:
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication
-    std::atomic<bool> mStopped;
     std::queue<std::unique_ptr<TTContactsMessage>> mQueuedMessages;
     std::mutex mQueueMutex;
     std::condition_variable mQueueCondition;

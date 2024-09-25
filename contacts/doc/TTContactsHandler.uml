@@ -16,8 +16,10 @@ package TTDiagnosticsBundle <<Rectangle>> {
 package TTUtilsBundle <<Rectangle>> {
   class TTUtilsSyscall
   class TTUtilsSharedMem
+  class TTUtilsStopable
 }
 
+TTContactsHandler --|> TTUtilsStopable
 TTContactsHandler o-- TTContactsMessage
 TTContactsHandler o-- TTUtilsSharedMem
 TTContactsHandler *-- TTContactsHandlerEntry

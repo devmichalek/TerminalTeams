@@ -1,17 +1,18 @@
 #pragma once
+#include "TTUtilsNamedPipe.hpp"
+#include "TTTextBoxSettings.hpp"
+#include "TTUtilsStopable.hpp"
 #include <string>
 #include <future>
 #include <deque>
 #include <functional>
-#include "TTUtilsNamedPipe.hpp"
-#include "TTTextBoxSettings.hpp"
 
 using TTTextBoxCallbackMessageSent = std::function<void(const std::string&)>;
 using TTTextBoxCallbackContactSwitch = std::function<void(size_t)>;
 
 // Class meant to be embedded into other higher abstract class.
 // Allows to control TTTextBox process concurrently.
-class TTTextBoxHandler {
+class TTTextBoxHandler : public TTUtilsStopable {
 public:
     explicit TTTextBoxHandler(const TTTextBoxSettings& settings,
         TTTextBoxCallbackMessageSent callbackMessageSent,
@@ -21,8 +22,6 @@ public:
     TTTextBoxHandler(TTTextBoxHandler&&) = delete;
     TTTextBoxHandler& operator=(const TTTextBoxHandler&) = delete;
     TTTextBoxHandler& operator=(TTTextBoxHandler&&) = delete;
-    virtual void stop();
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTTextBoxHandler() = default;
 private:
@@ -36,7 +35,6 @@ private:
     TTTextBoxCallbackMessageSent mCallbackMessageSent;
     TTTextBoxCallbackContactSwitch mCallbackContactsSwitch;
     // Thread concurrent message communication
-    std::atomic<bool> mStopped;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
 };

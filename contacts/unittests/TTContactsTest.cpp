@@ -46,17 +46,17 @@ protected:
     void RestartApplication(std::chrono::milliseconds timeout) {
         mApplicationTimeout = timeout;
         mContacts = std::make_unique<TTContacts>(*mSettingsMock, *mOutputStreamMock);
-        EXPECT_FALSE(mContacts->stopped());
+        EXPECT_FALSE(mContacts->isStopped());
         mApplicationThread = std::thread{&TTContactsTest::StartApplication, this};
     }
 
     void VerifyApplicationTimeout() {
         std::unique_lock<std::mutex> lock(mApplicationMutex);
         const bool predicate = mApplicationCv.wait_for(lock, mApplicationTimeout, [this]() {
-            return mContacts->stopped();
+            return mContacts->isStopped();
         });
         EXPECT_TRUE(predicate); // Check for application timeout
-        EXPECT_TRUE(mContacts->stopped());
+        EXPECT_TRUE(mContacts->isStopped());
         mApplicationThread.join();
     }
 

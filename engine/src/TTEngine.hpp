@@ -1,8 +1,8 @@
 #pragma once
 #include "TTEngineSettings.hpp"
-#include "TTUtilsStopper.hpp"
+#include "TTUtilsStopable.hpp"
 
-class TTEngine {
+class TTEngine : public TTUtilsStopable {
 public:
     explicit TTEngine(const TTEngineSettings& settings);
     virtual ~TTEngine();
@@ -12,10 +12,6 @@ public:
     TTEngine& operator=(TTEngine&&) = delete;
     // Main loop
     virtual void run();
-    // Stops application
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
 private:
     // Server thread
     void server(std::promise<void> promise);
@@ -28,9 +24,8 @@ private:
     // Callback switcher function (contacts selection)
     void switcher(size_t message);
     // Stops application (internal function)
-    virtual void stopInternal();
+    virtual void onStop() override;
     // Concurrent communication
-    TTUtilsStopper mStopper;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
     // Handlers, IPC communication

@@ -5,13 +5,14 @@
 #include "TTContactsMessage.hpp"
 #include "TTUtilsOutputStream.hpp"
 #include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsStopable.hpp"
 #include <memory>
 #include <vector>
 #include <string>
 #include <functional>
 #include <atomic>
 
-class TTContacts {
+class TTContacts :public TTUtilsStopable {
 public:
     explicit TTContacts(const TTContactsSettings& settings, TTUtilsOutputStream& outputStream);
     virtual ~TTContacts();
@@ -21,10 +22,6 @@ public:
     TTContacts& operator=(TTContacts&&) = delete;
     // Receives main data and sends confirmation
     virtual void run();
-    // Stops applications
-    virtual void stop();
-    // Returns true if application is stopped
-    [[nodiscard]] virtual bool stopped() const;
 protected:
     TTContacts() = default;
 private:
@@ -37,7 +34,6 @@ private:
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication
-    std::atomic<bool> mStopped;
     // Terminal Emulator window properties
     size_t mTerminalWidth;
     size_t mTerminalHeight;
