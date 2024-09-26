@@ -11,13 +11,13 @@ sudo apt-get install virtualbox
    ```
    virtualbox &> /dev/null &
    ```
-3. Click on "New" and start creating new virtual machine (<a href="./doc/4.19.1.png">screenshoot</a>).
-4. Enter virtual machine name, directory. Select "Linux" type and version "Red Hat (64-bit)" (<a href="./doc/4.19.2.png">screenshoot</a>).
-5. Choose how much RAM will be dedicated to the virtual machine (<a href="./doc/4.19.3.png">screenshoot</a>).
-6. Create virtual hard drive (dynamic VDI) and select an already existing one (<a href="./doc/4.19.4.png">screenshoot</a>).
+3. Click on "New" and start creating new virtual machine (<a href="./doc/1.png">screenshoot</a>).
+4. Enter virtual machine name, directory. Select "Linux" type and version "Ubuntu (64-bit)" (<a href="./doc/2.png">screenshoot</a>).
+5. Choose how much RAM will be dedicated to the virtual machine (<a href="./doc/3.png">screenshoot</a>).
+6. Create virtual hard drive (dynamic VDI) and select an already existing one (<a href="./doc/4.png">screenshoot</a>).
    In case of creating new one it is better to choose dynamic VDI type with at least 20GB of memory.
-7. At this point virtual machine is created. Go to the "Settings" of newly created VM (<a href="./doc/4.19.5.png">screenshoot</a>).
-8. Go to "Storage". Under "Storage Drives" section, select the disc "Empty" item and choose downloaded ISO file to be opened (<a href="./doc/4.19.6.png">screenshoot</a>).
+7. At this point virtual machine is created. Go to the "Settings" of newly created VM (<a href="./doc/5.png">screenshoot</a>).
+8. Go to "Storage". Under "Storage Devices" section, select the disc "Empty" item and choose downloaded ISO file to be opened (<a href="./doc/6.png">screenshoot</a>).
    From this point forward ISO is now mounted.
 9. Start newly created VM and complete all the steps during system installation (it differs among systems). Once you've completed all the steps, the installer will prompt you to reboot the machine. Decline and stop the VM by yourself. Now go to the "Storage" -> "Storage Devices" and remove previously added ISO file. Save the settings and enjoy the installed system. ISO file is needed only at the beginning and that`s the reason why we should remove it after system installation.
 
@@ -74,7 +74,7 @@ Restart the VM. In VirtualBox Manager click on VM's "Settings"->"General"->"Adva
 ## VM's Shared Folder Setup
 On the host type:
 ```
-VBoxManage sharedfolder add "VM name" --name "sharename" --hostpath "/home/$USER/VM/shared" --automount
+VBoxManage sharedfolder add "VM name" --name "sharename" --hostpath "/home/$USER/VMs/shared" --automount
 ```
 Start VM and then on the guest type:
 ```
@@ -87,7 +87,7 @@ ls -la
 ## VM's Private Network Setup
 You can now create a virtual network in VirtualBox between two virtual machines.
 
-1. In VirtualBox Manager go to "File"->"Host Network Manager" and click on "Create".
+1. In VirtualBox Manager go to "File"->"Tools"->"Network Manager" and click on "Create".
 2. Click on "Properties" of newly created private network.
 3. In "DHCP Server" click on "Enable Server" and set below properties:
     ```
@@ -105,6 +105,3 @@ You can now create a virtual network in VirtualBox between two virtual machines.
 5. Go to "Settings" of VM. Then on "Network" open "Adapter 2" tab and click on "Enable Network Adapter". Change "Attached to" to "Host-only Adapter" and choose previously created adapter.
 6. Do the same for other virtual machines - set "Adapter 2".
 7. Check VM IP addresses using `ip addr show` then check if VMs see each other on the network using `ping` command.
-
-# Running Tests
-ToDo

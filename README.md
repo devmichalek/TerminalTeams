@@ -52,7 +52,7 @@ Application was tested using:
 ### Future extensions and support
 - support for other character encodings
 - support for IPv6 and TLS
-- messages rollback based on trusted peer (requires TLS)
+- messages rollback after shutdown based on trusted peer (requires TLS)
 
 ### Todo
 - std::launder
@@ -62,3 +62,7 @@ Application was tested using:
 - engine documentation
 - remove IPC files in cpp classes in constructor
 - comment code
+- fix VerifyApplicationTimeout
+- add to TTUtilsStopable a subscribe method, condition_variable etc.
+- check if tteams instance is running, e. g. "tteams-textbox" is yes kill the session
+- textbox is not closing - bug

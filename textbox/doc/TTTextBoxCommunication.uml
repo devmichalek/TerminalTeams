@@ -13,7 +13,7 @@ end note
 TTTextBoxHandler -> TTUtilsNamedPipe : create and open
 activate TTTextBoxHandler #FFBBBB
 note right of TTTextBox
-Up to three attempts will be
+Up to five attempts will be
 made to open named pipe
 end note
 {first_open} TTTextBox -> TTUtilsNamedPipe : open
@@ -22,7 +22,7 @@ TTUtilsNamedPipe -> TTTextBox : failure
 TTUtilsNamedPipe -> TTTextBoxHandler : success
 deactivate TTTextBoxHandler
 {second_open} TTTextBox -> TTUtilsNamedPipe : open
-{first_open} <-> {second_open} : 500 ms
+{first_open} <-> {second_open} : 1000 ms
 TTUtilsNamedPipe -> TTTextBox : success
 deactivate TTTextBox
 note left of TTTextBoxHandler

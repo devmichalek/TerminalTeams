@@ -63,6 +63,7 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     errno = 0;
     int descriptor = -1;
     for (auto attempt = attempts; attempt > 0; --attempt) {
+        LOG_ERROR("Trying to open named pipe \"{}\", attempt={}/{}", path, (attempts - attempt + 1), attempts);
         if ((descriptor = mSyscall->open(path.c_str(), O_WRONLY)) != -1) {
             break;
         }

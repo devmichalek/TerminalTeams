@@ -13,7 +13,7 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
         mInactivityTimerFactory(std::chrono::milliseconds(5000), std::chrono::milliseconds(6000)),
         mDiscoveryTimerFactory(std::chrono::milliseconds(100), std::chrono::milliseconds(1000)) {
     for (const auto &neighbor : neighbors) {
-        mStaticNeighbors.emplace_back(mDiscoveryTimerFactory.create(), neighbor);
+        mStaticNeighbors.emplace_back(mDiscoveryTimerFactory.create(), neighbor + ":" + networkInterface.getPort());
         mStaticNeighbors.back().timer.expire();
     }
     LOG_INFO("Successfully constructed!");
@@ -89,6 +89,7 @@ std::string TTBroadcasterDiscovery::getIpAddressAndPort() {
 }
 
 void TTBroadcasterDiscovery::resolveStaticNeighbors() {
+    LOG_INFO("Started resolving static neighbors");
     do {
         auto smallest = mDiscoveryTimerFactory.max();
         bool resolved = true;
@@ -123,9 +124,11 @@ void TTBroadcasterDiscovery::resolveStaticNeighbors() {
             break;
         }
     } while (!isStopped());
+    LOG_INFO("Stopped resolving static neighbors");
 }
 
 void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
+    LOG_INFO("Started resolving dynamic neighbors");
     while (!isStopped()) {
         auto smallest = mInactivityTimerFactory.max();
         {
@@ -176,6 +179,7 @@ void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(smallest));
     }
+    LOG_INFO("Stopped resolving dynamic neighbors");
 }
 
 bool TTBroadcasterDiscovery::addNeighbor(const std::string& nickname,

@@ -3,6 +3,7 @@
 
 TTUniqueChatStub TTNeighborsStub::createChatStub(const std::string& ipAddressAndPort) const {
     try {
+        LOG_INFO("Creating chat stub to {}!", ipAddressAndPort);
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
         return tt::NeighborsChat::NewStub(channel);
     } catch (...) {
@@ -13,6 +14,7 @@ TTUniqueChatStub TTNeighborsStub::createChatStub(const std::string& ipAddressAnd
 
 TTUniqueDiscoveryStub TTNeighborsStub::createDiscoveryStub(const std::string& ipAddressAndPort) const {
     try {
+        LOG_INFO("Creating discovery stub to {}!", ipAddressAndPort);
         auto channel = grpc::CreateChannel(ipAddressAndPort, grpc::InsecureChannelCredentials());
         return tt::NeighborsDiscovery::NewStub(channel);
     } catch (...) {

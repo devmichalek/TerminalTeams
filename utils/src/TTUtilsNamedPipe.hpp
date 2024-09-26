@@ -16,7 +16,7 @@ public:
     TTUtilsNamedPipe& operator=(TTUtilsNamedPipe&&) = delete;
     virtual bool alive() const;
     virtual bool create();
-    virtual bool open(long attempts = 3, long timeoutMs = 500);
+    virtual bool open(long attempts = 5, long timeoutMs = 1000);
     virtual bool receive(char* message);
     virtual bool send(const char* message);
 protected:
