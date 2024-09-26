@@ -14,9 +14,9 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
         mOutputStream(outputStream),
         mInputStream(inputStream) {
     LOG_INFO("Constructing...");
-    // Open pipe
-    if (!mPipe->open()) {
-        throw std::runtime_error("TTTextBox: Failed to open named pipe!");
+    // Create pipe
+    if (!mPipe->create()) {
+        throw std::runtime_error("TTTextBox: Failed to create named pipe!");
     }
     // Set main sender thread
     std::promise<void> mainPromise;

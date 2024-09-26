@@ -26,7 +26,7 @@ APP_EXPECTED_RESULTS=""
 APP_ACTUAL_RESULTS=""
 
 # Test teardown
-kill "$(pgrep -f "${APP_CMD}" | head -n 1)"
+kill "$(pgrep -f "${APP_HANDLER_CMD}" | head -n 1)"
 echo "Info: Waiting for application to stop..."
 sleep 1
 echo "Info: Application shall be stopped now"

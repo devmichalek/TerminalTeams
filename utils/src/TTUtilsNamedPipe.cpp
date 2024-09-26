@@ -40,9 +40,11 @@ bool TTUtilsNamedPipe::create() {
     if (mSyscall->mkfifo(mNamedPipePath.c_str(), 0666) < 0) {
         LOG_ERROR("Failed to create named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
+    } else {
+        LOG_INFO("Successful make fifo!");
     }
     int descriptor = -1;
-    descriptor = mSyscall->open(mNamedPipePath.c_str(), O_RDONLY);
+    descriptor = mSyscall->open(mNamedPipePath.c_str(), O_WRONLY);
     if (descriptor == -1) {
         LOG_ERROR("Failed to open named pipe \"{}\", errno={}", mNamedPipePath, errno);
         return false;
@@ -64,7 +66,7 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     int descriptor = -1;
     for (auto attempt = attempts; attempt > 0; --attempt) {
         LOG_ERROR("Trying to open named pipe \"{}\", attempt={}/{}", path, (attempts - attempt + 1), attempts);
-        if ((descriptor = mSyscall->open(path.c_str(), O_WRONLY)) != -1) {
+        if ((descriptor = mSyscall->open(path.c_str(), O_RDONLY)) != -1) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));

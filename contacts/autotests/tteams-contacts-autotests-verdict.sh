@@ -40,7 +40,7 @@ fi
 
 if [[ $EXIT_STATUS -eq 0 ]]; then
     echo "Success: Autotest passed!"
-    rm -f "${HANDLER_STDIN}"
-    rm -f "${HANDLER_STDOUT}"
+    rm -f "${APP_HANDLER_STDIN}"
+    rm -f "${APP_HANDLER_STDOUT}"
 fi
 exit $EXIT_STATUS

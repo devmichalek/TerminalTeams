@@ -6,33 +6,33 @@ participant "TTUtilsNamedPipe" as TTUtilsNamedPipe
 participant "TTTextBoxHandler" as TTTextBoxHandler
 
 == Initialization ==
-note left of TTTextBoxHandler
+note left of TTTextBox
 Only one attempt will be made
 to create and open named pipe
 end note
-TTTextBoxHandler -> TTUtilsNamedPipe : create and open
-activate TTTextBoxHandler #FFBBBB
-note right of TTTextBox
+TTTextBox -> TTUtilsNamedPipe : create and open
+activate TTTextBox #FFBBBB
+note right of TTTextBoxHandler
 Up to five attempts will be
 made to open named pipe
 end note
-{first_open} TTTextBox -> TTUtilsNamedPipe : open
-activate TTTextBox #FFBBBB
-TTUtilsNamedPipe -> TTTextBox : failure
-TTUtilsNamedPipe -> TTTextBoxHandler : success
-deactivate TTTextBoxHandler
-{second_open} TTTextBox -> TTUtilsNamedPipe : open
-{first_open} <-> {second_open} : 1000 ms
+{first_open} TTTextBoxHandler -> TTUtilsNamedPipe : open
+activate TTTextBoxHandler #FFBBBB
+TTUtilsNamedPipe -> TTTextBoxHandler : failure
 TTUtilsNamedPipe -> TTTextBox : success
 deactivate TTTextBox
-note left of TTTextBoxHandler
+{second_open} TTTextBoxHandler -> TTUtilsNamedPipe : open
+{first_open} <-> {second_open} : 1000 ms
+TTUtilsNamedPipe -> TTTextBoxHandler : success
+deactivate TTTextBoxHandler
+note left of TTTextBox
 Attempt to check if named pipe is alive
 meanining the connection can be established
 end note
-TTTextBoxHandler -> TTUtilsNamedPipe : alive
-TTUtilsNamedPipe -> TTTextBoxHandler : success
 TTTextBox -> TTUtilsNamedPipe : alive
 TTUtilsNamedPipe -> TTTextBox : success
+TTTextBoxHandler -> TTUtilsNamedPipe : alive
+TTUtilsNamedPipe -> TTTextBoxHandler : success
 
 == Communication ==
 TTTextBoxHandler -> TTTextBoxHandler : start receiver thread

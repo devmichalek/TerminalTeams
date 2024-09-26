@@ -9,9 +9,9 @@ TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
         mCallbackMessageSent(callbackMessageSent),
         mCallbackContactsSwitch(callbackContactsSwitch) {
     LOG_INFO("Constructing...");
-    // Create pipe
-    if (!mPipe->create()) {
-        throw std::runtime_error("TTTextBoxHandler: Failed to create named pipe!");
+    // Open pipe
+    if (!mPipe->open()) {
+        throw std::runtime_error("TTTextBoxHandler: Failed to open named pipe!");
     }
     // Set main receiver thread
     std::promise<void> mainPromise;

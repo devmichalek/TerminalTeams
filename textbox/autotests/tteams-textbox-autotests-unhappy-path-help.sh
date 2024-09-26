@@ -36,6 +36,7 @@ APP_ACTUAL_RESULTS=$(<"${APP_STDOUT}")
 
 # Test teardown
 echo "#quit" > "${APP_HANDLER_STDIN}"
+kill $APP_HANDLER_STDIN_PID
 echo "Info: Waiting for application to stop..."
 sleep 2
 echo "Info: Application shall be stopped now"

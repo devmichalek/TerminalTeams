@@ -78,7 +78,7 @@ protected:
 
     TTTextBoxMessage createMessage(const std::string& data) {
         mExpectedMessages.push_back(data);
-        return TTTextBoxMessage{TTTextBoxStatus::MESSAGE, data.size(), data.c_str()};
+        return TTTextBoxMessage{TTTextBoxStatus::MESSAGE, static_cast<unsigned int>(data.size()), data.c_str()};
     }
 
     TTTextBoxMessage createContactsSwitchMessage(size_t id) {
@@ -99,15 +99,15 @@ ACTION_P(SetArgPointerInReceiveMessage, rhs) {
     std::memcpy(arg0, &rhs, sizeof(rhs));
 }
 
-TEST_F(TTTextBoxHandlerTest, FailedToCreateNamedPipe) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+TEST_F(TTTextBoxHandlerTest, FailedToOpenNamedPipe) {
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(false));
     EXPECT_THROW(RestartApplication(), std::runtime_error);
 }
 
 TEST_F(TTTextBoxHandlerTest, FailedToRunNamedPipeIsNotAlive) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -118,7 +118,7 @@ TEST_F(TTTextBoxHandlerTest, FailedToRunNamedPipeIsNotAlive) {
 }
 
 TEST_F(TTTextBoxHandlerTest, FailedToReceiveMessage) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -132,7 +132,7 @@ TEST_F(TTTextBoxHandlerTest, FailedToReceiveMessage) {
 }
 
 TEST_F(TTTextBoxHandlerTest, FailedBecauseOfUndefinedMessage) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -146,7 +146,7 @@ TEST_F(TTTextBoxHandlerTest, FailedBecauseOfUndefinedMessage) {
 }
 
 TEST_F(TTTextBoxHandlerTest, FailedBecauseOfUnknownMessage) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -160,7 +160,7 @@ TEST_F(TTTextBoxHandlerTest, FailedBecauseOfUnknownMessage) {
 }
 
 TEST_F(TTTextBoxHandlerTest, SuccessReceivedHeartbeats) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -176,7 +176,7 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedHeartbeats) {
 }
 
 TEST_F(TTTextBoxHandlerTest, SuccessReceivedGoodbye) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -191,7 +191,7 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedGoodbye) {
 }
 
 TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSwitch) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -243,7 +243,7 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSwitch) {
 }
 
 TEST_F(TTTextBoxHandlerTest, SuccessReceivedMessage) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
@@ -295,7 +295,7 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedMessage) {
 }
 
 TEST_F(TTTextBoxHandlerTest, SuccessReceivedMixOfMessages) {
-    EXPECT_CALL(*mNamedPipeMock, create)
+    EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)

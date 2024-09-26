@@ -66,3 +66,4 @@ Application was tested using:
 - add to TTUtilsStopable a subscribe method, condition_variable etc.
 - check if tteams instance is running, e. g. "tteams-textbox" is yes kill the session
 - textbox is not closing - bug
+- reject messages to itself
