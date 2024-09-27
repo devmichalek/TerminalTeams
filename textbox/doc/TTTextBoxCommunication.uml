@@ -7,7 +7,7 @@ participant "TTTextBoxHandler" as TTTextBoxHandler
 
 == Initialization ==
 note left of TTTextBox
-Only one attempt will be made
+Up to five attempts will be made
 to create and open named pipe
 end note
 TTTextBox -> TTUtilsNamedPipe : create and open

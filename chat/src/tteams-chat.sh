@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [[ $# -ne 1 ]]; then
+    echo "Error: Illegal number of parameters!" >&2
+    exit 2
+fi
+
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 MSG_QUEUE_NAME="${1}"
 MSG_QUEUE_PRIMARY_PATH="/dev/mqueue/${MSG_QUEUE_NAME}-primary"

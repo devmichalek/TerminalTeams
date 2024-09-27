@@ -30,7 +30,7 @@ bool TTUtilsNamedPipe::alive() const {
     return mNamedPipeDescriptor != std::nullopt;
 }
 
-bool TTUtilsNamedPipe::create() {
+bool TTUtilsNamedPipe::create(long attempts, long timeoutMs) {
     LOG_INFO("Creating \"{}\"...", mNamedPipePath);
     if (alive()) {
         LOG_ERROR("Cannot recreate!");
@@ -44,9 +44,15 @@ bool TTUtilsNamedPipe::create() {
         LOG_INFO("Successful make fifo!");
     }
     int descriptor = -1;
-    descriptor = mSyscall->open(mNamedPipePath.c_str(), O_WRONLY);
-    if (descriptor == -1) {
-        LOG_ERROR("Failed to open named pipe \"{}\", errno={}", mNamedPipePath, errno);
+    for (auto attempt = attempts; attempt > 0; --attempt) {
+        LOG_INFO("Trying to open named pipe (write only) \"{}\", attempt={}/{}", mNamedPipePath, (attempts - attempt + 1), attempts);
+        if ((descriptor = mSyscall->open(mNamedPipePath.c_str(), O_WRONLY | O_NONBLOCK)) > -1) {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
+    }
+    if (descriptor < 0) {
+        LOG_ERROR("Failed to open named pipe (write only) \"{}\", errno={}", mNamedPipePath, errno);
         return false;
     }
     mNamedPipeDescriptor = descriptor;
@@ -65,15 +71,15 @@ bool TTUtilsNamedPipe::open(long attempts, long timeoutMs) {
     errno = 0;
     int descriptor = -1;
     for (auto attempt = attempts; attempt > 0; --attempt) {
-        LOG_ERROR("Trying to open named pipe \"{}\", attempt={}/{}", path, (attempts - attempt + 1), attempts);
-        if ((descriptor = mSyscall->open(path.c_str(), O_RDONLY)) != -1) {
+        LOG_INFO("Trying to open named pipe (read only) \"{}\", attempt={}/{}", path, (attempts - attempt + 1), attempts);
+        if ((descriptor = mSyscall->open(path.c_str(), O_RDONLY)) > -1) {
             break;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(timeoutMs));
     }
 
-    if (descriptor == -1) {
-        LOG_ERROR("Failed to open named pipe \"{}\", errno={}", path, errno);
+    if (descriptor < 0) {
+        LOG_ERROR("Failed to open named pipe (read only) \"{}\", errno={}", path, errno);
         return false;
     }
     mNamedPipeDescriptor = descriptor;

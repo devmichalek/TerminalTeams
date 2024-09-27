@@ -64,6 +64,5 @@ Application was tested using:
 - comment code
 - fix VerifyApplicationTimeout
 - add to TTUtilsStopable a subscribe method, condition_variable etc.
-- check if tteams instance is running, e. g. "tteams-textbox" is yes kill the session
-- textbox is not closing - bug
+- when TTTextBoxHandler is closed with kill, the TTTextBox is not deleteding named pipe
 - reject messages to itself
