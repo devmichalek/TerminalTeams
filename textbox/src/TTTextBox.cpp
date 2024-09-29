@@ -101,7 +101,7 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
         }
         mOutputStream.print("Type #help to print a help message").endl();
         mOutputStream.print("Type #quit to quit the application").endl();
-        mOutputStream.print("Type #switch <id> to switch contacts").endl();
+        mOutputStream.print("Type #select <id> to select contact").endl();
         mOutputStream.print("Skip # and send a message to the currently selected contact.").endl();
         return true;
     }
@@ -115,31 +115,31 @@ bool TTTextBox::execute(const std::vector<std::string>& args) {
         return true;
     }
 
-    if (command == "switch") {
+    if (command == "select") {
         if (args.size() > 2) {
             LOG_WARNING("Received \"{}\" command with invalid number of arguments!", command);
             return false;
         }
         auto identity = args[1];
         if (!std::all_of(identity.begin(), identity.end(), ::isdigit)) {
-            LOG_WARNING("Contacts switch attempt failed - string has characters other than digits!");
+            LOG_WARNING("Contacts selection attempt failed - string has characters other than digits!");
             return false;
         }
 
         if (identity.size() > TTTextBoxMessage::DATA_MAX_DIGITS) {
-            LOG_WARNING("Contacts switch attempt failed - too many digits!");
+            LOG_WARNING("Contacts selection attempt failed - too many digits!");
             return false;
         }
 
         size_t id = 0;
         auto [ptr, ec] = std::from_chars(identity.c_str(), identity.c_str() + identity.size(), id);
         if (ec != std::errc()) {
-            LOG_ERROR("Failed to convert string to decimal on contacts switch attempt!");
+            LOG_ERROR("Failed to convert string to decimal on contacts selection attempt!");
             return false;
         }
-        auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
+        auto message = std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::CONTACTS_SELECT, sizeof(id), reinterpret_cast<char*>(&id));
         queue(std::move(message));
-        LOG_INFO("Successfully switched contacts!");
+        LOG_INFO("Successfully selected contact!");
         return true;
     }
 

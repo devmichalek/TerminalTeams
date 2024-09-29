@@ -48,18 +48,18 @@ after last successful receive
 end note
 {first_receive} TTTextBoxHandler -> TTUtilsNamedPipe : receive
 TTUtilsNamedPipe -> TTTextBoxHandler : failure
-[o-> TTTextBox : switch command
+[o-> TTTextBox : select command
 [o-> TTTextBox : "Hello world" message
 note right of TTTextBox
 Only one attempt is made
 to send any message
 end note
-TTTextBox -> TTUtilsNamedPipe : send (switch contact)
+TTTextBox -> TTUtilsNamedPipe : send (select contact)
 TTUtilsNamedPipe -> TTTextBox : success
 {second_receive} TTTextBoxHandler -> TTUtilsNamedPipe : receive
 {first_receive} <-> {second_receive} : 500 ms
 TTUtilsNamedPipe -> TTTextBoxHandler : success
-TTTextBoxHandler ->o] : callback (switch contact)
+TTTextBoxHandler ->o] : callback (select contact)
 TTTextBox -> TTUtilsNamedPipe : send (message)
 TTUtilsNamedPipe -> TTTextBox : success
 TTTextBoxHandler -> TTUtilsNamedPipe : receive

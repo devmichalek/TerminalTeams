@@ -34,8 +34,8 @@ public:
 
     [[nodiscard]] virtual std::unique_ptr<TTTextBoxHandler> createTextBoxHandler(
             TTTextBoxCallbackMessageSent callbackMessageSent,
-            TTTextBoxCallbackContactSwitch callbackContactsSwitch) const {
-        return std::make_unique<TTTextBoxHandler>(mTextBoxSettings, callbackMessageSent, callbackContactsSwitch);
+            TTTextBoxCallbackContactSelect callbackContactsSelect) const {
+        return std::make_unique<TTTextBoxHandler>(mTextBoxSettings, callbackMessageSent, callbackContactsSelect);
     }
 
     [[nodiscard]] virtual std::unique_ptr<TTNeighborsStub> createNeighborsStub() const {

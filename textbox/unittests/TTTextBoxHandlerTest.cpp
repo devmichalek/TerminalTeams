@@ -33,14 +33,14 @@ protected:
     virtual void TearDown() override {
         mReceivedMessages.clear();
         mExpectedMessages.clear();
-        mReceivedContactSwitches.clear();
-        mExpectedContactSwitches.clear();
+        mReceivedContactSelections.clear();
+        mExpectedContactSelections.clear();
     }
 
     void RestartApplication() {
         mHandler = std::make_unique<TTTextBoxHandler>(*mSettingsMock,
             std::bind(&TTTextBoxHandlerTest::MessageReceiver, this, _1),
-            std::bind(&TTTextBoxHandlerTest::ContactsSwitchReceiver, this, _1));
+            std::bind(&TTTextBoxHandlerTest::ContactsSelectionReceiver, this, _1));
         EXPECT_FALSE(mHandler->isStopped());
     }
 
@@ -54,8 +54,8 @@ protected:
         mReceivedMessages.emplace_back(message);
     }
 
-    void ContactsSwitchReceiver(size_t id) {
-        mReceivedContactSwitches.emplace_back(id);
+    void ContactsSelectionReceiver(size_t id) {
+        mReceivedContactSelections.emplace_back(id);
     }
 
     TTTextBoxMessage createUndefinedMessage() {
@@ -81,9 +81,9 @@ protected:
         return TTTextBoxMessage{TTTextBoxStatus::MESSAGE, static_cast<unsigned int>(data.size()), data.c_str()};
     }
 
-    TTTextBoxMessage createContactsSwitchMessage(size_t id) {
-        mExpectedContactSwitches.push_back(id);
-        return TTTextBoxMessage{TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id)};
+    TTTextBoxMessage createContactsSelectionMessage(size_t id) {
+        mExpectedContactSelections.push_back(id);
+        return TTTextBoxMessage{TTTextBoxStatus::CONTACTS_SELECT, sizeof(id), reinterpret_cast<char*>(&id)};
     }
 
     std::shared_ptr<TTTextBoxSettingsMock> mSettingsMock;
@@ -91,8 +91,8 @@ protected:
     std::unique_ptr<TTTextBoxHandler> mHandler;
     std::vector<std::string> mReceivedMessages;
     std::vector<std::string> mExpectedMessages;
-    std::vector<size_t> mReceivedContactSwitches;
-    std::vector<size_t> mExpectedContactSwitches;
+    std::vector<size_t> mReceivedContactSelections;
+    std::vector<size_t> mExpectedContactSelections;
 };
 
 ACTION_P(SetArgPointerInReceiveMessage, rhs) {
@@ -190,7 +190,7 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedGoodbye) {
     VerifyApplicationTimeout(std::chrono::milliseconds{50});
 }
 
-TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSwitch) {
+TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSelect) {
     EXPECT_CALL(*mNamedPipeMock, open)
         .Times(1)
         .WillOnce(Return(true));
@@ -199,15 +199,15 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSwitch) {
         .WillOnce(Return(true));
     const auto heartbeatMessage = createHeartbeatMessage();
     const std::vector<TTTextBoxMessage> messages1 = {
-        createContactsSwitchMessage(5),
-        createContactsSwitchMessage(1),
-        createContactsSwitchMessage(0)
+        createContactsSelectionMessage(5),
+        createContactsSelectionMessage(1),
+        createContactsSelectionMessage(0)
     };
     const std::vector<TTTextBoxMessage> messages2 = {
-        createContactsSwitchMessage(1005),
-        createContactsSwitchMessage(1),
-        createContactsSwitchMessage(100),
-        createContactsSwitchMessage(25),
+        createContactsSelectionMessage(1005),
+        createContactsSelectionMessage(1),
+        createContactsSelectionMessage(100),
+        createContactsSelectionMessage(25),
     };
     {
         InSequence _;
@@ -236,9 +236,9 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedContactsSwitch) {
     mHandler->stop();
     VerifyApplicationTimeout(std::chrono::milliseconds{100});
     // Verify
-    EXPECT_EQ(mExpectedContactSwitches.size(), mReceivedContactSwitches.size());
-    for (size_t i = 0; i < mExpectedContactSwitches.size(); ++i) {
-        EXPECT_EQ(mExpectedContactSwitches[i], mReceivedContactSwitches[i]);
+    EXPECT_EQ(mExpectedContactSelections.size(), mReceivedContactSelections.size());
+    for (size_t i = 0; i < mExpectedContactSelections.size(); ++i) {
+        EXPECT_EQ(mExpectedContactSelections[i], mReceivedContactSelections[i]);
     }
 }
 
@@ -305,12 +305,12 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedMixOfMessages) {
     const std::vector<TTTextBoxMessage> messages1 = {
         createMessage("Hello"),
         createMessage(" World!"),
-        createContactsSwitchMessage(3)
+        createContactsSelectionMessage(3)
     };
     const std::vector<TTTextBoxMessage> messages2 = {
         createMessage("Are"),
         createMessage("you ok?"),
-        createContactsSwitchMessage(3)
+        createContactsSelectionMessage(3)
     };
     const auto goodbyeMessage = createGoodbyeMessage();
     {
@@ -343,8 +343,8 @@ TEST_F(TTTextBoxHandlerTest, SuccessReceivedMixOfMessages) {
     for (size_t i = 0; i < mExpectedMessages.size(); ++i) {
         EXPECT_EQ(mExpectedMessages[i], mReceivedMessages[i]);
     }
-    EXPECT_EQ(mExpectedContactSwitches.size(), mReceivedContactSwitches.size());
-    for (size_t i = 0; i < mExpectedContactSwitches.size(); ++i) {
-        EXPECT_EQ(mExpectedContactSwitches[i], mReceivedContactSwitches[i]);
+    EXPECT_EQ(mExpectedContactSelections.size(), mReceivedContactSelections.size());
+    for (size_t i = 0; i < mExpectedContactSelections.size(); ++i) {
+        EXPECT_EQ(mExpectedContactSelections[i], mReceivedContactSelections[i]);
     }
 }

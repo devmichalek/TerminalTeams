@@ -108,8 +108,8 @@ protected:
         mExpectedMessages.emplace_back(TTTextBoxStatus::GOODBYE, 0, nullptr);
     }
 
-    void AddExpectedContactsSwitchMessage(size_t id) {
-        mExpectedMessages.emplace_back(TTTextBoxStatus::CONTACTS_SWITCH, sizeof(id), reinterpret_cast<char*>(&id));
+    void AddExpectedContactsSelectionMessage(size_t id) {
+        mExpectedMessages.emplace_back(TTTextBoxStatus::CONTACTS_SELECT, sizeof(id), reinterpret_cast<char*>(&id));
     }
 
     void AddExpectedMessage(const std::string& msg) {
@@ -323,7 +323,7 @@ TEST_F(TTTextBoxTest, SuccessHelpCommand) {
         "Type #help to print a help message\n",
             "Type #help to print a help message\n" // no comma on purpose
             "Type #quit to quit the application\n" // no comma on purpose
-            "Type #switch <id> to switch contacts\n" // no comma on purpose
+            "Type #select <id> to select contact\n" // no comma on purpose
             "Skip # and send a message to the currently selected contact.\n",
         ""
     };
@@ -429,10 +429,10 @@ TEST_F(TTTextBoxTest, FailureQuitCommandTooManyArguments) {
     EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
-TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
+TEST_F(TTTextBoxTest, SuccessSelectCommand) {
     // Expected messages
     AddExpectedHeartbeatMessage();
-    AddExpectedContactsSwitchMessage(1);
+    AddExpectedContactsSelectionMessage(1);
     AddExpectedGoodbyeMessage();
     // Expected flow
     EXPECT_CALL(*mNamedPipeMock, create)
@@ -446,7 +446,7 @@ TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
     RestartApplication(std::chrono::milliseconds{600});
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
-    mInputStreamMock->input("#switch 1");
+    mInputStreamMock->input("#select 1");
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
     mTextBox->stop();
     mInputStreamMock->input("");
@@ -464,7 +464,7 @@ TEST_F(TTTextBoxTest, SuccessSwitchCommand) {
     EXPECT_TRUE(IsAtLeastOneEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages[1]));
 }
 
-TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
+TEST_F(TTTextBoxTest, FailureSelectCommandTooManyArguments) {
     // Expected messages
     AddExpectedHeartbeatMessage();
     AddExpectedGoodbyeMessage();
@@ -479,7 +479,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
     RestartApplication(std::chrono::milliseconds{600});
-    mInputStreamMock->input("#switch 1 blahblah");
+    mInputStreamMock->input("#select 1 blahblah");
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
@@ -498,7 +498,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyArguments) {
     EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
-TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
+TEST_F(TTTextBoxTest, FailureSelectCommandNoDigits) {
     // Expected messages
     AddExpectedHeartbeatMessage();
     AddExpectedGoodbyeMessage();
@@ -513,7 +513,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
     RestartApplication(std::chrono::milliseconds{600});
-    mInputStreamMock->input("#switch blahblah");
+    mInputStreamMock->input("#select blahblah");
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
@@ -532,7 +532,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandNoDigits) {
     EXPECT_TRUE(IsLastEqualTo({mSentMessages.begin(), mSentMessages.end()}, mExpectedMessages.back()));
 }
 
-TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
+TEST_F(TTTextBoxTest, FailureSelectCommandTooManyDigits) {
     // Expected messages
     AddExpectedHeartbeatMessage();
     AddExpectedGoodbyeMessage();
@@ -547,7 +547,7 @@ TEST_F(TTTextBoxTest, FailureSwitchCommandTooManyDigits) {
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
     RestartApplication(std::chrono::milliseconds{600});
-    mInputStreamMock->input("#switch 11111");
+    mInputStreamMock->input("#select 11111");
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
@@ -594,6 +594,7 @@ TEST_F(TTTextBoxTest, SuccessSmallMessage) {
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;
@@ -668,7 +669,7 @@ TEST_F(TTTextBoxTest, SuccessBigMessage) {
 TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
     // Expected messages
     AddExpectedHeartbeatMessage();
-    AddExpectedContactsSwitchMessage(1);
+    AddExpectedContactsSelectionMessage(1);
     const std::string customMsg = "Hello world";
     AddExpectedMessage(customMsg);
     AddExpectedGoodbyeMessage();
@@ -685,7 +686,7 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
     RestartApplication(std::chrono::milliseconds{600});
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mInputStreamMock->input("#help");
-    mInputStreamMock->input("#switch 1");
+    mInputStreamMock->input("#select 1");
     mInputStreamMock->input(customMsg);
     std::this_thread::sleep_for(std::chrono::milliseconds{1000});
     mInputStreamMock->input("#quit");
@@ -697,7 +698,7 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
         "Type #help to print a help message\n",
             "Type #help to print a help message\n" // no comma on purpose
             "Type #quit to quit the application\n" // no comma on purpose
-            "Type #switch <id> to switch contacts\n" // no comma on purpose
+            "Type #select <id> to select contact\n" // no comma on purpose
             "Skip # and send a message to the currently selected contact.\n",
         "",
         "",

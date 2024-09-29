@@ -12,7 +12,7 @@ public:
     MOCK_METHOD(std::unique_ptr<TTChatHandler>, createChatHandler, (), (const, override));
     MOCK_METHOD(std::unique_ptr<TTTextBoxHandler>, createTextBoxHandler, (
         TTTextBoxCallbackMessageSent callbackMessageSent,
-        TTTextBoxCallbackContactSwitch callbackContactsSwitch), (const, override));
+        TTTextBoxCallbackContactSelect callbackContactsSelect), (const, override));
     MOCK_METHOD(std::unique_ptr<TTNeighborsStub>, createNeighborsStub, (), (const, override));
     MOCK_METHOD(std::unique_ptr<TTBroadcasterChat>, createBroadcasterChat, (
         TTContactsHandler& contactsHandler,

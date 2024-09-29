@@ -21,9 +21,9 @@ EXIT_STATUS=0
 # Test scenario
 echo "Info: Waiting for synchronization..."
 sleep 2
-echo "#switch 0 blahblah" > "${APP_HANDLER_STDIN}"
-echo "#switch blahblah" > "${APP_HANDLER_STDIN}"
-echo "#switch 11111" > "${APP_HANDLER_STDIN}"
+echo "#select 0 blahblah" > "${APP_HANDLER_STDIN}"
+echo "#select blahblah" > "${APP_HANDLER_STDIN}"
+echo "#select 11111" > "${APP_HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."
 sleep 2
 

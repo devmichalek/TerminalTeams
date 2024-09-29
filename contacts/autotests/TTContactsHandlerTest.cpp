@@ -1,8 +1,7 @@
 #include "TTContactsHandler.hpp"
-#include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsSignals.hpp"
 #include <iostream>
 #include <vector>
-#include <signal.h>
 
 // Logger
 LOG_DECLARE("tteams-contacts-handler");
@@ -14,15 +13,8 @@ void signalInterruptHandler(int) {
 
 int main(int argc, char** argv) {
     try {
-        // Signal handling
-        struct sigaction signalAction;
-        memset(&signalAction, 0, sizeof(signalAction));
-        signalAction.sa_handler = signalInterruptHandler;
-        sigfillset(&signalAction.sa_mask);
-        sigaction(SIGINT, &signalAction, nullptr);
-        sigaction(SIGTERM, &signalAction, nullptr);
-        sigaction(SIGSTOP, &signalAction, nullptr);
-        LOG_INFO("Signal handling initialized");
+        TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
+        signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
         // Run main app
         TTContactsSettings settings(argc, argv);
         TTContactsHandler handler(settings);

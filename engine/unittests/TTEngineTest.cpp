@@ -97,9 +97,9 @@ protected:
         }
         if (textBoxHandlerStatus) {
             EXPECT_CALL(*mAbstractFactory, createTextBoxHandler(_, _))
-                .WillOnce([&](auto callbackMessageSent, auto callbackContactsSwitch) {
+                .WillOnce([&](auto callbackMessageSent, auto callbackContactsSelect) {
                     mCallbackMessageSent = callbackMessageSent;
-                    mCallbackContactsSwitch = callbackContactsSwitch;
+                    mCallbackContactsSelect = callbackContactsSelect;
                     return std::move(mTextBoxHandler);
                 });
         } else {
@@ -250,7 +250,7 @@ protected:
     std::condition_variable mBroadcasterDiscoveryCondition;
     std::condition_variable mServerCondition;
     TTTextBoxCallbackMessageSent mCallbackMessageSent;
-    TTTextBoxCallbackContactSwitch mCallbackContactsSwitch;
+    TTTextBoxCallbackContactSelect mCallbackContactsSelect;
     std::unique_ptr<TTEngine> mEngine;
 };
 
@@ -429,7 +429,7 @@ TEST_F(TTEngineTest, UnhappyPathMailboxBroadcasterChatFailedToHandle) {
     loop.join();
 }
 
-TEST_F(TTEngineTest, HappyPathSwitcher) {
+TEST_F(TTEngineTest, HappyPathSelection) {
     PrepareEngineDependencies();
     const size_t message = 2;
     EXPECT_CALL(*mContactsHandler, size())
@@ -446,7 +446,7 @@ TEST_F(TTEngineTest, HappyPathSwitcher) {
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
     EXPECT_FALSE(mEngine->isStopped());
-    mCallbackContactsSwitch(message);
+    mCallbackContactsSelect(message);
     EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
@@ -454,7 +454,7 @@ TEST_F(TTEngineTest, HappyPathSwitcher) {
     loop.join();
 }
 
-TEST_F(TTEngineTest, UnhappyPathSwitcherIdIsTooLarge) {
+TEST_F(TTEngineTest, UnhappyPathSelectionIdIsTooLarge) {
     PrepareEngineDependencies();
     const size_t message = 2;
     EXPECT_CALL(*mContactsHandler, size())
@@ -465,7 +465,7 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherIdIsTooLarge) {
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
     EXPECT_FALSE(mEngine->isStopped());
-    mCallbackContactsSwitch(message);
+    mCallbackContactsSelect(message);
     EXPECT_FALSE(mEngine->isStopped());
     mEngine->stop();
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
@@ -473,7 +473,7 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherIdIsTooLarge) {
     loop.join();
 }
 
-TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerSelectFailed) {
+TEST_F(TTEngineTest, UnhappyPathSelectionContactsHandlerSelectFailed) {
     PrepareEngineDependencies();
     const size_t message = 2;
     EXPECT_CALL(*mContactsHandler, size())
@@ -490,13 +490,13 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerSelectFailed) {
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
     EXPECT_FALSE(mEngine->isStopped());
-    mCallbackContactsSwitch(message);
+    mCallbackContactsSelect(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
     EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
-TEST_F(TTEngineTest, UnhappyPathSwitcherChatHandlerSelectFailed) {
+TEST_F(TTEngineTest, UnhappyPathSelectionChatHandlerSelectFailed) {
     PrepareEngineDependencies();
     const size_t message = 2;
     EXPECT_CALL(*mContactsHandler, size())
@@ -513,13 +513,13 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherChatHandlerSelectFailed) {
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
     EXPECT_FALSE(mEngine->isStopped());
-    mCallbackContactsSwitch(message);
+    mCallbackContactsSelect(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
     EXPECT_TRUE(mEngine->isStopped());
     loop.join();
 }
 
-TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerAndChatHandlerSelectFailed) {
+TEST_F(TTEngineTest, UnhappyPathSelectionContactsHandlerAndChatHandlerSelectFailed) {
     PrepareEngineDependencies();
     const size_t message = 2;
     EXPECT_CALL(*mContactsHandler, size())
@@ -536,7 +536,7 @@ TEST_F(TTEngineTest, UnhappyPathSwitcherContactsHandlerAndChatHandlerSelectFaile
     std::thread loop(std::bind(&TTEngine::run, mEngine.get()));
     std::this_thread::sleep_for(std::chrono::milliseconds{150});
     EXPECT_FALSE(mEngine->isStopped());
-    mCallbackContactsSwitch(message);
+    mCallbackContactsSelect(message);
     std::this_thread::sleep_for(std::chrono::milliseconds{200});
     EXPECT_TRUE(mEngine->isStopped());
     loop.join();

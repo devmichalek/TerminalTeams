@@ -7,7 +7,7 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
     LOG_INFO("Creating handlers...");
     mContacts = abstractFactory.createContactsHandler();
     mChat = abstractFactory.createChatHandler();
-    mTextBox = abstractFactory.createTextBoxHandler(std::bind(&TTEngine::mailbox, this, _1), std::bind(&TTEngine::switcher, this, _1));
+    mTextBox = abstractFactory.createTextBoxHandler(std::bind(&TTEngine::mailbox, this, _1), std::bind(&TTEngine::selection, this, _1));
     if (!mContacts || !mChat || !mTextBox) {
         throw std::runtime_error("TTEngine: Failed to create handlers!");
     }
@@ -130,18 +130,18 @@ void TTEngine::mailbox(const std::string& message) {
     }
 }
 
-void TTEngine::switcher(size_t message) {
-    LOG_INFO("Received callback - contacts switch");
+void TTEngine::selection(size_t message) {
+    LOG_INFO("Received callback - contacts selection");
     if (message < mContacts->size()) {
         std::scoped_lock lock(mExternalCallsMutex);
         bool result = mContacts->select(message);
         result &= mChat->select(message);
         if (!result) [[unlikely]] {
-            LOG_ERROR("Received callback - failed to switch contact!");
+            LOG_ERROR("Received callback - failed to select contact!");
             stop();
         }
     } else {
-        LOG_WARNING("Received callback - attempt to switch to nonexisting contact!");
+        LOG_WARNING("Received callback - attempt to select to nonexisting contact!");
     }
 }
 

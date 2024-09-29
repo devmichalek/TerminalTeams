@@ -32,7 +32,7 @@ APP_HANDLER_ACTUAL_RESULTS=$(<"${APP_HANDLER_STDOUT}")
 APP_EXPECTED_RESULTS_RAW="\033[2J\033[1;1HType #help to print a help message
 \033[2J\033[1;1HType #help to print a help message
 Type #quit to quit the application
-Type #switch <id> to switch contacts
+Type #select <id> to select contact
 Skip # and send a message to the currently selected contact."
 APP_EXPECTED_RESULTS=$(echo -e "$APP_EXPECTED_RESULTS_RAW")
 APP_ACTUAL_RESULTS=$(<"${APP_STDOUT}")

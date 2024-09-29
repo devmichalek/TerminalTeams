@@ -134,4 +134,5 @@ sleep 3
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 ${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-engine.sh "${INTERFACE}" "${IP_ADDRESS}" "${PORT}" "${NICKNAME}" "${IDENTITY}""
+
 exit 0

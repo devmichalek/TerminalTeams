@@ -8,7 +8,7 @@ The purpose of this module is to:
 Since this module implements an user input interface it's possible to send specific commands to the handler. Examples:
 - `#help` - prints help message
 - `#quit` - closes the application and handler
-- `#switch <id>` - performs contacts switch
+- `#select <id>` - selects specified contact
 - `Hello world` - send casual message to the currently selected contact
 
 ## Architecture
@@ -23,7 +23,7 @@ This module consists of two main components:
 Both components use IPC for communication (named pipe). Message types taking part in the flow:
 - undefined (in case of error)
 - heartbeat
-- contacts switch
+- contacts selection
 - message
 - goodbye
 

@@ -21,11 +21,11 @@ EXIT_STATUS=0
 # Test scenario
 echo "Info: Waiting for synchronization..."
 sleep 2
-echo "#switch 0" > "${APP_HANDLER_STDIN}"
-echo "#switch 100" > "${APP_HANDLER_STDIN}"
-echo "#switch 9999" > "${APP_HANDLER_STDIN}"
-echo "#switch 15" > "${APP_HANDLER_STDIN}"
-echo "#switch 875" > "${APP_HANDLER_STDIN}"
+echo "#select 0" > "${APP_HANDLER_STDIN}"
+echo "#select 100" > "${APP_HANDLER_STDIN}"
+echo "#select 9999" > "${APP_HANDLER_STDIN}"
+echo "#select 15" > "${APP_HANDLER_STDIN}"
+echo "#select 875" > "${APP_HANDLER_STDIN}"
 echo "Info: Waiting for data to be set..."
 sleep 2
 

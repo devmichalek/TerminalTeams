@@ -1,7 +1,6 @@
 #include "TTChat.hpp"
-#include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsSignals.hpp"
 #include "TTConfig.hpp"
-#include <signal.h>
 
 // Application
 std::unique_ptr<TTChat> application;
@@ -17,14 +16,8 @@ void signalInterruptHandler(int) {
 int main(int argc, char** argv) {
     LOG_INFO("{}", VERSION_STRING);
     try {
-        // Signal handling
-        struct sigaction signalAction;
-        memset(&signalAction, 0, sizeof(signalAction));
-        signalAction.sa_handler = signalInterruptHandler;
-        sigfillset(&signalAction.sa_mask);
-        sigaction(SIGINT, &signalAction, nullptr);
-        sigaction(SIGTERM, &signalAction, nullptr);
-        sigaction(SIGSTOP, &signalAction, nullptr);
+        TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
+        signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
         // Run main app
         TTChatSettings settings(argc, argv);
         TTUtilsOutputStream outputStream;

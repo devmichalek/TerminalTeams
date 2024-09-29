@@ -8,7 +8,7 @@
 #include <functional>
 
 using TTTextBoxCallbackMessageSent = std::function<void(const std::string&)>;
-using TTTextBoxCallbackContactSwitch = std::function<void(size_t)>;
+using TTTextBoxCallbackContactSelect = std::function<void(size_t)>;
 
 // Class meant to be embedded into other higher abstract class.
 // Allows to control TTTextBox process concurrently.
@@ -16,7 +16,7 @@ class TTTextBoxHandler : public TTUtilsStopable {
 public:
     explicit TTTextBoxHandler(const TTTextBoxSettings& settings,
         TTTextBoxCallbackMessageSent callbackMessageSent,
-        TTTextBoxCallbackContactSwitch callbackContactsSwitch);
+        TTTextBoxCallbackContactSelect callbackContactsSelect);
     virtual ~TTTextBoxHandler();
     TTTextBoxHandler(const TTTextBoxHandler&) = delete;
     TTTextBoxHandler(TTTextBoxHandler&&) = delete;
@@ -33,7 +33,7 @@ private:
     std::shared_ptr<TTUtilsNamedPipe> mPipe;
     // Callbacks
     TTTextBoxCallbackMessageSent mCallbackMessageSent;
-    TTTextBoxCallbackContactSwitch mCallbackContactsSwitch;
+    TTTextBoxCallbackContactSelect mCallbackContactsSelect;
     // Thread concurrent message communication
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;

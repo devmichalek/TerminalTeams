@@ -64,5 +64,5 @@ Application was tested using:
 - comment code
 - fix VerifyApplicationTimeout
 - add to TTUtilsStopable a subscribe method, condition_variable etc.
-- when TTTextBoxHandler is closed with kill, the TTTextBox is not deleteding named pipe
+- when TTTextBoxHandler is closed with kill, the TTTextBox is not closing
 - reject messages to itself

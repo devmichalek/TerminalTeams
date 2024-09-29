@@ -6,7 +6,7 @@ package TTTextBoxBundle <<Rectangle>> {
   class TTTextBoxSettings
   enum TTTextBoxStatus
   annotation TTTextBoxCallbackMessageSent
-  annotation TTTextBoxCallbackContactSwitch
+  annotation TTTextBoxCallbackContactSelect
 }
 
 package TTDiagnosticsBundle <<Rectangle>> {
@@ -23,7 +23,7 @@ TTTextBoxHandler --|> TTUtilsStopable
 TTTextBoxHandler o-- TTTextBoxMessage
 TTTextBoxHandler o-- TTUtilsNamedPipe
 TTTextBoxHandler *-- TTTextBoxCallbackMessageSent
-TTTextBoxHandler *-- TTTextBoxCallbackContactSwitch
+TTTextBoxHandler *-- TTTextBoxCallbackContactSelect
 TTTextBoxHandler <.. TTDiagnosticsLogger
 TTTextBoxHandler <.. TTTextBoxSettings
 TTTextBoxSettings <.. TTUtilsSyscall

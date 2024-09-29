@@ -1,9 +1,8 @@
 #include "TTChatHandler.hpp"
-#include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsSignals.hpp"
 #include <iostream>
 #include <chrono>
 #include <vector>
-#include <signal.h>
 
 // Logger
 LOG_DECLARE("tteams-chat-handler");
@@ -38,14 +37,8 @@ std::vector<std::string> getTokens(std::string line) {
 
 int main(int argc, char** argv) {
     try {
-        // Signal handling
-        struct sigaction signalAction;
-        memset(&signalAction, 0, sizeof(signalAction));
-        signalAction.sa_handler = signalInterruptHandler;
-        sigfillset(&signalAction.sa_mask);
-        sigaction(SIGINT, &signalAction, nullptr);
-        sigaction(SIGTERM, &signalAction, nullptr);
-        sigaction(SIGSTOP, &signalAction, nullptr);
+        TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
+        signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
         LOG_INFO("Signal handling initialized");
         // Run main app
         TTChatSettings settings(argc, argv);

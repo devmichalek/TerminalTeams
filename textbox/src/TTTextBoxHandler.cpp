@@ -4,10 +4,10 @@
 
 TTTextBoxHandler::TTTextBoxHandler(const TTTextBoxSettings& settings,
     TTTextBoxCallbackMessageSent callbackMessageSent,
-    TTTextBoxCallbackContactSwitch callbackContactsSwitch) :
+    TTTextBoxCallbackContactSelect callbackContactsSelect) :
         mPipe(settings.getNamedPipe()),
         mCallbackMessageSent(callbackMessageSent),
-        mCallbackContactsSwitch(callbackContactsSwitch) {
+        mCallbackContactsSelect(callbackContactsSelect) {
     LOG_INFO("Constructing...");
     // Open pipe
     if (!mPipe->open()) {
@@ -49,12 +49,12 @@ void TTTextBoxHandler::main(std::promise<void> promise) {
                     case TTTextBoxStatus::HEARTBEAT:
                         LOG_INFO("Received heartbeat message");
                         break;
-                    case TTTextBoxStatus::CONTACTS_SWITCH:
+                    case TTTextBoxStatus::CONTACTS_SELECT:
                     {
-                        LOG_INFO("Received contacts switch message");
+                        LOG_INFO("Received contacts selection message");
                         size_t id = 0;
                         memcpy(&id, message.data, message.dataLength);
-                        mCallbackContactsSwitch(id);
+                        mCallbackContactsSelect(id);
                         break;
                     }
                     case TTTextBoxStatus::MESSAGE:
