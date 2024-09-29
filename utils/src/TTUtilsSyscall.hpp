@@ -8,11 +8,12 @@
 #include <fcntl.h>
 #include <mqueue.h>
 #include <string.h>
+#include <signal.h>
 
 class TTUtilsSyscall {
 public:
     TTUtilsSyscall() = default;
-    virtual ~TTUtilsSyscall() {}
+    virtual ~TTUtilsSyscall() = default;
     TTUtilsSyscall(const TTUtilsSyscall&) = delete;
     TTUtilsSyscall(TTUtilsSyscall&&) = delete;
     TTUtilsSyscall& operator=(const TTUtilsSyscall&) = delete;
@@ -34,7 +35,7 @@ public:
         return ::sem_timedwait(sem, abs_timeout);
     }
 
-    virtual int sem_unlink(const char* name) {
+    virtual int sem_unlink(const char* name) const {
         return ::sem_unlink(name);
     }
 
@@ -70,31 +71,55 @@ public:
         return ::mq_timedreceive(mqdes, msg_ptr, msg_len, msg_prio, abs_timeout);
     }
 
-    virtual int ftruncate(int fd, off_t length) {
+    virtual int ftruncate(int fd, off_t length) const {
         return ::ftruncate(fd, length);
     }
 
-    virtual int open(const char* pathname, int flags) {
+    virtual int open(const char* pathname, int flags) const {
         return ::open(pathname, flags);
     }
 
-    virtual int close(int fd) {
+    virtual int close(int fd) const {
         return ::close(fd);
     }
 
-    virtual int unlink(const char* pathname) {
+    virtual int unlink(const char* pathname) const {
         return ::unlink(pathname);
     }
 
-    virtual int mkfifo(const char* pathname, mode_t mode) {
+    virtual int mkfifo(const char* pathname, mode_t mode) const {
         return ::mkfifo(pathname, mode);
     }
 
-    virtual ssize_t read(int fd, void* buf, size_t count) {
+    virtual ssize_t read(int fd, void* buf, size_t count) const {
         return ::read(fd, buf, count);
     }
 
-    virtual ssize_t write(int fd, const void* buf, size_t count) {
+    virtual ssize_t write(int fd, const void* buf, size_t count) const {
         return ::write(fd, buf, count);
+    }
+
+    virtual int pthread_sigmask(int how, const sigset_t* set, sigset_t* oldset) const {
+        return ::pthread_sigmask(how, set, oldset);
+    }
+
+    virtual int sigaction(int signum, const struct sigaction* act, struct sigaction* oldact) const {
+        return ::sigaction(signum, act, oldact);
+    }
+
+    virtual int sigfillset(sigset_t* set) const {
+        return ::sigfillset(set);
+    }
+
+    virtual int sigemptyset(sigset_t* set) const {
+        return ::sigemptyset(set);
+    }
+
+    virtual int sigaddset(sigset_t* set, int signum) const {
+        return ::sigaddset(set, signum);
+    }
+
+    virtual int sigdelset(sigset_t* set, int signum) const {
+        return ::sigdelset(set, signum);
     }
 };

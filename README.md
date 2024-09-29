@@ -30,7 +30,7 @@ cmake --install build --prefix install
 - [Google gRPC](https://grpc.io/)
 - [Google Test](https://google.github.io/googletest/)
 - Bash
-- Inter-Process Communication
+- Inter-Process Communication (message queue, named pipe, shared memory)
 - [Docker](https://www.docker.com/)
 - [VirtualBox](https://www.virtualbox.org/)
 - Networking

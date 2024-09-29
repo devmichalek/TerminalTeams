@@ -1,5 +1,5 @@
 #include "TTTextBox.hpp"
-#include "TTDiagnosticsLogger.hpp"
+#include "TTUtilsSignals.hpp"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -14,15 +14,20 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
         mOutputStream(outputStream),
         mInputStream(inputStream) {
     LOG_INFO("Constructing...");
-    // Create pipe
-    if (!mPipe->create()) {
-        throw std::runtime_error("TTTextBox: Failed to create named pipe!");
+    TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
+    signals.block({ SIGPIPE });
+    {
+        // Create pipe
+        if (!mPipe->create()) {
+            throw std::runtime_error("TTTextBox: Failed to create named pipe!");
+        }
+        // Set main sender thread
+        std::promise<void> mainPromise;
+        mBlockers.push_back(mainPromise.get_future());
+        mThreads.push_back(std::thread(&TTTextBox::main, this, std::move(mainPromise)));
+        mThreads.back().detach();
     }
-    // Set main sender thread
-    std::promise<void> mainPromise;
-    mBlockers.push_back(mainPromise.get_future());
-    mThreads.push_back(std::thread(&TTTextBox::main, this, std::move(mainPromise)));
-    mThreads.back().detach();
+    signals.unblock({ SIGPIPE });
     LOG_INFO("Successfully constructed!");
 }
 
