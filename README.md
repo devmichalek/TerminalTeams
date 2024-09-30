@@ -65,4 +65,3 @@ Application was tested using:
 - fix VerifyApplicationTimeout
 - add to TTUtilsStopable a subscribe method, condition_variable etc.
 - reject messages to itself
-- use tee for unit test shell files: https://stackoverflow.com/questions/692000/how-do-i-write-standard-error-to-a-file-while-using-tee-with-a-pipe

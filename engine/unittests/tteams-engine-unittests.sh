@@ -11,4 +11,4 @@ valgrind --tool=memcheck \
          --show-leak-kinds=all \
          --track-origins=yes \
          --error-exitcode=1 \
-         ./tteams-engine-unittests &> tteams-engine-unittests-results.txt || exit 1
+         ./tteams-engine-unittests 2>&1 | tee -a tteams-engine-unittests-results.txt || exit 1
