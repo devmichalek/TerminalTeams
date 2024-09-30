@@ -13,14 +13,15 @@ public:
     TTUtilsSignals& operator=(const TTUtilsSignals&) = delete;
     TTUtilsSignals& operator=(TTUtilsSignals&&) = delete;
 
-    virtual void setup(void (*handler)(int), std::vector<int> signums) {
+    virtual void setup(void (*handler)(int), std::vector<int> signums) const {
         LOG_INFO("Signal handling setup");
-        memset(&mSignalAction, 0, sizeof(mSignalAction));
-        mSignalAction.sa_handler = handler;
-        mSyscall->sigfillset(&mSignalAction.sa_mask);
+        struct sigaction signalAction;
+        memset(&signalAction, 0, sizeof(signalAction));
+        signalAction.sa_handler = handler;
+        mSyscall->sigfillset(&signalAction.sa_mask);
         for (const auto &signum : signums) {
             LOG_INFO("Setting action for the signal number={}", signum);
-            mSyscall->sigaction(signum, &mSignalAction, nullptr);
+            mSyscall->sigaction(signum, &signalAction, nullptr);
         }
     }
 
@@ -46,5 +47,4 @@ public:
 
 private:
     std::shared_ptr<TTUtilsSyscall> mSyscall;
-    struct sigaction mSignalAction;
 };

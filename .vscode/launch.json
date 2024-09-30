@@ -2,12 +2,35 @@
     "version": "0.2.0",
     "configurations":[
         {
-            "name": "Debug Unit Tests",
+            "name": "Debug Selected Unit Test",
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}/install/unittests/tteams-${input:componentType}-unittests",
             "args": [
                 "--gtest_filter=${fileBasenameNoExtension}.*${selectedText}*"
+            ],
+            "miDebuggerPath": "/usr/bin/gdb",
+            "MIMode": "gdb",
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "logging": {
+                "exceptions": true
+            }
+        },
+        {
+            "name": "Debug Unit Tests",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}/install/unittests/tteams-${input:componentType}-unittests",
+            "args": [
+                "--gtest_filter=${fileBasenameNoExtension}.*"
             ],
             "miDebuggerPath": "/usr/bin/gdb",
             "MIMode": "gdb",

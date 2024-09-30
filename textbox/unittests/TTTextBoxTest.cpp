@@ -163,11 +163,9 @@ TEST_F(TTTextBoxTest, FailedToRunNamedPipeIsNotAlive) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(false));
-    mTextBox = std::make_unique<TTTextBox>(*mSettingsMock, *mOutputStreamMock, *mInputStreamMock);
-    mTextBox->run();
-    EXPECT_TRUE(mTextBox->isStopped());
+        .Times(1)
+        .WillOnce(Return(false));
+    EXPECT_THROW(RestartApplication(std::chrono::milliseconds{0}), std::runtime_error);
 }
 
 TEST_F(TTTextBoxTest, SuccessEmptyInput) {
@@ -180,8 +178,8 @@ TEST_F(TTTextBoxTest, SuccessEmptyInput) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(expectedMinNumOfMessages))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -210,8 +208,8 @@ TEST_F(TTTextBoxTest, FailedEmptyInput) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(expectedMinNumOfMessages))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageFalse, this, _1));
@@ -239,8 +237,8 @@ TEST_F(TTTextBoxTest, SuccessEmptyCommand) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -272,8 +270,8 @@ TEST_F(TTTextBoxTest, SuccessNonExistingCommand) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -305,8 +303,8 @@ TEST_F(TTTextBoxTest, SuccessHelpCommand) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -341,8 +339,8 @@ TEST_F(TTTextBoxTest, FailureHelpCommandTooManyArguments) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -374,8 +372,8 @@ TEST_F(TTTextBoxTest, SuccessQuitCommand) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -404,8 +402,8 @@ TEST_F(TTTextBoxTest, FailureQuitCommandTooManyArguments) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -439,8 +437,8 @@ TEST_F(TTTextBoxTest, SuccessSelectCommand) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -473,8 +471,8 @@ TEST_F(TTTextBoxTest, FailureSelectCommandTooManyArguments) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -507,8 +505,8 @@ TEST_F(TTTextBoxTest, FailureSelectCommandNoDigits) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -541,8 +539,8 @@ TEST_F(TTTextBoxTest, FailureSelectCommandTooManyDigits) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -581,8 +579,8 @@ TEST_F(TTTextBoxTest, SuccessSmallMessage) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -636,8 +634,8 @@ TEST_F(TTTextBoxTest, SuccessBigMessage) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));
@@ -678,8 +676,8 @@ TEST_F(TTTextBoxTest, SuccessMixOfMessagesAndCommands) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, alive)
-        .Times(2)
-        .WillRepeatedly(Return(true));
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*mNamedPipeMock, send)
         .Times(AtLeast(1))
         .WillRepeatedly(std::bind(&TTTextBoxTest::RetrieveSentMessageTrue, this, _1));

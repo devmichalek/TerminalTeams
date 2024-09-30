@@ -14,20 +14,29 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
         mOutputStream(outputStream),
         mInputStream(inputStream) {
     LOG_INFO("Constructing...");
-    TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
-    signals.block({ SIGPIPE });
+    // Create pipe
+    if (!mPipe->create()) {
+        throw std::runtime_error("TTTextBox: Failed to create named pipe!");
+    }
+    if (!mPipe->alive()) {
+        throw std::runtime_error("TTTextBox: Failed to run, pipe is not alive!");
+    }
+    // Set main sender thread
     {
-        // Create pipe
-        if (!mPipe->create()) {
-            throw std::runtime_error("TTTextBox: Failed to create named pipe!");
-        }
-        // Set main sender thread
+        TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
+        signals.block({ SIGPIPE });
         std::promise<void> mainPromise;
         mBlockers.push_back(mainPromise.get_future());
         mThreads.push_back(std::thread(&TTTextBox::main, this, std::move(mainPromise)));
         mThreads.back().detach();
+        signals.unblock({ SIGPIPE });
     }
-    signals.unblock({ SIGPIPE });
+    // Set asynchronous reader thread
+    {
+        // Do not add it to the blockers as I/O may block forever
+        mThreads.push_back(std::thread(&TTTextBox::asynchronousRead, this));
+        mThreads.back().detach();
+    }
     LOG_INFO("Successfully constructed!");
 }
 
@@ -41,23 +50,13 @@ TTTextBox::~TTTextBox() {
 }
 
 void TTTextBox::run() {
-    if (!mPipe->alive()) {
-        LOG_ERROR("Failed to run, pipe is not alive!");
-    } else {
-        try {
-            mOutputStream.clear();
-            mOutputStream.print("Type #help to print a help message").endl();
-            while (!isStopped()) {
-                std::string line;
-                mInputStream.readline(line);
-                if (!parse(line)) {
-                    LOG_WARNING("Failed to parse input!");
-                    continue;
-                }
-            }
-        } catch (...) {
-            LOG_ERROR("Caught unknown exception!");
+    try {
+        while (!isStopped()) {
+            // To be enhanced in the future
+            std::this_thread::sleep_for(std::chrono::milliseconds{100});
         }
+    } catch (...) {
+        LOG_ERROR("Caught unknown exception!");
     }
     stop();
 }
@@ -168,52 +167,48 @@ bool TTTextBox::send(const char* cbegin, const char* cend) {
 
 void TTTextBox::main(std::promise<void> promise) {
     LOG_INFO("Started textbox loop");
-    if (!mPipe->alive()) {
-        LOG_ERROR("Failed to run, pipe is not alive!");
-    } else {
-        try {
-            while (!isStopped()) {
-                LOG_INFO("Filling the list of messages...");
-                std::list<std::unique_ptr<TTTextBoxMessage>> messages;
-                {
-                    std::unique_lock<std::mutex> lock(mQueueMutex);
-                    auto waitTimeMs = std::chrono::milliseconds(TTTextBox::QUEUED_MSG_TIMEOUT_MS);
-                    mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
-                        return !mQueuedMessages.empty() || isStopped();
-                    });
-                    if (!mQueuedMessages.empty()) {
-                        size_t counter = 0;
-                        while (!mQueuedMessages.empty()) {
-                            ++counter;
-                            messages.push_back(std::move(mQueuedMessages.front()));
-                            mQueuedMessages.pop();
-                        }
-                        LOG_INFO("Inserted {} messages...", counter);
+    try {
+        while (!isStopped()) {
+            LOG_INFO("Filling the list of messages...");
+            std::list<std::unique_ptr<TTTextBoxMessage>> messages;
+            {
+                std::unique_lock<std::mutex> lock(mQueueMutex);
+                auto waitTimeMs = std::chrono::milliseconds(TTTextBox::QUEUED_MSG_TIMEOUT_MS);
+                mQueueCondition.wait_for(lock, waitTimeMs, [this]() {
+                    return !mQueuedMessages.empty() || isStopped();
+                });
+                if (!mQueuedMessages.empty()) {
+                    size_t counter = 0;
+                    while (!mQueuedMessages.empty()) {
+                        ++counter;
+                        messages.push_back(std::move(mQueuedMessages.front()));
+                        mQueuedMessages.pop();
                     }
-                    // Do not remove scope guards, risk of deadlock
+                    LOG_INFO("Inserted {} messages...", counter);
                 }
-                // If there are no new messages insert heartbeat message
-                if (messages.empty()) {
-                    LOG_INFO("Inserting heartbeat message...");
-                    messages.push_back(std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::HEARTBEAT, 0, nullptr));
-                }
-                LOG_INFO("Sending all messages...");
-                for (auto &message : messages) {
-                    if (isStopped()) {
-                        break;
-                    }
-                    if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
-                        LOG_ERROR("Failed to send message!");
-                        throw std::runtime_error({});
-                    }
-                }
-                LOG_INFO("Successfully sent all messages!");
+                // Do not remove scope guards, risk of deadlock
             }
-        } catch (...) {
-            LOG_ERROR("Caught unknown exception at textbox loop!");
+            // If there are no new messages insert heartbeat message
+            if (messages.empty()) {
+                LOG_INFO("Inserting heartbeat message...");
+                messages.push_back(std::make_unique<TTTextBoxMessage>(TTTextBoxStatus::HEARTBEAT, 0, nullptr));
+            }
+            LOG_INFO("Sending all messages...");
+            for (auto &message : messages) {
+                if (isStopped()) {
+                    break;
+                }
+                if (!mPipe->send(reinterpret_cast<char*>(message.get()))) {
+                    LOG_ERROR("Failed to send message!");
+                    throw std::runtime_error({});
+                }
+            }
+            LOG_INFO("Successfully sent all messages!");
         }
-        goodbye();
+    } catch (...) {
+        LOG_ERROR("Caught unknown exception at textbox loop!");
     }
+    goodbye();
     stop();
     promise.set_value();
     LOG_INFO("Completed textbox loop");
@@ -231,4 +226,17 @@ void TTTextBox::goodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTTextBoxMessage message(TTTextBoxStatus::GOODBYE, 0, nullptr);
     mPipe->send(reinterpret_cast<const char*>(&message));
+}
+
+void TTTextBox::asynchronousRead() {
+    mOutputStream.clear();
+    mOutputStream.print("Type #help to print a help message").endl();
+    while (!isStopped()) {
+        std::string line;
+        mInputStream.readline(line);
+        if (!parse(line)) {
+            LOG_WARNING("Failed to parse input!");
+            continue;
+        }
+    }
 }

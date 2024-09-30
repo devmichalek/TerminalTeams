@@ -64,5 +64,5 @@ Application was tested using:
 - comment code
 - fix VerifyApplicationTimeout
 - add to TTUtilsStopable a subscribe method, condition_variable etc.
-- when TTTextBoxHandler is closed with kill, the TTTextBox is not closing
 - reject messages to itself
+- use tee for unit test shell files: https://stackoverflow.com/questions/692000/how-do-i-write-standard-error-to-a-file-while-using-tee-with-a-pipe

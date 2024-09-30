@@ -36,6 +36,8 @@ private:
     void queue(std::unique_ptr<TTTextBoxMessage> message);
     // Sends goodbye message
     void goodbye();
+    // Asynchronous read
+    void asynchronousRead();
     // Literals
     inline const static long QUEUED_MSG_TIMEOUT_MS = 500;
     // IPC communication
