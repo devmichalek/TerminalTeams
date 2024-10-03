@@ -36,7 +36,6 @@ public:
     [[nodiscard]] virtual size_t size() const;
 protected:
     TTContactsHandler() = default;
-    virtual void onStop() override;
 private:
     // Send generic method
     bool send(const TTContactsMessage& message);
@@ -47,7 +46,7 @@ private:
     // Establish connection with the other process
     bool establish();
     // Sends last bit of information - goodbye message
-    void goodbye();
+    void sendGoodbye();
     // IPC shared memory communication
     std::shared_ptr<TTUtilsSharedMem> mSharedMem;
     // Thread concurrent message communication

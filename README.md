@@ -62,6 +62,5 @@ Application was tested using:
 - engine documentation
 - remove IPC files in cpp classes in constructor
 - comment code
-- fix VerifyApplicationTimeout
-- add to TTUtilsStopable a subscribe method, condition_variable etc.
-- reject messages to itself
+- reject gRPC messages to itself
+- fix mem leaks in unit tests

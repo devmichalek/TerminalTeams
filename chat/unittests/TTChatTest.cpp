@@ -72,12 +72,12 @@ protected:
 
     void StartApplication() {
         mChat->run();
-        mApplicationCv.notify_one();
     }
 
     void RestartApplication() {
         mChat = std::make_unique<TTChat>(*mSettingsMock, *mOutputStreamMock);
         EXPECT_FALSE(mChat->isStopped());
+        mChat->subscribeOnStop(mApplicationCv);
         mApplicationThread = std::thread{&TTChatTest::StartApplication, this};
     }
 

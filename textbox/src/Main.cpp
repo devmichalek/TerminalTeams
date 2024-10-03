@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
         LOG_INFO("TextBox initialized");
         try {
             if (!application->isStopped()) {
-                application->run();
+                application->wait();
             } else {
                 LOG_WARNING("Application was shut down out of a sudden");
             }

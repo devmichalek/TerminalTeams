@@ -117,14 +117,14 @@ protected:
     }
 
     void StartApplication() {
-        mTextBox->run();
-        mApplicationCv.notify_one();
+        mTextBox->wait();
     }
 
     void RestartApplication(std::chrono::milliseconds timeout) {
         mApplicationTimeout = timeout;
         mTextBox = std::make_unique<TTTextBox>(*mSettingsMock, *mOutputStreamMock, *mInputStreamMock);
         EXPECT_FALSE(mTextBox->isStopped());
+        mTextBox->subscribeOnStop(mApplicationCv);
         mApplicationThread = std::thread{&TTTextBoxTest::StartApplication, this};
     }
 
@@ -445,9 +445,10 @@ TEST_F(TTTextBoxTest, SuccessSelectCommand) {
     RestartApplication(std::chrono::milliseconds{600});
     std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mInputStreamMock->input("#select 1");
-    std::this_thread::sleep_for(std::chrono::milliseconds{1000});
+    std::this_thread::sleep_for(std::chrono::milliseconds{600});
     mTextBox->stop();
     mInputStreamMock->input("");
+    std::this_thread::sleep_for(std::chrono::milliseconds{100});
     // Verify
     VerifyApplicationTimeout();
     const auto& actual = mOutputStreamMock->mOutput;

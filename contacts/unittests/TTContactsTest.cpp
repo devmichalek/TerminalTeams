@@ -40,13 +40,13 @@ protected:
 
     void StartApplication() {
         mContacts->run();
-        mApplicationCv.notify_one();
     }
 
     void RestartApplication(std::chrono::milliseconds timeout) {
         mApplicationTimeout = timeout;
         mContacts = std::make_unique<TTContacts>(*mSettingsMock, *mOutputStreamMock);
         EXPECT_FALSE(mContacts->isStopped());
+        mContacts->subscribeOnStop(mApplicationCv);
         mApplicationThread = std::thread{&TTContactsTest::StartApplication, this};
     }
 

@@ -21,6 +21,7 @@ TTContactsHandler::TTContactsHandler(const TTContactsSettings& settings) :
     mHeartbeatThread = std::thread{&TTContactsHandler::heartbeat, this};
     mHandlerThread.detach();
     mHeartbeatThread.detach();
+    subscribeOnStop(mQueueCondition);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -268,10 +269,6 @@ size_t TTContactsHandler::size() const {
     return mContacts.size();
 }
 
-void TTContactsHandler::onStop() {
-    mQueueCondition.notify_one();
-}
-
 bool TTContactsHandler::send(const TTContactsMessage& message) {
     if (isStopped()) {
         return false;
@@ -319,7 +316,7 @@ void TTContactsHandler::main() {
 
                 if (isStopped()) {
                     exit = true;
-                    goodbye();
+                    sendGoodbye();
                     break; // Forced exit
                 }
 
@@ -332,7 +329,7 @@ void TTContactsHandler::main() {
             for (auto &message : messages) {
                 if (isStopped()) {
                     exit = true;
-                    goodbye();
+                    sendGoodbye();
                     break; // Forced exit
                 }
                 if (!mSharedMem->send(reinterpret_cast<const void*>(message.get()))) {
@@ -356,7 +353,7 @@ bool TTContactsHandler::establish() {
     return mSharedMem->send(reinterpret_cast<const void*>(&message), 5);
 }
 
-void TTContactsHandler::goodbye() {
+void TTContactsHandler::sendGoodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTContactsMessage message;
     message.setStatus(TTContactsStatus::GOODBYE);

@@ -25,6 +25,7 @@ TTChatHandler::TTChatHandler(const TTChatSettings& settings) :
     mHeartbeatThread.detach();
     // Set handler thread
     mHandlerResult = std::async(std::launch::async, std::bind(&TTChatHandler::main, this));
+    subscribeOnStop(mQueueCondition);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -147,10 +148,6 @@ std::optional<TTChatEntries> TTChatHandler::get(size_t id) const {
 std::optional<size_t> TTChatHandler::current() const {
     std::shared_lock messagesLock(mMessagesMutex);
     return mCurrentId;
-}
-
-void TTChatHandler::onStop() {
-    mQueueCondition.notify_one();
 }
 
 bool TTChatHandler::send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp) {
@@ -294,13 +291,13 @@ void TTChatHandler::main() {
         } catch (...) {
             LOG_ERROR("Caught unknown exception at primary loop!");
         }
-        goodbye();
+        sendGoodbye();
     }
     stop();
     LOG_INFO("Completed primary loop");
 }
 
-void TTChatHandler::goodbye() {
+void TTChatHandler::sendGoodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTChatMessage message;
     message.setType(TTChatMessageType::GOODBYE);

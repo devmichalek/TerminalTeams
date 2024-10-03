@@ -19,10 +19,9 @@ public:
     TTTextBox(TTTextBox&&) = delete;
     TTTextBox& operator=(const TTTextBox&) = delete;
     TTTextBox& operator=(TTTextBox&&) = delete;
-    virtual void run();
+    void wait();
 protected:
     TTTextBox() = default;
-    virtual void onStop() override;
 private:
     // Parses input and returns true if there are no suspicions
     bool parse(const std::string& line);
@@ -35,7 +34,7 @@ private:
     // Generic queue
     void queue(std::unique_ptr<TTTextBoxMessage> message);
     // Sends goodbye message
-    void goodbye();
+    void sendGoodbye();
     // Asynchronous read
     void asynchronousRead();
     // Literals
@@ -51,4 +50,6 @@ private:
     std::condition_variable mQueueCondition;
     std::deque<std::thread> mThreads;
     std::deque<std::future<void>> mBlockers;
+    std::mutex mWaitMutex;
+    std::condition_variable mWaitCondition;
 };

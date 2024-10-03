@@ -37,6 +37,8 @@ TTTextBox::TTTextBox(const TTTextBoxSettings& settings,
         mThreads.push_back(std::thread(&TTTextBox::asynchronousRead, this));
         mThreads.back().detach();
     }
+    subscribeOnStop(mQueueCondition);
+    subscribeOnStop(mWaitCondition);
     LOG_INFO("Successfully constructed!");
 }
 
@@ -49,20 +51,9 @@ TTTextBox::~TTTextBox() {
     LOG_INFO("Successfully destructed!");
 }
 
-void TTTextBox::run() {
-    try {
-        while (!isStopped()) {
-            // To be enhanced in the future
-            std::this_thread::sleep_for(std::chrono::milliseconds{100});
-        }
-    } catch (...) {
-        LOG_ERROR("Caught unknown exception!");
-    }
-    stop();
-}
-
-void TTTextBox::onStop() {
-    mQueueCondition.notify_one();
+void TTTextBox::wait() {
+    std::unique_lock<std::mutex> lock(mWaitMutex);
+    mWaitCondition.wait(lock, [this]() { return isStopped(); });
 }
 
 bool TTTextBox::parse(const std::string& line) {
@@ -208,7 +199,7 @@ void TTTextBox::main(std::promise<void> promise) {
     } catch (...) {
         LOG_ERROR("Caught unknown exception at textbox loop!");
     }
-    goodbye();
+    sendGoodbye();
     stop();
     promise.set_value();
     LOG_INFO("Completed textbox loop");
@@ -222,7 +213,7 @@ void TTTextBox::queue(std::unique_ptr<TTTextBoxMessage> message) {
     mQueueCondition.notify_one();
 }
 
-void TTTextBox::goodbye() {
+void TTTextBox::sendGoodbye() {
     LOG_WARNING("Sending goodbye message...");
     TTTextBoxMessage message(TTTextBoxStatus::GOODBYE, 0, nullptr);
     mPipe->send(reinterpret_cast<const char*>(&message));

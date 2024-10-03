@@ -30,7 +30,6 @@ public:
     [[nodiscard]] virtual std::optional<size_t> current() const;
 protected:
     TTChatHandler() = default;
-    virtual void onStop() override;
 private:
     bool send(TTChatMessageType type, const std::string& data, TTChatTimestamp timestamp);
     std::list<std::unique_ptr<TTChatMessage>> dequeue();
@@ -39,7 +38,7 @@ private:
     // Sends heartbeat periodically or main data if available
     void main();
     // Sends last bit of information - goodbye message
-    void goodbye();
+    void sendGoodbye();
     // IPC message queue communication
     std::shared_ptr<TTUtilsMessageQueue> mPrimaryMessageQueue;
     std::shared_ptr<TTUtilsMessageQueue> mSecondaryMessageQueue;
