@@ -6,6 +6,7 @@ TTNeighborsServiceDiscovery::TTNeighborsServiceDiscovery(TTBroadcasterDiscovery&
 }
 
 grpc::Status TTNeighborsServiceDiscovery::Greet(grpc::ServerContext* context, const tt::GreetRequest* request, tt::GreetReply* reply) {
+    LOG_INFO("Handling greet...");
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
@@ -31,6 +32,7 @@ grpc::Status TTNeighborsServiceDiscovery::Greet(grpc::ServerContext* context, co
 }
 
 grpc::Status TTNeighborsServiceDiscovery::Heartbeat(grpc::ServerContext* context, const tt::HeartbeatRequest* request, tt::HeartbeatReply* reply) {
+    LOG_INFO("Handling heartbeat...");
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");

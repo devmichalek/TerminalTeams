@@ -35,12 +35,12 @@ TTEngine::TTEngine(const TTEngineSettings& settings) {
     LOG_INFO("Creating gRPC server...");
     {
         const auto networkInterface = settings.getNetworkInterface();
-        auto neighborsServiceChat = abstractFactory.createNeighborsServiceChat(*mBroadcasterChat);
-        auto neighborsServiceDiscovery = abstractFactory.createNeighborsServiceDiscovery(*mBroadcasterDiscovery);
-        if (!neighborsServiceChat || !neighborsServiceDiscovery) {
+        mServiceChat = abstractFactory.createNeighborsServiceChat(*mBroadcasterChat);
+        mServiceDiscovery = abstractFactory.createNeighborsServiceDiscovery(*mBroadcasterDiscovery);
+        if (!mServiceChat || !mServiceDiscovery) {
             throw std::runtime_error("TTEngine: Failed to create services!");
         }
-        mServer = abstractFactory.createServer(networkInterface.getIpAddressAndPort(), *neighborsServiceChat, *neighborsServiceDiscovery);
+        mServer = abstractFactory.createServer(networkInterface.getIpAddressAndPort(), *mServiceChat, *mServiceDiscovery);
         if (!mServer) {
             throw std::runtime_error("TTEngine: Failed to create gRPC server!");
         }

@@ -34,6 +34,8 @@ private:
     std::unique_ptr<TTTextBoxHandler> mTextBox;
     std::mutex mExternalCallsMutex;
     // Node data
+    std::unique_ptr<TTNeighborsServiceChat> mServiceChat;
+    std::unique_ptr<TTNeighborsServiceDiscovery> mServiceDiscovery;
     std::unique_ptr<TTServer> mServer;
     std::unique_ptr<TTNeighborsStub> mNeighborsStub;
     std::unique_ptr<TTBroadcasterChat> mBroadcasterChat;

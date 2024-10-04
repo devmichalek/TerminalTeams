@@ -6,6 +6,7 @@ TTNeighborsServiceChat::TTNeighborsServiceChat(TTBroadcasterChat& handler) : mHa
 };
 
 grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt::TellRequest* request, tt::TellReply* reply) {
+    LOG_INFO("Handling tell...");
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");
@@ -29,6 +30,7 @@ grpc::Status TTNeighborsServiceChat::Tell(grpc::ServerContext* context, const tt
 }
 
 grpc::Status TTNeighborsServiceChat::Narrate(grpc::ServerContext* context, grpc::ServerReader<tt::NarrateRequest>* stream, tt::NarrateReply* reply) {
+    LOG_INFO("Handling narrate...");
     if (!context) {
         LOG_ERROR("Context is null!");
         return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "Context is null!");

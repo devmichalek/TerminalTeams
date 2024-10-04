@@ -8,12 +8,13 @@ IP_ADDRESS="${2}"
 PORT="${3}"
 NICKNAME="${4}"
 IDENTITY="${5}"
-TMUX_SESSION_NAME="terminal-teams-session"
-CONTACTS_SHARED_MEMORY_NAME="$(hostname)-contacts" # todo add mechanism for generating random shared name
-CHAT_MESSAGE_QUEUE_NAME="$(hostname)-chat" # todo add mechanism for generating random queue name
-TEXTBOX_PIPE_NAME="$(hostname)-textbox" # todo add mechanism for generating random pipe name
-NEIGHBORS_RAW=$(ip -4 neigh | grep ${INTERFACE})
-NEIGHBORS=$(awk -F ' ' '{print $1}' <<< "$NEIGHBORS_RAW")
+RANDOM_STRING="$(hostname)-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 10; echo)"
+TMUX_SESSION_NAME="${RANDOM_STRING}-terminal-teams-session"
+CONTACTS_SHARED_MEMORY_NAME="${RANDOM_STRING}-contacts"
+CHAT_MESSAGE_QUEUE_NAME="${RANDOM_STRING}-chat"
+TEXTBOX_PIPE_NAME="${RANDOM_STRING}-textbox"
+NEIGHBORS_RAW=$(ip -4 neigh | grep "${INTERFACE}")
+NEIGHBORS=$(awk -F ' ' '{print $1}' <<< "${NEIGHBORS_RAW[@]}")
 
 ${SCRIPTPATH}/tteams-engine "${CONTACTS_SHARED_MEMORY_NAME}" "${CHAT_MESSAGE_QUEUE_NAME}" "${TEXTBOX_PIPE_NAME}" "${NICKNAME}" "${IDENTITY}" "${INTERFACE}" "${IP_ADDRESS}" "${PORT}" ${NEIGHBORS[@]} &>/dev/null &
 

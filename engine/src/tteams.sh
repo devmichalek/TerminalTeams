@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-if ! [ -z "$(pgrep -u "${USER}" tteams)" ]; then
-    echo "Error: Another instance of Terminal Teams is running!"
-    echo "Info: Please close all processes related with Terminal Teams"
-    exit 1
-fi
-
 TT_DEFAULT_TERMINAL=${TT_DEFAULT_TERMINAL:-'gnome-terminal'}
 if ! which ${TT_DEFAULT_TERMINAL} &> /dev/null; then
     echo "Error: Failed to open another terminal emulator!"
@@ -47,6 +41,14 @@ if [ -z "${TT_SKIP_DIMENSIONS_CHECK}" ]; then
     fi
 fi
 
+if [ -z "${TT_SKIP_INSTANCE_CHECK}" ]; then
+    if ! [ -z "$(pgrep -u "${USER}" tteams)" ]; then
+        echo "Error: Another instance of Terminal Teams is running!"
+        echo "Info: Please close all processes related with Terminal Teams"
+        exit 1
+    fi
+fi
+
 usage()
 {
     echo "Terminal Teams a chat between users on the LAN within Terminal Emulator." >&2
@@ -70,18 +72,25 @@ do
     esac
 done
 
+if ! [ -z "${INTERFACE}" ]; then
+    if ! ip link show dev "${INTERFACE}" &> /dev/null; then
+        echo "Error: Interface ${INTERFACE} doesn't exist"
+        echo "Info: Please specify valid interface name"
+        exit 1
+    fi
+fi
+
 if ! [ -z "${IP_ADDRESS}" ]; then
     if [ -z "${INTERFACE}" ]; then
         echo "Error: Interface is not specified but IP address was provided!"
         echo "Info: Please specify interface you want to use using -i option"
         exit 1
-    else
-        IP_ADDRESSES=$(ip -f inet addr show ${INTERFACE} | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
-        if [[ ! " ${IP_ADDRESSES[*]} " =~ [[:space:]]${IP_ADDRESS}[[:space:]] ]]; then
-            echo "Error: Interface ${INTERFACE} doesn't have specified ${IP_ADDRESS} IP address"
-            echo "Info: Please specify valid interface (-i option) and valid IP address (-a option)"
-            exit 1
-        fi
+    fi
+    IP_ADDRESSES=$(ip -f inet addr show "${INTERFACE}" | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+    if [[ ! " ${IP_ADDRESSES[*]} " =~ [[:space:]]${IP_ADDRESS}[[:space:]] ]]; then
+        echo "Error: Interface ${INTERFACE} doesn't have specified ${IP_ADDRESS} IP address"
+        echo "Info: Please specify valid interface (-i option) and valid IP address (-a option)"
+        exit 1
     fi
 fi
 
@@ -93,7 +102,7 @@ if [ -z "${INTERFACE}" ]; then
         exit 1
     fi
 
-    INTERFACES=$(awk -F ' ' '{print $3}' <<< "$NEIGHBORS")
+    INTERFACES=$(awk -F ' ' '{print $3}' <<< "${NEIGHBORS[@]}")
     UNIQUE_INTERFACES=$(printf "$INTERFACES" | sort | uniq)
     if [ ${#UNIQUE_INTERFACES[@]} -gt 1 ]; then
         echo "Error: Multiple available interfaces found over multiple neighbors!"
@@ -130,7 +139,6 @@ if [ -z "${PASSPHRASE}" ]; then
 fi
 
 echo "Using ${IP_ADDRESS}:${PORT} over ${INTERFACE}..."
-sleep 3
 
 SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 ${TT_DEFAULT_TERMINAL} -- /usr/bin/env bash -c "${SCRIPTPATH}/tteams-engine.sh "${INTERFACE}" "${IP_ADDRESS}" "${PORT}" "${NICKNAME}" "${IDENTITY}""

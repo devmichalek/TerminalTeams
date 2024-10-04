@@ -13,6 +13,7 @@ TTBroadcasterDiscovery::TTBroadcasterDiscovery(TTContactsHandler& contactsHandle
         mInactivityTimerFactory(std::chrono::milliseconds(5000), std::chrono::milliseconds(6000)),
         mDiscoveryTimerFactory(std::chrono::milliseconds(100), std::chrono::milliseconds(1000)) {
     for (const auto &neighbor : neighbors) {
+        LOG_INFO("Creating static neighbor from IP address={}", neighbor);
         mStaticNeighbors.emplace_back(mDiscoveryTimerFactory.create(), neighbor + ":" + networkInterface.getPort());
         mStaticNeighbors.back().timer.expire();
     }
@@ -142,8 +143,9 @@ void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
                     if (remaining < smallest) {
                         smallest = remaining;
                     }
+                    continue;
                 }
-                else if (neighbor.trials) {
+                if (neighbor.trials) {
                     if (!neighbor.stub) {
                         const auto entryOpt = mContactsHandler.get(id);
                         if (!entryOpt) [[unlikely]] {
@@ -177,7 +179,8 @@ void TTBroadcasterDiscovery::resolveDynamicNeighbors() {
                 }
             }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(smallest));
+        LOG_INFO("Inactivity count={}ms", smallest.count());
+        std::this_thread::sleep_for(smallest);
     }
     LOG_INFO("Stopped resolving dynamic neighbors");
 }
