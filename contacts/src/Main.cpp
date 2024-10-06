@@ -18,17 +18,16 @@ int main(int argc, char** argv) {
     try {
         TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
         signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
-        // Set contacts
+        // Run application
         TTContactsSettings settings(argc, argv);
         TTUtilsOutputStream outputStream;
         application = std::make_unique<TTContacts>(settings, outputStream);
         LOG_INFO("Contacts initialized");
-        // Run main app
         try {
             if (!application->isStopped()) {
                 application->run();
             } else {
-                LOG_WARNING("Application was shut down out of a sudden");
+                LOG_WARNING("Application was shut down all of a sudden");
             }
         } catch (const std::exception& exp) {
             LOG_ERROR("Exception captured: {}", exp.what());

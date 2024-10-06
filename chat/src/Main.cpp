@@ -18,11 +18,21 @@ int main(int argc, char** argv) {
     try {
         TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
         signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
-        // Run main app
+        // Run application
         TTChatSettings settings(argc, argv);
         TTUtilsOutputStream outputStream;
         application = std::make_unique<TTChat>(settings, outputStream);
-        application->run();
+        LOG_INFO("Chat initialized");
+        try {
+            if (!application->isStopped()) {
+                application->run();
+            } else {
+                LOG_WARNING("Application was shut down all of a sudden");
+            }
+        } catch (const std::exception& exp) {
+            LOG_ERROR("Exception captured: {}", exp.what());
+            throw;
+        }
     } catch (const std::exception& exp) {
         LOG_ERROR("Exception captured: {}", exp.what());
     }

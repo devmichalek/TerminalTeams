@@ -61,6 +61,7 @@ TTNarrateResponse TTNeighborsStub::sendNarrate(TTNeighborsChatStubIf& stub, cons
                 return {false};
             }
         }
+        writer->WritesDone();
         grpc::Status status = writer->Finish();
         if (status.ok()) [[likely]] {
             return {true};

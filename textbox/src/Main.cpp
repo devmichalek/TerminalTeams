@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
             if (!application->isStopped()) {
                 application->wait();
             } else {
-                LOG_WARNING("Application was shut down out of a sudden");
+                LOG_WARNING("Application was shut down all of a sudden");
             }
         } catch (const std::exception& exp) {
             LOG_ERROR("Exception captured: {}", exp.what());

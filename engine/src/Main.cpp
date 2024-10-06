@@ -18,15 +18,15 @@ int main(int argc, char** argv) {
     try {
         TTUtilsSignals signals(std::make_shared<TTUtilsSyscall>());
         signals.setup(signalInterruptHandler, { SIGINT, SIGTERM, SIGSTOP });
-        // Run main app
+        // Run application
         TTEngineSettings settings(argc, argv);
         application = std::make_unique<TTEngine>(settings);
-        // Run main app
+        LOG_INFO("Engine initialized");
         try {
             if (!application->isStopped()) {
                 application->run();
             } else {
-                LOG_WARNING("Application was shut down out of a sudden");
+                LOG_WARNING("Application was shut down all of a sudden");
             }
         } catch (const std::exception& exp) {
             LOG_ERROR("Exception captured: {}", exp.what());

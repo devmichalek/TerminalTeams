@@ -20,7 +20,7 @@ public:
     virtual bool alive() const;
     virtual bool receive(char* message, long attempts = 3, long timeoutMs = 1000);
     virtual bool send(const char* message, long attempts = 3, long timeoutMs = 1000);
- protected:
+protected:
     TTUtilsMessageQueue() = default;
 private:
     // IPC shared memory communication
