@@ -45,12 +45,29 @@ TEST_F(TTBroadcasterChatTest, HappyPathReceiveTellRequest) {
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*mChatHandler, receive(id.value(), request.message, _))
         .Times(1)
         .WillOnce(Return(true));
+    EXPECT_TRUE(mBroadcaster->handleReceive(request));
+}
+
+TEST_F(TTBroadcasterChatTest, HappyPathReceiveTellRequestMessageToItself) {
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
+    std::optional<size_t> id = 1;
+    EXPECT_CALL(*mContactsHandler, get(request.identity))
+        .Times(1)
+        .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.1:1777");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_TRUE(mBroadcaster->handleReceive(request));
 }
 
@@ -62,12 +79,28 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestNoIdentity) {
     EXPECT_FALSE(mBroadcaster->handleReceive(request));
 }
 
+TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestContactsHandlerFailedToGetEntry) {
+    const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
+    std::optional<size_t> id = 1;
+    EXPECT_CALL(*mContactsHandler, get(request.identity))
+        .Times(1)
+        .WillOnce(Return(id));
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(std::nullopt));
+    EXPECT_FALSE(mBroadcaster->handleReceive(request));
+}
+
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestContactsHandlerFailed) {
     const TTTellRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", "Hello world!");
     std::optional<size_t> id = 1;
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(false));
@@ -80,6 +113,10 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveTellRequestChatHandlerFailed) {
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(true));
@@ -95,6 +132,10 @@ TEST_F(TTBroadcasterChatTest, HappyPathReceiveNarrateRequest) {
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(true));
@@ -106,9 +147,34 @@ TEST_F(TTBroadcasterChatTest, HappyPathReceiveNarrateRequest) {
     EXPECT_TRUE(mBroadcaster->handleReceive(request));
 }
 
+TEST_F(TTBroadcasterChatTest, HappyPathReceiveNarrateRequestMessageToItself) {
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
+    std::optional<size_t> id = 1;
+    EXPECT_CALL(*mContactsHandler, get(request.identity))
+        .Times(1)
+        .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.1:1777");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
+    EXPECT_TRUE(mBroadcaster->handleReceive(request));
+}
+
 TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestNoIdentity) {
     const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
     EXPECT_CALL(*mContactsHandler, get(request.identity))
+        .Times(1)
+        .WillOnce(Return(std::nullopt));
+    EXPECT_FALSE(mBroadcaster->handleReceive(request));
+}
+
+TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestContactsHandlerFailedToGetEntry) {
+    const TTNarrateRequest request("312382290f4f71e7fb7f00449fb529fce3b8ec95", { "a", "b", "c" });
+    std::optional<size_t> id = 1;
+    EXPECT_CALL(*mContactsHandler, get(request.identity))
+        .Times(1)
+        .WillOnce(Return(id));
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
         .Times(1)
         .WillOnce(Return(std::nullopt));
     EXPECT_FALSE(mBroadcaster->handleReceive(request));
@@ -120,6 +186,10 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestContactsHandlerFai
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(false));
@@ -132,6 +202,10 @@ TEST_F(TTBroadcasterChatTest, UnhappyPathReceiveNarrateRequestChatHandlerFailed)
     EXPECT_CALL(*mContactsHandler, get(request.identity))
         .Times(1)
         .WillOnce(Return(id));
+    TTContactsHandlerEntry entry("nickname", "312382290f4f71e7fb7f00449fb529fce3b8ec95", "192.168.1.88:875");
+    EXPECT_CALL(*mContactsHandler, get(Matcher<size_t>(id.value())))
+        .Times(1)
+        .WillOnce(Return(entry));
     EXPECT_CALL(*mContactsHandler, receive(id.value()))
         .Times(1)
         .WillOnce(Return(true));

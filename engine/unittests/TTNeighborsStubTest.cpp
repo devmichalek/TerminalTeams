@@ -68,6 +68,9 @@ TEST(TTNeighborsStubTest, HappyPathSendNarrate) {
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request2), _))
         .Times(1)
         .WillOnce(Return(true));
+    EXPECT_CALL(*cwinr, WritesDone())
+        .Times(1)
+        .WillOnce(Return(true));
     EXPECT_CALL(*cwinr, Finish())
         .Times(1)
         .WillOnce(Return(grpc::Status()));
@@ -149,6 +152,9 @@ TEST(TTNeighborsStubTest, UnhappyPathSendNarrateFailedToFinish) {
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*cwinr, Write(IsNarrateRequestEqualTo(request2), _))
+        .Times(1)
+        .WillOnce(Return(true));
+    EXPECT_CALL(*cwinr, WritesDone())
         .Times(1)
         .WillOnce(Return(true));
     EXPECT_CALL(*cwinr, Finish())

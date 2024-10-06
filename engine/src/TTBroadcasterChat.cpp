@@ -133,6 +133,17 @@ bool TTBroadcasterChat::handleReceive(const TTTellRequest& request) {
         LOG_WARNING("Failed to handle reception, no such identity={}", request.identity);
         return false;
     }
+    const auto contactsCurrentEntryOpt = mContactsHandler.get(id.value());
+    if (!contactsCurrentEntryOpt) [[unlikely]] {
+        LOG_ERROR("Failed to handle send (contacts handler get failure)!");
+        stop();
+        return false;
+    }
+    const auto requestedIpAddress = contactsCurrentEntryOpt.value().ipAddressAndPort;
+    if (requestedIpAddress == mNetworkInterface.getIpAddressAndPort()) {
+        LOG_INFO("Success, nothing to be send (host IP address match)!");
+        return true;
+    }
     if (!mContactsHandler.receive(id.value())) [[unlikely]] {
         LOG_ERROR("Failed to handle reception on contacts receive");
         stop();
@@ -153,6 +164,17 @@ bool TTBroadcasterChat::handleReceive(const TTNarrateRequest& request) {
     if (!id) {
         LOG_WARNING("Failed to handle reception, no such identity={}", request.identity);
         return false;
+    }
+    const auto contactsCurrentEntryOpt = mContactsHandler.get(id.value());
+    if (!contactsCurrentEntryOpt) [[unlikely]] {
+        LOG_ERROR("Failed to handle send (contacts handler get failure)!");
+        stop();
+        return false;
+    }
+    const auto requestedIpAddress = contactsCurrentEntryOpt.value().ipAddressAndPort;
+    if (requestedIpAddress == mNetworkInterface.getIpAddressAndPort()) {
+        LOG_INFO("Success, nothing to be send (host IP address match)!");
+        return true;
     }
     if (!mContactsHandler.receive(id.value())) {
         LOG_ERROR("Failed to handle reception on contacts receive");

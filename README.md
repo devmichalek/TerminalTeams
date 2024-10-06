@@ -1,3 +1,5 @@
+![ExampleConversation](./doc/ExampleConversation.png)
+
 ### Usage
 Application runs inside Linux Terminal Emulator to:
 - find users on LAN,
@@ -55,14 +57,5 @@ Application was tested using:
 - support for other character encodings
 - support for IPv6 and TLS
 - messages rollback after shutdown based on trusted peer (requires TLS)
-
-### Todo
-- std::launder
-- safe cleanup
 - utils unit tests
 - engine auto tests
-- engine documentation
-- remove IPC files in cpp classes in constructor
-- comment code
-- reject gRPC messages to itself
-- fix mem leaks in unit tests
