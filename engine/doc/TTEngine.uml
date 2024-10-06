@@ -1,0 +1,142 @@
+@startuml
+
+package TTEngineBundle <<Rectangle>> {
+  class TTEngine
+  class TTEngineSettings
+  class TTNeighborsServiceChat
+  class TTNeighborsServiceDiscovery
+  class TTServer
+  class TTNeighborsStub
+  class TTBroadcasterChat
+  class TTBroadcasterDiscovery
+  class TTAbstractFactory
+  struct TTTellRequest
+  struct TTTellResponse
+  struct TTNarrateRequest
+  struct TTNarrateResponse
+  struct TTGreetRequest
+  struct TTGreetResponse
+  struct TTHeartbeatRequest
+  struct TTHeartbeatResponse
+  class TTNetworkInterface
+}
+
+package TTProtocolsBundle <<Rectangle>> {
+  class NeighborsChat::Service
+  class NeighborsDiscovery::Service
+  class NeighborsChat::StubInterface
+  class NeighborsDiscovery::StubInterface
+}
+
+package TTContactsBundle <<Rectangle>> {
+  class TTContactsHandler
+  class TTContactsSettings
+}
+
+package TTChatBundle <<Rectangle>> {
+  class TTChatHandler
+  class TTChatSettings
+}
+
+package TTTextBoxBundle <<Rectangle>> {
+  class TTTextBoxHandler
+  class TTTextBoxSettings
+}
+
+package TTUtilsBundle <<Rectangle>> {
+  class TTUtilsStopable
+  class TTUtilsTimer
+  class TTUtilsTimerFactory
+  class TTDiagnosticsLogger
+}
+
+TTEngine --|> TTUtilsStopable
+TTEngine o-- TTContactsHandler
+TTEngine o-- TTChatHandler
+TTEngine o-- TTTextBoxHandler
+TTEngine o-- TTNeighborsServiceChat
+TTEngine o-- TTNeighborsServiceDiscovery
+TTEngine o-- TTServer
+TTEngine o-- TTNeighborsStub
+TTEngine o-- TTBroadcasterChat
+TTEngine o-- TTBroadcasterDiscovery
+TTEngine <.. TTEngineSettings
+TTEngine <.. TTAbstractFactory
+TTEngine <.. TTNetworkInterface
+TTEngine <.. TTDiagnosticsLogger
+
+TTEngineSettings o-- TTContactsSettings
+TTEngineSettings o-- TTChatSettings
+TTEngineSettings o-- TTTextBoxSettings
+TTEngineSettings o-- TTAbstractFactory
+TTEngineSettings o-- TTNetworkInterface
+
+TTNeighborsServiceChat --|> NeighborsChat::Service
+TTNeighborsServiceChat o-- TTBroadcasterChat
+TTNeighborsServiceChat <-- TTTellRequest
+TTNeighborsServiceChat <-- TTNarrateRequest
+TTNeighborsServiceChat <.. TTDiagnosticsLogger
+
+TTNeighborsServiceDiscovery --|> NeighborsDiscovery::Service
+TTNeighborsServiceDiscovery o-- TTBroadcasterDiscovery
+TTNeighborsServiceDiscovery <-- TTGreetRequest
+TTNeighborsServiceDiscovery <-- TTHeartbeatRequest
+TTNeighborsServiceDiscovery <.. TTDiagnosticsLogger
+
+TTNeighborsStub <-- NeighborsChat::StubInterface
+TTNeighborsStub <-- NeighborsDiscovery::StubInterface
+TTNeighborsStub <-- TTTellRequest
+TTNeighborsStub <-- TTTellResponse
+TTNeighborsStub <-- TTNarrateRequest
+TTNeighborsStub <-- TTNarrateResponse
+TTNeighborsStub <-- TTGreetRequest
+TTNeighborsStub <-- TTGreetResponse
+TTNeighborsStub <-- TTHeartbeatRequest
+TTNeighborsStub <-- TTHeartbeatResponse
+TTNeighborsStub <.. TTDiagnosticsLogger
+
+TTAbstractFactory o-- TTContactsSettings
+TTAbstractFactory o-- TTChatSettings
+TTAbstractFactory o-- TTTextBoxSettings
+TTAbstractFactory <-- TTContactsHandler
+TTAbstractFactory <-- TTChatHandler
+TTAbstractFactory <-- TTTextBoxHandler
+TTAbstractFactory <-- TTNeighborsStub
+TTAbstractFactory <-- TTBroadcasterChat
+TTAbstractFactory <-- TTBroadcasterDiscovery
+TTAbstractFactory <-- TTNeighborsServiceChat
+TTAbstractFactory <-- TTNeighborsServiceDiscovery
+TTAbstractFactory <-- TTServer
+
+TTServer --|> TTUtilsStopable
+TTServer <-- TTNeighborsServiceChat
+TTServer <-- TTNeighborsServiceDiscovery
+
+TTBroadcasterChat --|> TTUtilsStopable
+TTBroadcasterChat o-- TTContactsHandler
+TTBroadcasterChat o-- TTChatHandler
+TTBroadcasterChat o-- TTNeighborsStub
+TTBroadcasterChat o-- TTNetworkInterface
+TTBroadcasterChat <-- TTServer
+TTBroadcasterChat <-- TTTellRequest
+TTBroadcasterChat <-- TTTellResponse
+TTBroadcasterChat <-- TTNarrateRequest
+TTBroadcasterChat <-- TTNarrateResponse
+TTBroadcasterChat o-- TTUtilsTimer
+TTBroadcasterChat o-- TTUtilsTimerFactory
+TTBroadcasterChat <.. TTDiagnosticsLogger
+
+TTBroadcasterDiscovery --|> TTUtilsStopable
+TTBroadcasterDiscovery o-- TTContactsHandler
+TTBroadcasterDiscovery o-- TTChatHandler
+TTBroadcasterDiscovery o-- TTNeighborsStub
+TTBroadcasterDiscovery o-- TTNetworkInterface
+TTBroadcasterDiscovery <-- TTGreetRequest
+TTBroadcasterDiscovery <-- TTGreetResponse
+TTBroadcasterDiscovery <-- TTHeartbeatRequest
+TTBroadcasterDiscovery <-- TTHeartbeatResponse
+TTBroadcasterDiscovery o-- TTUtilsTimer
+TTBroadcasterDiscovery o-- TTUtilsTimerFactory
+TTBroadcasterDiscovery <.. TTDiagnosticsLogger
+
+@enduml

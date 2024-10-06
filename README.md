@@ -3,6 +3,8 @@ Application runs inside Linux Terminal Emulator to:
 - find users on LAN,
 - chat with other people on LAN
 
+![TerminalTeamsCommunication](./doc/TerminalTeamsCommunication.svg)
+
 The tmux terminal multiplexer was used to create program interface.
 
 ### Assumptions
